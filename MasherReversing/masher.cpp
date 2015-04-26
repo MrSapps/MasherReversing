@@ -31,7 +31,7 @@ struct DDVHeader
     uint32_t audioFormat;
     uint32_t sampleRate;
     uint32_t maxAudioFrameSize;
-    uint32_t fieldE; // might be reserved, seemingly not used
+    uint32_t fieldE; // seen this be * num frames before.. something to do with audio
     uint32_t framesInterleave;
 };
 
