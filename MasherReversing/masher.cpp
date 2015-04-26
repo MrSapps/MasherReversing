@@ -9,20 +9,29 @@
 struct DDVHeader
 {
     uint32_t ddvTag;
+
+    // offset 4
     uint32_t ddvVersion;
+
+    // offset 8
     uint32_t contains;          // 0x3 = audio and video, 0x1 = video 0x2 = audio (might be other way round)
     uint32_t frameRate;
     uint32_t numberOfFrames;
-    uint32_t field5; // could be part of number of frames, has no effect if set to none zero
+
+
+    uint32_t field5; // Probably a reserved field, it has no effect and isn't read by masher lib
     uint32_t width;
     uint32_t height;
-    uint32_t field8;
-    uint32_t field9;
+
+
+    uint32_t maxVideoFrameSize; // must add 8 to this for some reason
+    uint32_t field9; // size of a buffer that contains shorts, i.e read field9 * 2
     uint32_t keyFrameRate;
+
     uint32_t audioFormat;
     uint32_t sampleRate;
-    uint32_t fieldD;
-    uint32_t fieldE;
+    uint32_t maxAudioFrameSize;
+    uint32_t fieldE; // might be reserved, seemingly not used
     uint32_t framesInterleave;
 };
 
