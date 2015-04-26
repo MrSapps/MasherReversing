@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <vector>
 
 struct DDVHeader
 {
@@ -30,59 +31,47 @@ int main(int, char**)
     FILE* fp = fopen("MIP01C03.DDV", "rb");
     //FILE* fp = fopen("Masher/GDENDING.DDV", "rb");
 
-    DDVHeader header;
+    DDVHeader header = {};
     fread(&header, 0x40, 1, fp);
 
-    uint32_t audioArraySize = header.framesInterleave * 4;
-    uint32_t videoArraySize = header.numberOfFrames * 4;
+    const uint32_t audioArraySize = header.framesInterleave;
+    const uint32_t videoArraySize = header.numberOfFrames;
 
-    uint32_t* pAudioFrameSizes = (uint32_t*)malloc(audioArraySize);
-    uint32_t* pVideoFrameSizes = (uint32_t*)malloc(videoArraySize);
+    std::vector<uint32_t> pAudioFrameSizes(audioArraySize);
+    std::vector<uint32_t> pVideoFrameSizes(videoArraySize);
 
-    fread(pAudioFrameSizes, audioArraySize, 1, fp);
-    fread(pVideoFrameSizes, videoArraySize, 1, fp);
+    fread(pAudioFrameSizes.data(), audioArraySize * sizeof(uint32_t), 1, fp);
+    fread(pVideoFrameSizes.data(), videoArraySize * sizeof(uint32_t), 1, fp);
 
-    uint8_t** ppAudioFrames = (uint8_t**)malloc(header.framesInterleave * sizeof(uint8_t*));
-    uint8_t** ppVideoFrames = (uint8_t**)malloc(header.numberOfFrames * sizeof(uint8_t*));
+    std::vector<std::vector<uint8_t>> ppAudioFrames(header.framesInterleave);
+    std::vector<std::vector<uint8_t>> ppVideoFrames(header.numberOfFrames);
 
     for (uint32_t frame = 0; frame < header.framesInterleave; frame++)
     {
-        ppAudioFrames[frame] = (uint8_t*)malloc(pAudioFrameSizes[frame]);
-        fread(ppAudioFrames[frame], pAudioFrameSizes[frame], 1, fp);
+        ppAudioFrames[frame].resize(pAudioFrameSizes[frame]);
+        fread(ppAudioFrames[frame].data(), pAudioFrameSizes[frame], 1, fp);
     }
 
     for (uint32_t frame = 0; frame < header.numberOfFrames; frame++)
     {
-        uint16_t someOffset;
+        uint16_t someOffset = 0;
         fread(&someOffset, 2, 1, fp);
 
-        ppVideoFrames[frame] = (uint8_t*)malloc(pVideoFrameSizes[frame] + 2);
-        fread(ppVideoFrames[frame], pVideoFrameSizes[frame] + 2, 1, fp);
+        ppVideoFrames[frame].resize(pVideoFrameSizes[frame] + 2);
+        fread(ppVideoFrames[frame].data(), pVideoFrameSizes[frame] + 2, 1, fp);
 
-        uint8_t* pAudio = &ppVideoFrames[frame][someOffset + 2];
+        if (someOffset + 2 >= ppVideoFrames[frame].size())
+        {
+            std::cout << someOffset + 2 << " is out of bounds on frame " << frame << std::endl;
+        }
+        else
+        {
+            uint8_t* pAudio = &ppVideoFrames[frame][someOffset + 2];
 
-        int nDebug = 0;
+            int nDebug = 0;
+        }
     }
 
-
-
-
-
-    // Free everything
-
-    for (unsigned int frame = 0; frame < header.numberOfFrames; frame++)
-    {
-        free(ppVideoFrames[frame]);
-    }
-    for (unsigned int frame = 0; frame < header.framesInterleave; frame++)
-    {
-        free(ppAudioFrames[frame]);
-    }
-
-    free(ppVideoFrames);
-    free(ppAudioFrames);
-    free(pVideoFrameSizes);
-    free(pAudioFrameSizes);
     fclose(fp);
     return 0;
 
