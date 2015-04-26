@@ -9,7 +9,7 @@ struct DDVHeader
 {
     uint32_t ddvTag;
     uint32_t ddvVersion;
-    uint32_t field2;
+    uint32_t contains;          // 0x3 = audio and video, 0x1 = video 0x2 = audio (might be other way round)
     uint32_t frameRate;
     uint32_t frameNumber;
     uint32_t field5;
@@ -27,7 +27,7 @@ struct DDVHeader
 
 int main(int, char**)
 {
-    FILE* fp = fopen("Masher/MIP01C03.DDV", "rb");
+    FILE* fp = fopen("MIP01C03.DDV", "rb");
     //FILE* fp = fopen("Masher/GDENDING.DDV", "rb");
 
     DDVHeader header;
