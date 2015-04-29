@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <vector>
 
-struct DDVHeader
+struct DDVHeaderPart1
 {
     uint32_t ddvTag;
 
@@ -17,8 +17,10 @@ struct DDVHeader
     uint32_t contains;          // 0x3 = audio and video, 0x1 = video 0x2 = audio (might be other way round)
     uint32_t frameRate;
     uint32_t numberOfFrames;
+};
 
-
+struct DDVHeaderPart2
+{
     uint32_t field5; // Probably a reserved field, it has no effect and isn't read by masher lib
     uint32_t width;
     uint32_t height;
@@ -27,24 +29,38 @@ struct DDVHeader
     uint32_t maxVideoFrameSize; // must add 8 to this for some reason
     uint32_t field9; // size of a buffer that contains shorts, i.e read field9 * 2
     uint32_t keyFrameRate;
+};
 
+struct DDVHeaderPart3
+{
     uint32_t audioFormat;
     uint32_t sampleRate;
     uint32_t maxAudioFrameSize;
-    uint32_t fieldE; // seen this be * num frames before.. something to do with audio
+    uint32_t fieldE; // size of 1 audio channel?
+
     uint32_t framesInterleave;
 };
 
 int main(int, char**)
 {
-    FILE* fp = fopen("MIP01C03.DDV", "rb");
+    FILE* fp = fopen("Testing.DDV", "rb");
     //FILE* fp = fopen("Masher/GDENDING.DDV", "rb");
 
-    DDVHeader header = {};
-    fread(&header, 0x40, 1, fp);
+    DDVHeaderPart1 headerP1 = {};
+    fread(&headerP1, sizeof(headerP1), 1, fp);
 
-    const uint32_t audioArraySize = header.framesInterleave;
-    const uint32_t videoArraySize = header.numberOfFrames;
+    DDVHeaderPart2 headerP2 = {};
+    fread(&headerP2, sizeof(headerP2), 1, fp);
+
+    // Only read audio section if audio is present in the file
+    DDVHeaderPart3 headerP3 = {};
+    if (headerP1.contains & 0x2)
+    {
+        fread(&headerP3, sizeof(headerP3), 1, fp);
+    }
+
+    const uint32_t audioArraySize = headerP3.framesInterleave;
+    const uint32_t videoArraySize = headerP1.numberOfFrames;
 
     std::vector<uint32_t> pAudioFrameSizes(audioArraySize);
     std::vector<uint32_t> pVideoFrameSizes(videoArraySize);
@@ -52,16 +68,16 @@ int main(int, char**)
     fread(pAudioFrameSizes.data(), audioArraySize * sizeof(uint32_t), 1, fp);
     fread(pVideoFrameSizes.data(), videoArraySize * sizeof(uint32_t), 1, fp);
 
-    std::vector<std::vector<uint8_t>> ppAudioFrames(header.framesInterleave);
-    std::vector<std::vector<uint8_t>> ppVideoFrames(header.numberOfFrames);
+    std::vector<std::vector<uint8_t>> ppAudioFrames(headerP3.framesInterleave);
+    std::vector<std::vector<uint8_t>> ppVideoFrames(headerP1.numberOfFrames);
 
-    for (uint32_t frame = 0; frame < header.framesInterleave; frame++)
+    for (uint32_t frame = 0; frame < headerP3.framesInterleave; frame++)
     {
         ppAudioFrames[frame].resize(pAudioFrameSizes[frame]);
         fread(ppAudioFrames[frame].data(), pAudioFrameSizes[frame], 1, fp);
     }
 
-    for (uint32_t frame = 0; frame < header.numberOfFrames; frame++)
+    for (uint32_t frame = 0; frame < headerP1.numberOfFrames; frame++)
     {
         uint16_t someOffset = 0;
         fread(&someOffset, 2, 1, fp);
