@@ -54,7 +54,8 @@ int main(int, char**)
 
     // Only read audio section if audio is present in the file
     DDVHeaderPart3 headerP3 = {};
-    if (headerP1.contains & 0x2)
+    const bool bHasAudio = (headerP1.contains & 0x2) == 0x2;
+    if (bHasAudio)
     {
         fread(&headerP3, sizeof(headerP3), 1, fp);
     }
@@ -77,23 +78,37 @@ int main(int, char**)
         fread(ppAudioFrames[frame].data(), pAudioFrameSizes[frame], 1, fp);
     }
 
-    for (uint32_t frame = 0; frame < headerP1.numberOfFrames; frame++)
+    if (bHasAudio)
     {
-        uint16_t someOffset = 0;
-        fread(&someOffset, 2, 1, fp);
-
-        ppVideoFrames[frame].resize(pVideoFrameSizes[frame] + 2);
-        fread(ppVideoFrames[frame].data(), pVideoFrameSizes[frame] + 2, 1, fp);
-
-        if (someOffset + 2 >= ppVideoFrames[frame].size())
+        for (uint32_t frame = 0; frame < headerP1.numberOfFrames; frame++)
         {
-            std::cout << someOffset + 2 << " is out of bounds on frame " << frame << std::endl;
+            uint16_t someOffset = 0;
+            fread(&someOffset, 2, 1, fp);
+
+            ppVideoFrames[frame].resize(pVideoFrameSizes[frame] + 2);
+            fread(ppVideoFrames[frame].data(), pVideoFrameSizes[frame] + 2, 1, fp);
+
+            if (someOffset + 2 >= ppVideoFrames[frame].size())
+            {
+                std::cout << someOffset + 2 << " is out of bounds on frame " << frame << std::endl;
+            }
+            else
+            {
+                uint8_t* pAudio = &ppVideoFrames[frame][someOffset + 2];
+
+                int nDebug = 0;
+            }
         }
-        else
+    }
+    else
+    {
+        for (uint32_t frame = 0; frame < headerP1.numberOfFrames; frame++)
         {
-            uint8_t* pAudio = &ppVideoFrames[frame][someOffset + 2];
+          
+            ppVideoFrames[frame].resize(pVideoFrameSizes[frame]);
+            fread(ppVideoFrames[frame].data(), pVideoFrameSizes[frame], 1, fp);
 
-            int nDebug = 0;
+        
         }
     }
 
