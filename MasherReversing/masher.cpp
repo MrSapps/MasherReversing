@@ -41,6 +41,54 @@ struct DDVHeaderPart3
     uint32_t framesInterleave;
 };
 
+// Frame data for 16x8 1 frame DDV where one block of 8x8 is black and the other
+// is white is:
+// 01 00 10 00 A0 00 27 11 AB 2B 3F 9B 04 0A 40 01 
+// 01 43 80 49 01 8E 7E A2 FF 13 00 00
+
+// ddv_play_frame
+// -> calls_decode_block_q
+//    -> decode_bitstream_q < decodes the bitstream with a (FE F0) terminated buffer?
+// -> ddv_func7_DecodeMacroBlock x6
+// Maybe before or after
+// -> j_ddv__func5_block_decoder_q
+//   -> ddv__func5_block_decoder_q
+//      -> Either x6 blit_output_mmx_q or x6 blit_output_no_asm_q
+// depending on supported cpu features. Before each blitter  func
+// ddv_func7_DecodeMacroBlock is called
+// finally depending on some other global set of flags  sub_40A2C0 or
+// the likes will be called, the others seem to skip blocks or change the overall
+// video height.
+
+// after bit stream decoding we seem to end up with:
+// 00 00 00 FE 00 00 00 FE 02 04 FE 0F 01 00 01 08
+// FF 03 01 08 FF 03 FF 13 00 FE F0 03 00 FE 08 04
+// 07 00 05 0C 05 00 03 1C 02 00 00 FE F0 03 00 FE << I assume "FE F0" is the end, or perhaps the previous "FE F0" instance
+// 00 00 00 00 00 00 00 00 41 00 00 00 31 00 00 00
+// 80 B8 42 00 10 01 F4 01 1C 00 00 00 00 00 00 00
+// 01 00 00 00 0C 04 00 00 10 04 00 00 88 05 00 00
+// 00 00 00 00 00 00 00 00 31 00 00 00 A1 00 00 00
+// A0 01 F4 01 01 00 00 00 01 00 00 00 0F 00 00 00
+// 01 00 00 00 00 00 00 00 10 00 00 00 08 00 00 00
+// 1A 00 00 00 18 00 00 00 0F 00 00 00 00 00 00 00
+// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+// 10 01 F4 01 60 01 F4 01 00 00 00 00 00 00 00 00
+// 00 00 00 00 00 00 00 00 01 00 00 00 01 00 00 00
+// 00 01 00 00 00 00 00 00 02 00 00 00 01 00 00 00
+// 00 01 F4 01 04 01 F4 01 00 00 00 00 00 00 00 00
+// 10 01 F4 01 22 00 00 00 00 00 00 00 E0 60 07 02
+// 40 00 00 00 00 00 00 00 A1 00 00 00 91 00 00 00
+// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+// 00 00 00 00 00 00 00 00 91 00 00 00 41 00 00 00 << Static ascii strings after this data, so this is the max possible size
+
+
 int main(int, char**)
 {
     FILE* fp = fopen("Testing.DDV", "rb");
