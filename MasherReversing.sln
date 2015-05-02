@@ -5,7 +5,7 @@ VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MasherReversing", "MasherReversing\MasherReversing.vcxproj", "{820C9154-20E9-4ECD-B7EE-44157B839725}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DDraw", "DDraw\DDraw.vcxproj", "{0D87F224-E44B-4176-93DD-7F9F7DD5468E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hook", "MasherReversing\Hook.vcxproj", "{0D87F224-E44B-4176-93DD-7F9F7DD5468E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
