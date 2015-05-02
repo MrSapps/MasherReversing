@@ -6,21 +6,21 @@
 struct ddv_class
 {
     HANDLE mFileHandle;
-    DWORD field_4;
-    DWORD mFrameDataBufferRelated;
-    DWORD field_C;
+    DWORD ddvVersion;
+    DWORD contains;
+    DWORD frameRate;
     DWORD mNumberOfFrames;
-    DWORD field_14;
-    DWORD field_18;
-    DWORD field_1C;
-    DWORD field_20;
-    DWORD field_24;
-    DWORD field_28;
-    DWORD field_2C;
-    DWORD field_30;
-    DWORD field_34;
+    DWORD field5;
+    DWORD width;
+    DWORD height;
+    DWORD maxVideoFrameSize;
+    DWORD field9;
+    DWORD keyFrameRate;
+    DWORD audioFormat;
+    DWORD sampleRate;
+    DWORD maxAudioFrameSize;
     DWORD fieldE;
-    DWORD field_3C;
+    DWORD framesInterleave; 
     DWORD mRawFrameBitStreamData;
     DWORD mDecodedBitStream;
     DWORD mLastUsedFrameBuffer;
