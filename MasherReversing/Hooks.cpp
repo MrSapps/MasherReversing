@@ -172,10 +172,10 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     
     // Done once for the whole 320x240 image
     int v9 = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream);
-  //  after_block_decode_no_effect_q(v9);           // has no effect if call noped
+    after_block_decode_no_effect_q_ptr(v9);           // has no effect if call noped
     decode6_mmx_ret = (int)pThis1->mDecodedBitStream;
 
-    dataSizeDWords = pThis1->mBlockDataSize_q; // 64
+    dataSizeDWords = pThis1->mBlockDataSize_q; // 64 - because 64 coefficients?
     dataSizeDWordsCopy = dataSizeDWords;
     xBlockCnt = 0;
 
@@ -201,17 +201,53 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
             }
             else
             {
+                // First is the DC coefficient
+                // then 63 AC coefficients
+
+                // Reverse DCT
+
+                // mDecodedBitStream, ?, which table to use, mMacroBlockBuffer_q (output is here? baddf00d at start), previous output?
+
                 // B1
+                /*
+
+                */
+
                 block1PtrCopy = buffer;
-                decode1_ret = decodeMacroBlockfPtr(decode6_mmx_ret, &gMacroBlock1Buffer, buffer, 0, 0, 0);
-                blit_output_no_mmx(dataSizeDWords);     // none ASM version of above - again blank if not called
+
+                /*
+                028160E0 = mDecodedBitStream
+                028160E0  B2 00 00 FE D6 07 00 FE  94 05 04 00 F0 03 05 00
+                028160F0  04 00 FF 03 FE 03 FF 03  FF 03 03 00 FF 03 FF 03
+                02816100  FC 03 01 04 01 04 01 00  01 14 00 FE 62 05 11 00
+                */
+
+                /*
+                006313E8 = gMacroBlock1Buffer
+                006313E8  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+                006313F8  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+
+                */
+
+                /*
+                table selector (14)
+                macro block output buffer (10)
+                64 macro block static buffer (C)
+                decoded bit stream ptr (8)
+                */
+                decode1_ret = decodeMacroBlockfPtr(decode6_mmx_ret, &gMacroBlock1Buffer, buffer, 0 /*14h*/, 0, 0);
+                // buffer/mMacroBlockBuffer_q = 0xB2 and many zeros after call
+                // gMacroBlock1Buffer = zeros
+                // mDecodedBitStream = unchanged
+
+                blit_output_no_mmx(dataSizeDWords);
                 
                 dataSizeBytes = 4 * dataSizeDWords;
                 block2Ptr = dataSizeBytes + buffer;
                 block2PtrCopy = block2Ptr;
 
                 // B2
-                decode2_ret = decodeMacroBlockfPtr(decode1_ret, &gMacroBlock2Buffer, block2Ptr, 0, block1PtrCopy, &gMacroBlock1Buffer);
+                decode2_ret = decodeMacroBlockfPtr(decode1_ret, &gMacroBlock2Buffer, block2Ptr, 0, block1PtrCopy, &gMacroBlock1Buffer); // last 2 args are unused?
                 blit_output_no_mmx(dataSizeBytes);
                 block3Ptr = dataSizeBytes + block2Ptr;
 
@@ -241,6 +277,14 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
 
                 if (dword_62EFE0 & 1) // Hit on 2x2 dithering
                 {
+                    
+                    /*
+                    05370000 = pScreenBufferCurrentPos
+                    05370000  4B 21 4C 29 4B 21 4B 21  4B 21 4B 21 4B 21 8C 29
+                    05370010  4B 21 8C 29 0A 19 4B 21  0A 19 0B 21 0A 19 4B 21
+                    05370020  89 10 C9 10 C9 10 0A 19  0B 21 4B 21 4B 21 4B 21
+                    05370030  4B 21 8C 29 CD 31 0E 3A  0E 3A 4F 42 CD 31 0E 3A
+                    */
                     calling_conv_hack((int)pScreenBufferCurrentPos);
                     //                    write_block_bit1_no_mmx_ptr(dataSizeBytes);// sets width too small and images look weird
                     goto after_block_write;
@@ -254,6 +298,7 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
                 }
                 if (dword_62EFE0 & 8) // Hit on "no dithering", 2x1 dithering
                 {
+                    abort();
                     // Not expected for the test video
                     //write_block_bit8_no_mmx(dataSizeBytes);// seems to be the "normal" case
                     //goto after_block_write;
@@ -282,8 +327,8 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
         numXBlocks = pThis2->nNumMacroblocksX; // 240/16=20
         v39 = __SETO__(xBlockCnt + 1, numXBlocks);
         v38 = xBlockCnt++ + 1 - numXBlocks < 0;
-        //} while (v38 ^ v39);
-    } while (numXBlocks < pThis2->nNumMacroblocksX);
+       // } while (v38 ^ v39);
+    } while (xBlockCnt < pThis2->nNumMacroblocksX);
     //return (char)pThis2;
 
   //  memset(pScreenBuffer, 0xff, 256 * 390);
