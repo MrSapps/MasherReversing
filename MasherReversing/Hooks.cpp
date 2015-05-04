@@ -84,15 +84,14 @@ int __SETO__(int, int)
 }
 
 
-__declspec(naked) int __cdecl calling_conv_hack(int param)
+/*int __declspec (naked)*/ void  calling_conv_hack(int param)
 {
     __asm
     {
-        push ecx
         mov ecx, param
+        push ecx
         call write_block_bit1_no_mmx_ptr
         pop ecx
-        retn
     }
 }
 
@@ -111,14 +110,14 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     */
 
 //    ddv_class *pThis3; // eax@1
-    ddv_class *pThis1; // ebp@1
+    ddv_class *pThis1 = 0; // ebp@1
     int(__cdecl *decodeMacroBlockfPtr)(int, int *, int, DWORD, int, int *); // edi@2
-    int keyFrameRate; // eax@2
-    int decode6_mmx_ret; // ebx@4
-    int dataSizeDWords; // ebp@4
-    int buffer; // esi@4
+    int keyFrameRate = 0; // eax@2
+    int decode6_mmx_ret = 0; // ebx@4
+    int dataSizeDWords = 0; // ebp@4
+    int buffer = 0; // esi@4
    // int v9; // eax@4
-    int dataSizeBytes; // ebp@7
+    int dataSizeBytes = 0; // ebp@7
 //    int decode1_mmx_ret; // ebx@7
 //    int v12; // esi@7
 //    int decode2_mmx_ret; // ebx@7
@@ -129,30 +128,30 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
 //    int v18; // esi@7
 //    int decode5_mmx_ret; // ebx@7
  //   int v20; // esi@7
-    int v21; // ST30_4@14
-    int decode1_ret; // ebx@14
-    int v23; // esi@14
-    int v24; // ST18_4@14
-    int decode2_ret; // ebx@14
-    int v26; // esi@14
-    int decode3_ret; // ebx@14
-    int v28; // ST40_4@14
-    int v29; // esi@14
-    int v30; // ST28_4@14
-    int decode4_ret; // ebx@14
-    int v32; // esi@14
-    int v33; // ST10_4@14
-    int decode5_ret; // ebx@14
-    int v35; // esi@14
-    int v36; // edx@21
-    int numXBlocks; // edx@25
-    unsigned __int8 v38; // sf@25
-    unsigned __int8 v39; // of@25
-    unsigned __int8 *pScreenBufferCopy; // [sp+10h] [bp-14h]@5
-    ddv_class *pThis2; // [sp+14h] [bp-10h]@1
-    unsigned int blockYCount; // [sp+18h] [bp-Ch]@5
-    int dataSizeDWordsCopy; // [sp+1Ch] [bp-8h]@4
-    int xBlockCnt; // [sp+20h] [bp-4h]@4
+    int block1PtrCopy = 0; // ST30_4@14
+    int decode1_ret = 0; // ebx@14
+    int block2Ptr = 0; // esi@14
+    int block2PtrCopy = 0; // ST18_4@14
+    int decode2_ret = 0; // ebx@14
+    int block3Ptr = 0; // esi@14
+    int decode3_ret = 0; // ebx@14
+    int block3PtrCopy = 0; // ST40_4@14
+    int block4Ptr = 0; // esi@14
+    int block4PtrCopy = 0; // ST28_4@14
+    int decode4_ret = 0; // ebx@14
+    int block5Ptr = 0; // esi@14
+    int block5PtrCopy = 0; // ST10_4@14
+    int decode5_ret = 0; // ebx@14
+    int block6Ptr = 0; // esi@14
+    int v36 = 0; // edx@21
+    int numXBlocks = 0; // edx@25
+    unsigned __int8 v38 = 0; // sf@25
+    unsigned __int8 v39 = 0; // of@25
+    unsigned __int8 *pScreenBufferCurrentPos = 0; // [sp+10h] [bp-14h]@5
+    ddv_class *pThis2 = 0; // [sp+14h] [bp-10h]@1
+    unsigned int blockYCount = 0; // [sp+18h] [bp-Ch]@5
+    int dataSizeDWordsCopy = 0; // [sp+1Ch] [bp-8h]@4
+    int xBlockCnt = 0; // [sp+20h] [bp-4h]@4
 
     pThis1 = thisPtr;
     pThis2 = thisPtr;
@@ -171,6 +170,7 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     }
     buffer = thisPtr->mMacroBlockBuffer_q;
     
+    // Done once for the whole 320x240 image
     int v9 = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream);
   //  after_block_decode_no_effect_q(v9);           // has no effect if call noped
     decode6_mmx_ret = (int)pThis1->mDecodedBitStream;
@@ -184,13 +184,14 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
         return (char)pThis2;
     }
 
+    // Now loop over the 16x16 macro blocks that make up the image, so we have 320/16=xblocks (20), 240/16=yblocks (16)
     do
     {
-        pScreenBufferCopy = pScreenBuffer;
+        pScreenBufferCurrentPos = pScreenBuffer;
         blockYCount = 0;
-        if (pThis2->nNumMacroblocksY <= 0) // 15
+        if (pThis2->nNumMacroblocksY <= 0) // 320/16=15
         {
-            goto skip_block_blts;
+            goto skip_block_blts; // aka break - wonder why this is within the loop?
         }
         do
         {
@@ -200,75 +201,92 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
             }
             else
             {
-                v21 = buffer;
-                decode1_ret = ((int(__cdecl *)(int, int *, int, DWORD))decodeMacroBlockfPtr)
-                    (decode6_mmx_ret, &gMacroBlock1Buffer, buffer, 0);
+                // B1
+                block1PtrCopy = buffer;
+                decode1_ret = decodeMacroBlockfPtr(decode6_mmx_ret, &gMacroBlock1Buffer, buffer, 0, 0, 0);
                 blit_output_no_mmx(dataSizeDWords);     // none ASM version of above - again blank if not called
+                
                 dataSizeBytes = 4 * dataSizeDWords;
-                v23 = dataSizeBytes + buffer;
-                v24 = v23;
-                decode2_ret = decodeMacroBlockfPtr(decode1_ret, &gMacroBlock2Buffer, v23, 0, v21, &gMacroBlock1Buffer);
+                block2Ptr = dataSizeBytes + buffer;
+                block2PtrCopy = block2Ptr;
+
+                // B2
+                decode2_ret = decodeMacroBlockfPtr(decode1_ret, &gMacroBlock2Buffer, block2Ptr, 0, block1PtrCopy, &gMacroBlock1Buffer);
                 blit_output_no_mmx(dataSizeBytes);
-                v26 = dataSizeBytes + v23;
-                decode3_ret = decodeMacroBlockfPtr(decode2_ret, &gMacroBlock3Buffer, v26, 1, v24, &gMacroBlock2Buffer);
-                v28 = v26;
+                block3Ptr = dataSizeBytes + block2Ptr;
+
+                // B3
+                decode3_ret = decodeMacroBlockfPtr(decode2_ret, &gMacroBlock3Buffer, block3Ptr, 1, block2PtrCopy, &gMacroBlock2Buffer);
+                block3PtrCopy = block3Ptr;
                 blit_output_no_mmx(dataSizeBytes);
-                v29 = dataSizeBytes + v26;
-                v30 = v29;
-                decode4_ret = decodeMacroBlockfPtr(decode3_ret, &gMacroBlock4Buffer, v29, 1, v28, &gMacroBlock3Buffer);
+                block4Ptr = dataSizeBytes + block3Ptr;
+                block4PtrCopy = block4Ptr;
+
+                // B4
+                decode4_ret = decodeMacroBlockfPtr(decode3_ret, &gMacroBlock4Buffer, block4Ptr, 1, block3PtrCopy, &gMacroBlock3Buffer);
                 blit_output_no_mmx(dataSizeBytes);
-                v32 = dataSizeBytes + v29;
-                v33 = v32;
-                decode5_ret = decodeMacroBlockfPtr(decode4_ret, (int *)&gMacroBlock5Buffer, v32, 1, v30, &gMacroBlock4Buffer);
+                block5Ptr = dataSizeBytes + block4Ptr;
+                block5PtrCopy = block5Ptr;
+
+                // B5
+                decode5_ret = decodeMacroBlockfPtr(decode4_ret, &gMacroBlock5Buffer, block5Ptr, 1, block4PtrCopy, &gMacroBlock4Buffer);
                 blit_output_no_mmx(dataSizeBytes);
-                v35 = dataSizeBytes + v32;
-                decode6_mmx_ret = decodeMacroBlockfPtr(
-                    decode5_ret,
-                    (int *)&gMacroBlock6Buffer,
-                    v35,
-                    1,
-                    v33,
-                    (int *)&gMacroBlock5Buffer);// crashes when removed, maybe bad asm
+                block6Ptr = dataSizeBytes + block5Ptr;
+
+                // B6
+                decode6_mmx_ret = decodeMacroBlockfPtr(decode5_ret, &gMacroBlock6Buffer, block6Ptr, 1, block5PtrCopy, &gMacroBlock5Buffer);
                 blit_output_no_mmx(dataSizeBytes);      // a missing macro block/square if not called
-                buffer = dataSizeBytes + v35;
+
+                buffer = dataSizeBytes + block6Ptr;
+
                 if (dword_62EFE0 & 1) // Hit on 2x2 dithering
                 {
-                    //calling_conv_hack(dataSizeBytes);
-//                    write_block_bit1_no_mmx_ptr(dataSizeBytes);// sets width too small and images look weird
+                    calling_conv_hack((int)pScreenBufferCurrentPos);
+                    //                    write_block_bit1_no_mmx_ptr(dataSizeBytes);// sets width too small and images look weird
                     goto after_block_write;
                 }
                 if (dword_62EFE0 & 4)
                 {
-                    write_block_bit4_no_mmx(dataSizeBytes);// plays at half height?
-                    goto after_block_write;
+                    // Not expected for the test video
+                    abort();
+                    //write_block_bit4_no_mmx(dataSizeBytes);// plays at half height?
+                    //goto after_block_write;
                 }
                 if (dword_62EFE0 & 8) // Hit on "no dithering", 2x1 dithering
                 {
-                    write_block_bit8_no_mmx(dataSizeBytes);// seems to be the "normal" case
-                    goto after_block_write;
+                    // Not expected for the test video
+                    //write_block_bit8_no_mmx(dataSizeBytes);// seems to be the "normal" case
+                    //goto after_block_write;
                 }
             }
-            write_block_other_bits_no_mmx(dataSizeBytes);// half height, every other horizontal block is skipped?
+            // Not expected for the test video
+            abort();
+            //write_block_other_bits_no_mmx(dataSizeBytes);// half height, every other horizontal block is skipped?
         after_block_write:
-            v36 = (int)&pScreenBufferCopy[16 * dword_62EFD8];// dword_62EFD8 is probably the buffer width? 1280 - always 1280?
-            pScreenBufferCopy += 16 * dword_62EFD8;
+
+            v36 = (int)&pScreenBufferCurrentPos[16 * dword_62EFD8];// dword_62EFD8 is probably the buffer width? 1280 - always 1280?
+
+            pScreenBufferCurrentPos += 16 * dword_62EFD8;
+
             if (dword_62EFE0 & 8)
             {
-                pScreenBufferCopy = (unsigned __int8 *)(16 * dword_62EFD8 + v36);
+                pScreenBufferCurrentPos = (unsigned __int8 *)(16 * dword_62EFD8 + v36);
             }
+
             dataSizeDWords = dataSizeDWordsCopy;
             ++blockYCount;
         } while (blockYCount < pThis2->nNumMacroblocksY); // 16 lines for the block?
 
     skip_block_blts:
         pScreenBuffer += dword_62EFD4;              // not sure what this is, height maybe? No scaling = 32, 2x1 = 64, 2x2=64
-        numXBlocks = pThis2->nNumMacroblocksX;
+        numXBlocks = pThis2->nNumMacroblocksX; // 240/16=20
         v39 = __SETO__(xBlockCnt + 1, numXBlocks);
         v38 = xBlockCnt++ + 1 - numXBlocks < 0;
-    } while (v38 ^ v39);
+        //} while (v38 ^ v39);
+    } while (numXBlocks < pThis2->nNumMacroblocksX);
     //return (char)pThis2;
 
-    memset(pScreenBuffer, 0xff, 256 * 390);
+  //  memset(pScreenBuffer, 0xff, 256 * 390);
 
     // The app doesn't seem to do anything with the return value
     return 0;
