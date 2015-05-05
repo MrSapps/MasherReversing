@@ -72,6 +72,6 @@ static DWORD* p_dword_62EFD8 = (DWORD*)0x0062EFD8;
 static DWORD& dword_62EFD8 = *p_dword_62EFD8;
 
 static DWORD* p_dword_62EFD4 = (DWORD*)0x0062EFD4;
-static DWORD& dword_62EFD4 = *p_dword_62EFD4;
+static DWORD& gMacroBlockStripWidthInBytes = *p_dword_62EFD4;
 
 void InstallHooks();

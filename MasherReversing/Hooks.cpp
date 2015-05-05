@@ -58,7 +58,7 @@ static ddv__func5_block_decoder_q_type real_ddv__func5_block_decoder_q = (ddv__f
 static JmpHookedFunction<ddv__func5_block_decoder_q_type>* ddv_func6_decodes_block_q_hook;
 
 // Wrappers for hand made calling conventions
-static void do_write_block_bit1_no_mmx(int param)
+static void do_write_block_bit1_no_mmx(int param) // TODO: Reimpl
 {
     __asm
     {
@@ -69,7 +69,7 @@ static void do_write_block_bit1_no_mmx(int param)
     }
 }
 
-static void do_blit_output_no_mmx(int macroBlockBuffer, int* decodedBitStream)
+static void do_blit_output_no_mmx(int macroBlockBuffer, int* decodedBitStream) // TODO: Reimpl
 {
     __asm
     {
@@ -112,11 +112,11 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
     DWORD block1Output = thisPtr->mMacroBlockBuffer_q;
     
     // Done once for the whole 320x240 image
-    int decodeRet = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream);
+    int decodeRet = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream); // TODO: Reimpl
 
     // Each block only seems to have 1 colour if this isn't called, but then resizing the window seems to fix it sometimes (perhaps causes
     // this function to be called else where).
-    after_block_decode_no_effect_q_ptr(decodeRet); // actually does have an effect
+    after_block_decode_no_effect_q_ptr(decodeRet); // TODO: Reimpl
 
     // Sanity check
     if (thisPtr->nNumMacroblocksX <= 0 || thisPtr->nNumMacroblocksY <= 0)
@@ -138,7 +138,7 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
             const int afterBlock1Ptr = decodeMacroBlockfPtr(bitstreamCurPos, p_gMacroBlock1Buffer, block1Output, 0, 0, 0);
             do_blit_output_no_mmx(block1Output, p_gMacroBlock1Buffer);
 
-            const int dataSizeBytes = 4 * thisPtr->mBlockDataSize_q;
+            const int dataSizeBytes = 4 * thisPtr->mBlockDataSize_q; // Convert to byte count 64*4=256
             int block2Output = dataSizeBytes + block1Output;
 
             // B2
@@ -185,6 +185,8 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
             }
             else
             {
+                // When no dithering or scaling?
+
                 // Not expected for the test video
                 abort();
                 //write_block_other_bits_no_mmx(dataSizeBytes);// half height, every other horizontal block is skipped?
@@ -199,7 +201,15 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
                 pScreenBufferCurrentPos = (unsigned __int8 *)(16 * dword_62EFD8 + v36);
             }
         }
-        pScreenBuffer += dword_62EFD4;              // not sure what this is, height maybe? No scaling = 32, 2x1 = 64, 2x2=64
+
+        // Amount to move along the frame buffer to next to the next vertical "strip" of blocks to write
+
+
+        // Seems to be the width of the blitted macro block strip in bytes
+        // thus no scaling = 16 pixels
+        // 2x1 scaling = 32 pixels
+        // and 2x2 scaling = 32 pixels
+        pScreenBuffer += gMacroBlockStripWidthInBytes; 
     }
 
     // The app doesn't seem to do anything with the return value
