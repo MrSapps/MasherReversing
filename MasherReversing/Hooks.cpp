@@ -54,11 +54,11 @@ static_assert(sizeof(ddv_class) == 0x94, "Structure size must match exactly!");
 char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsigned char* screenBuffer);
 typedef decltype(&ddv__func5_block_decoder_q) ddv__func5_block_decoder_q_type;
 
-ddv__func5_block_decoder_q_type real_ddv__func5_block_decoder_q = (ddv__func5_block_decoder_q_type)0x00409FE0;
-JmpHookedFunction<ddv__func5_block_decoder_q_type>* ddv_func6_decodes_block_q_hook;
+static ddv__func5_block_decoder_q_type real_ddv__func5_block_decoder_q = (ddv__func5_block_decoder_q_type)0x00409FE0;
+static JmpHookedFunction<ddv__func5_block_decoder_q_type>* ddv_func6_decodes_block_q_hook;
 
 // Wrappers for hand made calling conventions
-void do_write_block_bit1_no_mmx(int param)
+static void do_write_block_bit1_no_mmx(int param)
 {
     __asm
     {
@@ -69,7 +69,7 @@ void do_write_block_bit1_no_mmx(int param)
     }
 }
 
-void do_blit_output_no_mmx(int macroBlockBuffer, int* decodedBitStream)
+static void do_blit_output_no_mmx(int macroBlockBuffer, int* decodedBitStream)
 {
     __asm
     {
@@ -80,7 +80,7 @@ void do_blit_output_no_mmx(int macroBlockBuffer, int* decodedBitStream)
     }
 }
 
-char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
+static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
     OutputDebugString("ddv__func5_block_decoder_q\n");
 
@@ -135,34 +135,34 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
         {
       
             // B1
-            int decode1_ret = decodeMacroBlockfPtr(bitstreamCurPos, p_gMacroBlock1Buffer, block1Output, 0, 0, 0);
+            const int afterBlock1Ptr = decodeMacroBlockfPtr(bitstreamCurPos, p_gMacroBlock1Buffer, block1Output, 0, 0, 0);
             do_blit_output_no_mmx(block1Output, p_gMacroBlock1Buffer);
 
-            int dataSizeBytes = 4 * thisPtr->mBlockDataSize_q;
+            const int dataSizeBytes = 4 * thisPtr->mBlockDataSize_q;
             int block2Output = dataSizeBytes + block1Output;
 
             // B2
-            int decode2_ret = decodeMacroBlockfPtr(decode1_ret, p_gMacroBlock2Buffer, block2Output, 0, 0, 0);
+            const int afterBlock2Ptr = decodeMacroBlockfPtr(afterBlock1Ptr, p_gMacroBlock2Buffer, block2Output, 0, 0, 0);
             do_blit_output_no_mmx(block2Output, p_gMacroBlock2Buffer);
-            int block3Output = dataSizeBytes + block2Output;
+            const int block3Output = dataSizeBytes + block2Output;
 
             // B3
-            int decode3_ret = decodeMacroBlockfPtr(decode2_ret, p_gMacroBlock3Buffer, block3Output, 1, 0, 0);
+            const int afterBlock3Ptr = decodeMacroBlockfPtr(afterBlock2Ptr, p_gMacroBlock3Buffer, block3Output, 1, 0, 0);
             do_blit_output_no_mmx(block3Output, p_gMacroBlock3Buffer);
-            int block4Output = dataSizeBytes + block3Output;
+            const int block4Output = dataSizeBytes + block3Output;
 
             // B4
-            int decode4_ret = decodeMacroBlockfPtr(decode3_ret, p_gMacroBlock4Buffer, block4Output, 1, 0, 0);
+            const int afterBlock4Ptr = decodeMacroBlockfPtr(afterBlock3Ptr, p_gMacroBlock4Buffer, block4Output, 1, 0, 0);
             do_blit_output_no_mmx(block4Output, p_gMacroBlock4Buffer);
-            int block5Output = dataSizeBytes + block4Output;
+            const int block5Output = dataSizeBytes + block4Output;
 
             // B5
-            int decode5_ret = decodeMacroBlockfPtr(decode4_ret, p_gMacroBlock5Buffer, block5Output, 1, 0, 0);
+            const int afterBlock5Ptr = decodeMacroBlockfPtr(afterBlock4Ptr, p_gMacroBlock5Buffer, block5Output, 1, 0, 0);
             do_blit_output_no_mmx(block5Output, p_gMacroBlock5Buffer);
-            int block6Output = dataSizeBytes + block5Output;
+            const int block6Output = dataSizeBytes + block5Output;
 
             // B6
-            bitstreamCurPos = decodeMacroBlockfPtr(decode5_ret, p_gMacroBlock6Buffer, block6Output, 1, 0, 0);
+            bitstreamCurPos = decodeMacroBlockfPtr(afterBlock5Ptr, p_gMacroBlock6Buffer, block6Output, 1, 0, 0);
             do_blit_output_no_mmx(block6Output, p_gMacroBlock6Buffer);
             block1Output = dataSizeBytes + block6Output;
 
@@ -206,11 +206,7 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     return 0;
 }
 
-JmpHookedFunction<ddv_func7_DecodeMacroBlock>* ddv_func7_DecodeMacroBlock_hook;
-
-
-
-
+static JmpHookedFunction<ddv_func7_DecodeMacroBlock>* ddv_func7_DecodeMacroBlock_hook;
 
 void InstallHooks()
 {
