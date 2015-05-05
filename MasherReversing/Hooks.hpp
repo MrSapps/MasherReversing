@@ -59,22 +59,11 @@ static char& gCpuSupportsMMX = *p_gCpuSupportsMMX;
 // TODO: Probably structs as there are 7 other DWORDS related after each one
 // of these
 static int* p_gMacroBlock1Buffer = (int*)0x006313E8;
-static int& gMacroBlock1Buffer = *p_gMacroBlock1Buffer;
-
 static int* p_gMacroBlock2Buffer = (int*)0x006314E8;
-static int& gMacroBlock2Buffer = *p_gMacroBlock2Buffer;
-
 static int* p_gMacroBlock3Buffer = (int*)0x00630FE8;
-static int& gMacroBlock3Buffer = *p_gMacroBlock3Buffer;
-
 static int* p_gMacroBlock4Buffer = (int*)0x006311E8;
-static int& gMacroBlock4Buffer = *p_gMacroBlock4Buffer;
-
 static int* p_gMacroBlock5Buffer = (int*)0x006310E8;
-static int& gMacroBlock5Buffer = *p_gMacroBlock5Buffer;
-
 static int* p_gMacroBlock6Buffer = (int*)0x006312E8;
-static int& gMacroBlock6Buffer = *p_gMacroBlock6Buffer;
 
 static DWORD* p_dword_62EFE0 = (DWORD*)0x0062EFE0;
 static DWORD& dword_62EFE0 = *p_dword_62EFE0;

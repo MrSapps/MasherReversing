@@ -31,8 +31,8 @@ struct ddv_class
     DWORD nNumMacroblocksY;
     BYTE mHasAudioQ;
     BYTE field_61;
-    BYTE field_62;
-    BYTE field_63;
+    BYTE field_62;      // Padding?
+    BYTE field_63;      // Padding?
     DWORD mCurrentFrameNumber;
     DWORD mCurrentFrameNumber2;
     DWORD field_6C;
@@ -79,7 +79,7 @@ int __SETO__(int, int)
 }
 
 //B2, D6 07
-/*int __declspec (naked)*/ void  calling_conv_hack2(int macroBlockBuffer, int decodedBitStream)
+/*int __declspec (naked)*/ void  calling_conv_hack2(int macroBlockBuffer, int* decodedBitStream)
 {
     __asm
     {
@@ -119,7 +119,6 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     int decode5_ret = 0; // ebx@14
     int block6Ptr = 0; // esi@14
     unsigned __int8 *pScreenBufferCurrentPos = 0; // [sp+10h] [bp-14h]@5
-    int dataSizeDWordsCopy = 0; // [sp+1Ch] [bp-8h]@4
 
 
     if (!(thisPtr->field_61 & 0xFF))
@@ -146,11 +145,10 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     
     // Done once for the whole 320x240 image
     int v9 = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream);
-    after_block_decode_no_effect_q_ptr(v9);           // has no effect if call noped
+    after_block_decode_no_effect_q_ptr(v9); // actually does have an effect
     decode6_mmx_ret = (int)thisPtr->mDecodedBitStream;
 
     dataSizeDWords = thisPtr->mBlockDataSize_q; // 64 - because 64 coefficients?
-    dataSizeDWordsCopy = dataSizeDWords;
 
     // Sanity check
     if (thisPtr->nNumMacroblocksX <= 0 || thisPtr->nNumMacroblocksY <= 0)
@@ -158,54 +156,49 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
         return 0;
     }
 
-    // Now loop over the 16x16 macro blocks that make up the image, so we have 320/16=xblocks (20), 240/16=yblocks (16)
+    // For 320x240 image we have a 20x16 macro block grid (because 320/16 and 240/16)
     for (unsigned int xBlock = 0; xBlock < thisPtr->nNumMacroblocksX; xBlock++)
     {
         pScreenBufferCurrentPos = pScreenBuffer;
 
         for (unsigned int yBlock = 0; yBlock < thisPtr->nNumMacroblocksY; yBlock++)
         {
-
             block1PtrCopy = buffer;
 
-
-            decode1_ret = decodeMacroBlockfPtr(decode6_mmx_ret, &gMacroBlock1Buffer, buffer, 0 /*14h*/, 0, 0);
-
-
-            calling_conv_hack2(buffer, (int)&gMacroBlock1Buffer); // << didn't change gMacroBlock1Buffer!
-
+            // B1
+            decode1_ret = decodeMacroBlockfPtr(decode6_mmx_ret, p_gMacroBlock1Buffer, buffer, 0 /*14h*/, 0, 0);
+            calling_conv_hack2(buffer, p_gMacroBlock1Buffer); // << didn't change gMacroBlock1Buffer!
 
             dataSizeBytes = 4 * dataSizeDWords;
             block2Ptr = dataSizeBytes + buffer;
             block2PtrCopy = block2Ptr;
 
             // B2
-            decode2_ret = decodeMacroBlockfPtr(decode1_ret, &gMacroBlock2Buffer, block2Ptr, 0, block1PtrCopy, &gMacroBlock1Buffer); // last 2 args are unused?
-            calling_conv_hack2(block2Ptr, (int)&gMacroBlock2Buffer);
+            decode2_ret = decodeMacroBlockfPtr(decode1_ret, p_gMacroBlock2Buffer, block2Ptr, 0, block1PtrCopy, p_gMacroBlock1Buffer); // last 2 args are unused?
+            calling_conv_hack2(block2Ptr, p_gMacroBlock2Buffer);
             block3Ptr = dataSizeBytes + block2Ptr;
 
             // B3
-            decode3_ret = decodeMacroBlockfPtr(decode2_ret, &gMacroBlock3Buffer, block3Ptr, 1, block2PtrCopy, &gMacroBlock2Buffer);
+            decode3_ret = decodeMacroBlockfPtr(decode2_ret, p_gMacroBlock3Buffer, block3Ptr, 1, block2PtrCopy, p_gMacroBlock2Buffer);
             block3PtrCopy = block3Ptr;
-            calling_conv_hack2(block3Ptr, (int)&gMacroBlock3Buffer);
+            calling_conv_hack2(block3Ptr, p_gMacroBlock3Buffer);
             block4Ptr = dataSizeBytes + block3Ptr;
             block4PtrCopy = block4Ptr;
 
             // B4
-            decode4_ret = decodeMacroBlockfPtr(decode3_ret, &gMacroBlock4Buffer, block4Ptr, 1, block3PtrCopy, &gMacroBlock3Buffer);
-            calling_conv_hack2(block4Ptr, (int)&gMacroBlock4Buffer);
+            decode4_ret = decodeMacroBlockfPtr(decode3_ret, p_gMacroBlock4Buffer, block4Ptr, 1, block3PtrCopy, p_gMacroBlock3Buffer);
+            calling_conv_hack2(block4Ptr, p_gMacroBlock4Buffer);
             block5Ptr = dataSizeBytes + block4Ptr;
             block5PtrCopy = block5Ptr;
 
             // B5
-            decode5_ret = decodeMacroBlockfPtr(decode4_ret, &gMacroBlock5Buffer, block5Ptr, 1, block4PtrCopy, &gMacroBlock4Buffer);
-            calling_conv_hack2(block5Ptr, (int)&gMacroBlock5Buffer);
+            decode5_ret = decodeMacroBlockfPtr(decode4_ret, p_gMacroBlock5Buffer, block5Ptr, 1, block4PtrCopy, p_gMacroBlock4Buffer);
+            calling_conv_hack2(block5Ptr, p_gMacroBlock5Buffer);
             block6Ptr = dataSizeBytes + block5Ptr;
 
             // B6
-            decode6_mmx_ret = decodeMacroBlockfPtr(decode5_ret, &gMacroBlock6Buffer, block6Ptr, 1, block5PtrCopy, &gMacroBlock5Buffer);
-            calling_conv_hack2(block6Ptr, (int)&gMacroBlock6Buffer);      // a missing macro block/square if not called
-
+            decode6_mmx_ret = decodeMacroBlockfPtr(decode5_ret, p_gMacroBlock6Buffer, block6Ptr, 1, block5PtrCopy, p_gMacroBlock5Buffer);
+            calling_conv_hack2(block6Ptr, p_gMacroBlock6Buffer);
             buffer = dataSizeBytes + block6Ptr;
 
             if (dword_62EFE0 & 1) // Hit on 2x2 dithering
@@ -241,7 +234,7 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
                 pScreenBufferCurrentPos = (unsigned __int8 *)(16 * dword_62EFD8 + v36);
             }
 
-            dataSizeDWords = dataSizeDWordsCopy;
+            dataSizeDWords = dataSizeDWords;
         }
         pScreenBuffer += dword_62EFD4;              // not sure what this is, height maybe? No scaling = 32, 2x1 = 64, 2x2=64
     }
