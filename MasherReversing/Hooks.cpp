@@ -97,9 +97,8 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     // Take the non MMX path
     *p_gCpuSupportsMMX = false;
 
-    ddv_class *pThis1 = 0; // ebp@1
     int(__cdecl *decodeMacroBlockfPtr)(int, int *, int, DWORD, int, int *); // edi@2
-    int keyFrameRate = 0; // eax@2
+
     int decode6_mmx_ret = 0; // ebx@4
     int dataSizeDWords = 0; // ebp@4
     int buffer = 0; // esi@4
@@ -119,53 +118,52 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     int block5PtrCopy = 0; // ST10_4@14
     int decode5_ret = 0; // ebx@14
     int block6Ptr = 0; // esi@14
-    int v36 = 0; // edx@21
-    int numXBlocks = 0; // edx@25
-    unsigned __int8 v38 = 0; // sf@25
-    unsigned __int8 v39 = 0; // of@25
     unsigned __int8 *pScreenBufferCurrentPos = 0; // [sp+10h] [bp-14h]@5
-    ddv_class *pThis2 = 0; // [sp+14h] [bp-10h]@1
-    unsigned int blockYCount = 0; // [sp+18h] [bp-Ch]@5
     int dataSizeDWordsCopy = 0; // [sp+1Ch] [bp-8h]@4
-    unsigned int xBlockCnt = 0; // [sp+20h] [bp-4h]@4
 
-    pThis1 = thisPtr;
-    pThis2 = thisPtr;
+
     if (!(thisPtr->field_61 & 0xFF))
     {
         return thisPtr->field_61;
     }
-    keyFrameRate = thisPtr->keyFrameRate;
+
     ++thisPtr->field_6C;
-    decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, DWORD, int, int *))ddv_func7_DecodeMacroBlock_ptr;// gending uses this one - this outputs macroblock coefficients?
-    if (keyFrameRate <= 1)
+  
+    if (thisPtr->keyFrameRate <= 1)
     {
         // Should never happen - at least with the test data
         abort();
-        //decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, _DWORD, int, int *))DecodeMacroBlockReleated_Q;// forcing this to get called resulting in really blocky video frames for keyframes > 1
+        // forcing this to get called resulting in really blocky video frames for keyframes > 1
+        //decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, _DWORD, int, int *))DecodeMacroBlockReleated_Q;
     }
+    else
+    {
+        // gending uses this one - this outputs macroblock coefficients?
+        decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, DWORD, int, int *))ddv_func7_DecodeMacroBlock_ptr;
+    }
+
     buffer = thisPtr->mMacroBlockBuffer_q;
     
     // Done once for the whole 320x240 image
     int v9 = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream);
     after_block_decode_no_effect_q_ptr(v9);           // has no effect if call noped
-    decode6_mmx_ret = (int)pThis1->mDecodedBitStream;
+    decode6_mmx_ret = (int)thisPtr->mDecodedBitStream;
 
-    dataSizeDWords = pThis1->mBlockDataSize_q; // 64 - because 64 coefficients?
+    dataSizeDWords = thisPtr->mBlockDataSize_q; // 64 - because 64 coefficients?
     dataSizeDWordsCopy = dataSizeDWords;
-    xBlockCnt = 0;
 
-    if (pThis2->nNumMacroblocksX <= 0 || pThis2->nNumMacroblocksY <= 0)
+    // Sanity check
+    if (thisPtr->nNumMacroblocksX <= 0 || thisPtr->nNumMacroblocksY <= 0)
     {
-        return (char)pThis2;
+        return 0;
     }
 
     // Now loop over the 16x16 macro blocks that make up the image, so we have 320/16=xblocks (20), 240/16=yblocks (16)
-    do
+    for (unsigned int xBlock = 0; xBlock < thisPtr->nNumMacroblocksX; xBlock++)
     {
         pScreenBufferCurrentPos = pScreenBuffer;
-        blockYCount = 0;
-        do
+
+        for (unsigned int yBlock = 0; yBlock < thisPtr->nNumMacroblocksY; yBlock++)
         {
 
             block1PtrCopy = buffer;
@@ -234,7 +232,7 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
                 //write_block_other_bits_no_mmx(dataSizeBytes);// half height, every other horizontal block is skipped?
             }
 
-            v36 = (int)&pScreenBufferCurrentPos[16 * dword_62EFD8];// dword_62EFD8 is probably the buffer width? 1280 - always 1280?
+            const int v36 = (int)&pScreenBufferCurrentPos[16 * dword_62EFD8];// dword_62EFD8 is probably the buffer width? 1280 - always 1280?
 
             pScreenBufferCurrentPos += 16 * dword_62EFD8;
 
@@ -244,17 +242,9 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
             }
 
             dataSizeDWords = dataSizeDWordsCopy;
-            ++blockYCount;
-
-        } while (blockYCount < pThis2->nNumMacroblocksY); // 16 lines for the block?
-
+        }
         pScreenBuffer += dword_62EFD4;              // not sure what this is, height maybe? No scaling = 32, 2x1 = 64, 2x2=64
-        numXBlocks = pThis2->nNumMacroblocksX; // 240/16=20
-        xBlockCnt++;
-    } while (xBlockCnt < pThis2->nNumMacroblocksX);
-    //return (char)pThis2;
-
-  //  memset(pScreenBuffer, 0xff, 256 * 390);
+    }
 
     // The app doesn't seem to do anything with the return value
     return 0;
