@@ -109,12 +109,14 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
         decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, DWORD, int, int *))ddv_func7_DecodeMacroBlock_ptr;
     }
 
-    DWORD buffer = thisPtr->mMacroBlockBuffer_q;
+    DWORD block1Output = thisPtr->mMacroBlockBuffer_q;
     
     // Done once for the whole 320x240 image
-    int v9 = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream);
-    after_block_decode_no_effect_q_ptr(v9); // actually does have an effect
-    int decode6_mmx_ret = (int)thisPtr->mDecodedBitStream;
+    int decodeRet = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream);
+
+    // Each block only seems to have 1 colour if this isn't called, but then resizing the window seems to fix it sometimes (perhaps causes
+    // this function to be called else where).
+    after_block_decode_no_effect_q_ptr(decodeRet); // actually does have an effect
 
     // Sanity check
     if (thisPtr->nNumMacroblocksX <= 0 || thisPtr->nNumMacroblocksY <= 0)
@@ -122,44 +124,47 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
         return 0;
     }
 
+    int bitstreamCurPos = (int)thisPtr->mDecodedBitStream;
+
     // For 320x240 image we have a 20x16 macro block grid (because 320/16 and 240/16)
     for (unsigned int xBlock = 0; xBlock < thisPtr->nNumMacroblocksX; xBlock++)
     {
         unsigned char* pScreenBufferCurrentPos = pScreenBuffer;
-
+  
         for (unsigned int yBlock = 0; yBlock < thisPtr->nNumMacroblocksY; yBlock++)
         {
+      
             // B1
-            int decode1_ret = decodeMacroBlockfPtr(decode6_mmx_ret, p_gMacroBlock1Buffer, buffer, 0, 0, 0);
-            do_blit_output_no_mmx(buffer, p_gMacroBlock1Buffer);
+            int decode1_ret = decodeMacroBlockfPtr(bitstreamCurPos, p_gMacroBlock1Buffer, block1Output, 0, 0, 0);
+            do_blit_output_no_mmx(block1Output, p_gMacroBlock1Buffer);
 
             int dataSizeBytes = 4 * thisPtr->mBlockDataSize_q;
-            int block2Ptr = dataSizeBytes + buffer;
+            int block2Output = dataSizeBytes + block1Output;
 
             // B2
-            int decode2_ret = decodeMacroBlockfPtr(decode1_ret, p_gMacroBlock2Buffer, block2Ptr, 0, buffer, p_gMacroBlock1Buffer);
-            do_blit_output_no_mmx(block2Ptr, p_gMacroBlock2Buffer);
-            int block3Ptr = dataSizeBytes + block2Ptr;
+            int decode2_ret = decodeMacroBlockfPtr(decode1_ret, p_gMacroBlock2Buffer, block2Output, 0, 0, 0);
+            do_blit_output_no_mmx(block2Output, p_gMacroBlock2Buffer);
+            int block3Output = dataSizeBytes + block2Output;
 
             // B3
-            int decode3_ret = decodeMacroBlockfPtr(decode2_ret, p_gMacroBlock3Buffer, block3Ptr, 1, block2Ptr, p_gMacroBlock2Buffer);
-            do_blit_output_no_mmx(block3Ptr, p_gMacroBlock3Buffer);
-            int block4Ptr = dataSizeBytes + block3Ptr;
+            int decode3_ret = decodeMacroBlockfPtr(decode2_ret, p_gMacroBlock3Buffer, block3Output, 1, 0, 0);
+            do_blit_output_no_mmx(block3Output, p_gMacroBlock3Buffer);
+            int block4Output = dataSizeBytes + block3Output;
 
             // B4
-            int decode4_ret = decodeMacroBlockfPtr(decode3_ret, p_gMacroBlock4Buffer, block4Ptr, 1, block3Ptr, p_gMacroBlock3Buffer);
-            do_blit_output_no_mmx(block4Ptr, p_gMacroBlock4Buffer);
-            int block5Ptr = dataSizeBytes + block4Ptr;
+            int decode4_ret = decodeMacroBlockfPtr(decode3_ret, p_gMacroBlock4Buffer, block4Output, 1, 0, 0);
+            do_blit_output_no_mmx(block4Output, p_gMacroBlock4Buffer);
+            int block5Output = dataSizeBytes + block4Output;
 
             // B5
-            int decode5_ret = decodeMacroBlockfPtr(decode4_ret, p_gMacroBlock5Buffer, block5Ptr, 1, block4Ptr, p_gMacroBlock4Buffer);
-            do_blit_output_no_mmx(block5Ptr, p_gMacroBlock5Buffer);
-            int block6Ptr = dataSizeBytes + block5Ptr;
+            int decode5_ret = decodeMacroBlockfPtr(decode4_ret, p_gMacroBlock5Buffer, block5Output, 1, 0, 0);
+            do_blit_output_no_mmx(block5Output, p_gMacroBlock5Buffer);
+            int block6Output = dataSizeBytes + block5Output;
 
             // B6
-            decode6_mmx_ret = decodeMacroBlockfPtr(decode5_ret, p_gMacroBlock6Buffer, block6Ptr, 1, block5Ptr, p_gMacroBlock5Buffer);
-            do_blit_output_no_mmx(block6Ptr, p_gMacroBlock6Buffer);
-            buffer = dataSizeBytes + block6Ptr;
+            bitstreamCurPos = decodeMacroBlockfPtr(decode5_ret, p_gMacroBlock6Buffer, block6Output, 1, 0, 0);
+            do_blit_output_no_mmx(block6Output, p_gMacroBlock6Buffer);
+            block1Output = dataSizeBytes + block6Output;
 
             if (dword_62EFE0 & 1) // Hit on 2x2 dithering
             {
