@@ -29,13 +29,13 @@ struct ddv_class
     DWORD mAudioFrameSizeBitsQ;
     DWORD nNumMacroblocksX;
     DWORD nNumMacroblocksY;
-    BYTE mHasAudioQ;
-    BYTE field_61;
+    BYTE mHasAudio;
+    BYTE mHasVideo;
     BYTE field_62;      // Padding?
     BYTE field_63;      // Padding?
     DWORD mCurrentFrameNumber;
     DWORD mCurrentFrameNumber2;
-    DWORD field_6C;
+    DWORD field_6C; // Some sort of counter
     DWORD mUnknownBuffer1;
     DWORD mFrameSizesArray;
     DWORD field_78;
@@ -56,15 +56,6 @@ typedef decltype(&ddv__func5_block_decoder_q) ddv__func5_block_decoder_q_type;
 
 ddv__func5_block_decoder_q_type real_ddv__func5_block_decoder_q = (ddv__func5_block_decoder_q_type)0x00409FE0;
 JmpHookedFunction<ddv__func5_block_decoder_q_type>* ddv_func6_decodes_block_q_hook;
-
-
-int __SETO__(int, int)
-{
-    OutputDebugString("__SETO__ not implemented!!\n");
-
-    // TODO
-    return 0;
-}
 
 
 /*int __declspec (naked)*/ void  calling_conv_hack(int param)
@@ -120,10 +111,9 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     int block6Ptr = 0; // esi@14
     unsigned __int8 *pScreenBufferCurrentPos = 0; // [sp+10h] [bp-14h]@5
 
-
-    if (!(thisPtr->field_61 & 0xFF))
+    if (!thisPtr->mHasVideo)
     {
-        return thisPtr->field_61;
+        return 0;
     }
 
     ++thisPtr->field_6C;
