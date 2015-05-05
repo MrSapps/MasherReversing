@@ -61,9 +61,9 @@ static char& gCpuSupportsMMX = *p_gCpuSupportsMMX;
 
 // TODO: Probably structs as there are 7 other DWORDS related after each one
 // of these
-static int* p_gMacroBlock1Buffer = (int*)0x006313E8;
+static int* p_gMacroBlock1Buffer = (int*)0x006313E8; // 2 UV buffers
 static int* p_gMacroBlock2Buffer = (int*)0x006314E8;
-static int* p_gMacroBlock3Buffer = (int*)0x00630FE8;
+static int* p_gMacroBlock3Buffer = (int*)0x00630FE8; // Y buffer (4x size)
 static int* p_gMacroBlock4Buffer = (int*)0x006311E8;
 static int* p_gMacroBlock5Buffer = (int*)0x006310E8;
 static int* p_gMacroBlock6Buffer = (int*)0x006312E8;
