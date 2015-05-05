@@ -97,31 +97,13 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     // Take the non MMX path
     *p_gCpuSupportsMMX = false;
 
-    /*
-    ddv_func6_decodes_block_q_hook->UnHook();
-    auto ret = ddv_func6_decodes_block_q_hook->OrignalFunction()(hack, thisPtr, screenBuffer);
-    ddv_func6_decodes_block_q_hook->Hook();
-    */
-
-//    ddv_class *pThis3; // eax@1
     ddv_class *pThis1 = 0; // ebp@1
     int(__cdecl *decodeMacroBlockfPtr)(int, int *, int, DWORD, int, int *); // edi@2
     int keyFrameRate = 0; // eax@2
     int decode6_mmx_ret = 0; // ebx@4
     int dataSizeDWords = 0; // ebp@4
     int buffer = 0; // esi@4
-   // int v9; // eax@4
     int dataSizeBytes = 0; // ebp@7
-//    int decode1_mmx_ret; // ebx@7
-//    int v12; // esi@7
-//    int decode2_mmx_ret; // ebx@7
-//    int v14; // esi@7
-//    int decode3_mmx_ret; // ebx@7
-//    int v16; // esi@7
-//    int decode4_mmx_ret; // ebx@7
-//    int v18; // esi@7
-//    int decode5_mmx_ret; // ebx@7
- //   int v20; // esi@7
     int block1PtrCopy = 0; // ST30_4@14
     int decode1_ret = 0; // ebx@14
     int block2Ptr = 0; // esi@14
@@ -145,7 +127,7 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     ddv_class *pThis2 = 0; // [sp+14h] [bp-10h]@1
     unsigned int blockYCount = 0; // [sp+18h] [bp-Ch]@5
     int dataSizeDWordsCopy = 0; // [sp+1Ch] [bp-8h]@4
-    int xBlockCnt = 0; // [sp+20h] [bp-4h]@4
+    unsigned int xBlockCnt = 0; // [sp+20h] [bp-4h]@4
 
     pThis1 = thisPtr;
     pThis2 = thisPtr;
@@ -173,7 +155,7 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     dataSizeDWordsCopy = dataSizeDWords;
     xBlockCnt = 0;
 
-    if (pThis2->nNumMacroblocksX <= 0) // 20
+    if (pThis2->nNumMacroblocksX <= 0 || pThis2->nNumMacroblocksY <= 0)
     {
         return (char)pThis2;
     }
@@ -183,87 +165,74 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     {
         pScreenBufferCurrentPos = pScreenBuffer;
         blockYCount = 0;
-        if (pThis2->nNumMacroblocksY <= 0) // 320/16=15
-        {
-            goto skip_block_blts; // aka break - wonder why this is within the loop?
-        }
         do
         {
-            if (gCpuSupportsMMX)
+
+            block1PtrCopy = buffer;
+
+
+            decode1_ret = decodeMacroBlockfPtr(decode6_mmx_ret, &gMacroBlock1Buffer, buffer, 0 /*14h*/, 0, 0);
+
+
+            calling_conv_hack2(buffer, (int)&gMacroBlock1Buffer); // << didn't change gMacroBlock1Buffer!
+
+
+            dataSizeBytes = 4 * dataSizeDWords;
+            block2Ptr = dataSizeBytes + buffer;
+            block2PtrCopy = block2Ptr;
+
+            // B2
+            decode2_ret = decodeMacroBlockfPtr(decode1_ret, &gMacroBlock2Buffer, block2Ptr, 0, block1PtrCopy, &gMacroBlock1Buffer); // last 2 args are unused?
+            calling_conv_hack2(block2Ptr, (int)&gMacroBlock2Buffer);
+            block3Ptr = dataSizeBytes + block2Ptr;
+
+            // B3
+            decode3_ret = decodeMacroBlockfPtr(decode2_ret, &gMacroBlock3Buffer, block3Ptr, 1, block2PtrCopy, &gMacroBlock2Buffer);
+            block3PtrCopy = block3Ptr;
+            calling_conv_hack2(block3Ptr, (int)&gMacroBlock3Buffer);
+            block4Ptr = dataSizeBytes + block3Ptr;
+            block4PtrCopy = block4Ptr;
+
+            // B4
+            decode4_ret = decodeMacroBlockfPtr(decode3_ret, &gMacroBlock4Buffer, block4Ptr, 1, block3PtrCopy, &gMacroBlock3Buffer);
+            calling_conv_hack2(block4Ptr, (int)&gMacroBlock4Buffer);
+            block5Ptr = dataSizeBytes + block4Ptr;
+            block5PtrCopy = block5Ptr;
+
+            // B5
+            decode5_ret = decodeMacroBlockfPtr(decode4_ret, &gMacroBlock5Buffer, block5Ptr, 1, block4PtrCopy, &gMacroBlock4Buffer);
+            calling_conv_hack2(block5Ptr, (int)&gMacroBlock5Buffer);
+            block6Ptr = dataSizeBytes + block5Ptr;
+
+            // B6
+            decode6_mmx_ret = decodeMacroBlockfPtr(decode5_ret, &gMacroBlock6Buffer, block6Ptr, 1, block5PtrCopy, &gMacroBlock5Buffer);
+            calling_conv_hack2(block6Ptr, (int)&gMacroBlock6Buffer);      // a missing macro block/square if not called
+
+            buffer = dataSizeBytes + block6Ptr;
+
+            if (dword_62EFE0 & 1) // Hit on 2x2 dithering
             {
-                OutputDebugString("Should not be hitting this code path\n");
+                calling_conv_hack((int)pScreenBufferCurrentPos);
+                //  write_block_bit1_no_mmx_ptr(dataSizeBytes);// sets width too small and images look weird
+            }
+            else if (dword_62EFE0 & 4)
+            {
+                // Not expected for the test video
+                abort();
+                //write_block_bit4_no_mmx(dataSizeBytes);// plays at half height?
+            }
+            else if (dword_62EFE0 & 8) // Hit on "no dithering", 2x1 dithering
+            {
+                abort();
+                // Not expected for the test video
+                //write_block_bit8_no_mmx(dataSizeBytes);// seems to be the "normal" case
             }
             else
             {
-
-                block1PtrCopy = buffer;
-
-
-                decode1_ret = decodeMacroBlockfPtr(decode6_mmx_ret, &gMacroBlock1Buffer, buffer, 0 /*14h*/, 0, 0);
-
-              
-                calling_conv_hack2(buffer, (int)&gMacroBlock1Buffer); // << didn't change gMacroBlock1Buffer!
-                
-              
-                dataSizeBytes = 4 * dataSizeDWords;
-                block2Ptr = dataSizeBytes + buffer;
-                block2PtrCopy = block2Ptr;
-
-                // B2
-                decode2_ret = decodeMacroBlockfPtr(decode1_ret, &gMacroBlock2Buffer, block2Ptr, 0, block1PtrCopy, &gMacroBlock1Buffer); // last 2 args are unused?
-                calling_conv_hack2(block2Ptr, (int)&gMacroBlock2Buffer);
-                block3Ptr = dataSizeBytes + block2Ptr;
-
-                // B3
-                decode3_ret = decodeMacroBlockfPtr(decode2_ret, &gMacroBlock3Buffer, block3Ptr, 1, block2PtrCopy, &gMacroBlock2Buffer);
-                block3PtrCopy = block3Ptr;
-                calling_conv_hack2(block3Ptr, (int)&gMacroBlock3Buffer);
-                block4Ptr = dataSizeBytes + block3Ptr;
-                block4PtrCopy = block4Ptr;
-
-                // B4
-                decode4_ret = decodeMacroBlockfPtr(decode3_ret, &gMacroBlock4Buffer, block4Ptr, 1, block3PtrCopy, &gMacroBlock3Buffer);
-                calling_conv_hack2(block4Ptr, (int)&gMacroBlock4Buffer);
-                block5Ptr = dataSizeBytes + block4Ptr;
-                block5PtrCopy = block5Ptr;
-
-                // B5
-                decode5_ret = decodeMacroBlockfPtr(decode4_ret, &gMacroBlock5Buffer, block5Ptr, 1, block4PtrCopy, &gMacroBlock4Buffer);
-                calling_conv_hack2(block5Ptr, (int)&gMacroBlock5Buffer);
-                block6Ptr = dataSizeBytes + block5Ptr;
-
-                // B6
-                decode6_mmx_ret = decodeMacroBlockfPtr(decode5_ret, &gMacroBlock6Buffer, block6Ptr, 1, block5PtrCopy, &gMacroBlock5Buffer);
-                calling_conv_hack2(block6Ptr, (int)&gMacroBlock6Buffer);      // a missing macro block/square if not called
-
-                buffer = dataSizeBytes + block6Ptr;
-
-                if (dword_62EFE0 & 1) // Hit on 2x2 dithering
-                {
-                    
-                    calling_conv_hack((int)pScreenBufferCurrentPos);
-                    //                    write_block_bit1_no_mmx_ptr(dataSizeBytes);// sets width too small and images look weird
-                    goto after_block_write;
-                }
-                if (dword_62EFE0 & 4)
-                {
-                    // Not expected for the test video
-                    abort();
-                    //write_block_bit4_no_mmx(dataSizeBytes);// plays at half height?
-                    //goto after_block_write;
-                }
-                if (dword_62EFE0 & 8) // Hit on "no dithering", 2x1 dithering
-                {
-                    abort();
-                    // Not expected for the test video
-                    //write_block_bit8_no_mmx(dataSizeBytes);// seems to be the "normal" case
-                    //goto after_block_write;
-                }
+                // Not expected for the test video
+                abort();
+                //write_block_other_bits_no_mmx(dataSizeBytes);// half height, every other horizontal block is skipped?
             }
-            // Not expected for the test video
-            abort();
-            //write_block_other_bits_no_mmx(dataSizeBytes);// half height, every other horizontal block is skipped?
-        after_block_write:
 
             v36 = (int)&pScreenBufferCurrentPos[16 * dword_62EFD8];// dword_62EFD8 is probably the buffer width? 1280 - always 1280?
 
@@ -276,14 +245,12 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
 
             dataSizeDWords = dataSizeDWordsCopy;
             ++blockYCount;
+
         } while (blockYCount < pThis2->nNumMacroblocksY); // 16 lines for the block?
 
-    skip_block_blts:
         pScreenBuffer += dword_62EFD4;              // not sure what this is, height maybe? No scaling = 32, 2x1 = 64, 2x2=64
         numXBlocks = pThis2->nNumMacroblocksX; // 240/16=20
-        v39 = __SETO__(xBlockCnt + 1, numXBlocks);
-        v38 = xBlockCnt++ + 1 - numXBlocks < 0;
-       // } while (v38 ^ v39);
+        xBlockCnt++;
     } while (xBlockCnt < pThis2->nNumMacroblocksX);
     //return (char)pThis2;
 
