@@ -192,13 +192,13 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
                 //write_block_other_bits_no_mmx(dataSizeBytes);// half height, every other horizontal block is skipped?
             }
 
-            const int v36 = (int)&pScreenBufferCurrentPos[16 * dword_62EFD8];// dword_62EFD8 is probably the buffer width? 1280 - always 1280?
-
-            pScreenBufferCurrentPos += 16 * dword_62EFD8;
+            // Moves the blit pos down by 16 pixels (1280 is from (320*2)*2 which is the frame width in bytes doubled)
+            pScreenBufferCurrentPos += 16 * gMacroBlockHeightSpacing;
 
             if (dword_62EFE0 & 8)
             {
-                pScreenBufferCurrentPos = (unsigned __int8 *)(16 * dword_62EFD8 + v36);
+                // Moves by another 16, thus 32 pixels down, this is for when the output is scaled by x2
+                pScreenBufferCurrentPos += 16 * gMacroBlockHeightSpacing;
             }
         }
 

@@ -69,7 +69,7 @@ static DWORD* p_dword_62EFE0 = (DWORD*)0x0062EFE0;
 static DWORD& dword_62EFE0 = *p_dword_62EFE0;
 
 static DWORD* p_dword_62EFD8 = (DWORD*)0x0062EFD8;
-static DWORD& dword_62EFD8 = *p_dword_62EFD8;
+static DWORD& gMacroBlockHeightSpacing = *p_dword_62EFD8;
 
 static DWORD* p_dword_62EFD4 = (DWORD*)0x0062EFD4;
 static DWORD& gMacroBlockStripWidthInBytes = *p_dword_62EFD4;
