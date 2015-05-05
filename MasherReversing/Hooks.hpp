@@ -38,6 +38,10 @@ static after_block_decode_no_effect_q after_block_decode_no_effect_q_ptr = (afte
 typedef int(__cdecl* write_block_bit1_no_mmx)(int a1);
 static write_block_bit1_no_mmx write_block_bit1_no_mmx_ptr = (write_block_bit1_no_mmx)0x0040BB30;
 
+typedef int(__cdecl* blit_output_no_mmx)(int a1);
+static blit_output_no_mmx blit_output_no_mmx_ptr = (blit_output_no_mmx)0x0040ED90;
+
+
 // write_block_bit4_no_mmx
 // 0040AB50 __usercall
 

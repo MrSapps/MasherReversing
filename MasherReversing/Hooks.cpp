@@ -57,28 +57,11 @@ typedef decltype(&ddv__func5_block_decoder_q) ddv__func5_block_decoder_q_type;
 ddv__func5_block_decoder_q_type real_ddv__func5_block_decoder_q = (ddv__func5_block_decoder_q_type)0x00409FE0;
 JmpHookedFunction<ddv__func5_block_decoder_q_type>* ddv_func6_decodes_block_q_hook;
 
-static void blit_output_no_mmx(int)
-{
-    // TODO
-}
-
-static void write_block_bit4_no_mmx(int)
-{
-    // TODO
-}
-
-static void write_block_bit8_no_mmx(int)
-{
-    // TODO
-}
-
-static void write_block_other_bits_no_mmx(int)
-{
-    // TODO
-}
 
 int __SETO__(int, int)
 {
+    OutputDebugString("__SETO__ not implemented!!\n");
+
     // TODO
     return 0;
 }
@@ -95,6 +78,17 @@ int __SETO__(int, int)
     }
 }
 
+//B2, D6 07
+/*int __declspec (naked)*/ void  calling_conv_hack2(int macroBlockBuffer, int decodedBitStream)
+{
+    __asm
+    {
+        push decodedBitStream
+        push macroBlockBuffer
+        call blit_output_no_mmx_ptr
+        add esp, 8
+    }
+}
 
 char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
@@ -201,90 +195,52 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
             }
             else
             {
-                // First is the DC coefficient
-                // then 63 AC coefficients
-
-                // Reverse DCT
-
-                // mDecodedBitStream, ?, which table to use, mMacroBlockBuffer_q (output is here? baddf00d at start), previous output?
-
-                // B1
-                /*
-
-                */
 
                 block1PtrCopy = buffer;
 
-                /*
-                028160E0 = mDecodedBitStream
-                028160E0  B2 00 00 FE D6 07 00 FE  94 05 04 00 F0 03 05 00
-                028160F0  04 00 FF 03 FE 03 FF 03  FF 03 03 00 FF 03 FF 03
-                02816100  FC 03 01 04 01 04 01 00  01 14 00 FE 62 05 11 00
-                */
 
-                /*
-                006313E8 = gMacroBlock1Buffer
-                006313E8  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-                006313F8  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-
-                */
-
-                /*
-                table selector (14)
-                macro block output buffer (10)
-                64 macro block static buffer (C)
-                decoded bit stream ptr (8)
-                */
                 decode1_ret = decodeMacroBlockfPtr(decode6_mmx_ret, &gMacroBlock1Buffer, buffer, 0 /*14h*/, 0, 0);
-                // buffer/mMacroBlockBuffer_q = 0xB2 and many zeros after call
-                // gMacroBlock1Buffer = zeros
-                // mDecodedBitStream = unchanged
 
-                blit_output_no_mmx(dataSizeDWords);
+              
+                calling_conv_hack2(buffer, (int)&gMacroBlock1Buffer); // << didn't change gMacroBlock1Buffer!
                 
+              
                 dataSizeBytes = 4 * dataSizeDWords;
                 block2Ptr = dataSizeBytes + buffer;
                 block2PtrCopy = block2Ptr;
 
                 // B2
                 decode2_ret = decodeMacroBlockfPtr(decode1_ret, &gMacroBlock2Buffer, block2Ptr, 0, block1PtrCopy, &gMacroBlock1Buffer); // last 2 args are unused?
-                blit_output_no_mmx(dataSizeBytes);
+                calling_conv_hack2(block2Ptr, (int)&gMacroBlock2Buffer);
                 block3Ptr = dataSizeBytes + block2Ptr;
 
                 // B3
                 decode3_ret = decodeMacroBlockfPtr(decode2_ret, &gMacroBlock3Buffer, block3Ptr, 1, block2PtrCopy, &gMacroBlock2Buffer);
                 block3PtrCopy = block3Ptr;
-                blit_output_no_mmx(dataSizeBytes);
+                calling_conv_hack2(block3Ptr, (int)&gMacroBlock3Buffer);
                 block4Ptr = dataSizeBytes + block3Ptr;
                 block4PtrCopy = block4Ptr;
 
                 // B4
                 decode4_ret = decodeMacroBlockfPtr(decode3_ret, &gMacroBlock4Buffer, block4Ptr, 1, block3PtrCopy, &gMacroBlock3Buffer);
-                blit_output_no_mmx(dataSizeBytes);
+                calling_conv_hack2(block4Ptr, (int)&gMacroBlock4Buffer);
                 block5Ptr = dataSizeBytes + block4Ptr;
                 block5PtrCopy = block5Ptr;
 
                 // B5
                 decode5_ret = decodeMacroBlockfPtr(decode4_ret, &gMacroBlock5Buffer, block5Ptr, 1, block4PtrCopy, &gMacroBlock4Buffer);
-                blit_output_no_mmx(dataSizeBytes);
+                calling_conv_hack2(block5Ptr, (int)&gMacroBlock5Buffer);
                 block6Ptr = dataSizeBytes + block5Ptr;
 
                 // B6
                 decode6_mmx_ret = decodeMacroBlockfPtr(decode5_ret, &gMacroBlock6Buffer, block6Ptr, 1, block5PtrCopy, &gMacroBlock5Buffer);
-                blit_output_no_mmx(dataSizeBytes);      // a missing macro block/square if not called
+                calling_conv_hack2(block6Ptr, (int)&gMacroBlock6Buffer);      // a missing macro block/square if not called
 
                 buffer = dataSizeBytes + block6Ptr;
 
                 if (dword_62EFE0 & 1) // Hit on 2x2 dithering
                 {
                     
-                    /*
-                    05370000 = pScreenBufferCurrentPos
-                    05370000  4B 21 4C 29 4B 21 4B 21  4B 21 4B 21 4B 21 8C 29
-                    05370010  4B 21 8C 29 0A 19 4B 21  0A 19 0B 21 0A 19 4B 21
-                    05370020  89 10 C9 10 C9 10 0A 19  0B 21 4B 21 4B 21 4B 21
-                    05370030  4B 21 8C 29 CD 31 0E 3A  0E 3A 4F 42 CD 31 0E 3A
-                    */
                     calling_conv_hack((int)pScreenBufferCurrentPos);
                     //                    write_block_bit1_no_mmx_ptr(dataSizeBytes);// sets width too small and images look weird
                     goto after_block_write;
