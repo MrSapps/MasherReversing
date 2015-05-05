@@ -50,6 +50,9 @@ static blit_output_no_mmx blit_output_no_mmx_ptr = (blit_output_no_mmx)0x0040ED9
 
 // write_block_other_bits_no_mmx
 // 0040B330 __usercall
+typedef int(__cdecl* write_block_other_bits_no_mmx)(int a1);
+static write_block_other_bits_no_mmx write_block_other_bits_no_mmx_ptr = (write_block_other_bits_no_mmx)0x0040B330;
+
 
 
 // vars:

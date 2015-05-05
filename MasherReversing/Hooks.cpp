@@ -69,6 +69,17 @@ static void do_write_block_bit1_no_mmx(int param) // TODO: Reimpl
     }
 }
 
+static void do_write_block_other_bits_no_mmx(int param) // TODO: Reimpl
+{
+    __asm
+    {
+        mov ecx, param
+            push ecx
+            call write_block_other_bits_no_mmx_ptr
+            pop ecx
+    }
+}
+
 static void do_blit_output_no_mmx(int macroBlockBuffer, int* decodedBitStream) // TODO: Reimpl
 {
     __asm
@@ -86,6 +97,10 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
 
     // Take the non MMX path - this function replaces the code that was gurded by this, probably don't matter what its set to now :)
     *p_gCpuSupportsMMX = false;
+
+    // Force no dithering or scaling
+    dword_62EFE0 = 0;
+    gMacroBlockStripWidthInBytes = 32;
 
     int(__cdecl *decodeMacroBlockfPtr)(int, int *, int, DWORD, int, int *) = nullptr;
 
@@ -186,10 +201,7 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
             else
             {
                 // When no dithering or scaling?
-
-                // Not expected for the test video
-                abort();
-                //write_block_other_bits_no_mmx(dataSizeBytes);// half height, every other horizontal block is skipped?
+                do_write_block_other_bits_no_mmx((int)pScreenBufferCurrentPos);// half height, every other horizontal block is skipped?
             }
 
             // Moves the blit pos down by 16 pixels (1280 is from (320*2)*2 which is the frame width in bytes doubled)
