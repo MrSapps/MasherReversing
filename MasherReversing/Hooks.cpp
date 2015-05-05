@@ -148,10 +148,11 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
   
         for (unsigned int yBlock = 0; yBlock < thisPtr->nNumMacroblocksY; yBlock++)
         {
-      
+            // 2 chroma blocks and 4 Luma in YUV 4:2:0
+
             // B1
             const int afterBlock1Ptr = decodeMacroBlockfPtr(bitstreamCurPos, p_gMacroBlock1Buffer, block1Output, 0, 0, 0);
-            do_blit_output_no_mmx(block1Output, p_gMacroBlock1Buffer);
+            do_blit_output_no_mmx(block1Output, p_gMacroBlock1Buffer); // Inverse DCT?
 
             const int dataSizeBytes = 4 * thisPtr->mBlockDataSize_q; // Convert to byte count 64*4=256
             int block2Output = dataSizeBytes + block1Output;
@@ -201,6 +202,8 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
             else
             {
                 // When no dithering or scaling?
+
+                // YUV to RGB?
                 do_write_block_other_bits_no_mmx((int)pScreenBufferCurrentPos);// half height, every other horizontal block is skipped?
             }
 
