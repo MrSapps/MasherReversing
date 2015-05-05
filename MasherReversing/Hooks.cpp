@@ -94,19 +94,14 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
     int dataSizeDWords = 0; // ebp@4
     int buffer = 0; // esi@4
     int dataSizeBytes = 0; // ebp@7
-    int block1PtrCopy = 0; // ST30_4@14
     int decode1_ret = 0; // ebx@14
     int block2Ptr = 0; // esi@14
-    int block2PtrCopy = 0; // ST18_4@14
     int decode2_ret = 0; // ebx@14
     int block3Ptr = 0; // esi@14
     int decode3_ret = 0; // ebx@14
-    int block3PtrCopy = 0; // ST40_4@14
     int block4Ptr = 0; // esi@14
-    int block4PtrCopy = 0; // ST28_4@14
     int decode4_ret = 0; // ebx@14
     int block5Ptr = 0; // esi@14
-    int block5PtrCopy = 0; // ST10_4@14
     int decode5_ret = 0; // ebx@14
     int block6Ptr = 0; // esi@14
     unsigned __int8 *pScreenBufferCurrentPos = 0; // [sp+10h] [bp-14h]@5
@@ -153,41 +148,35 @@ char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsig
 
         for (unsigned int yBlock = 0; yBlock < thisPtr->nNumMacroblocksY; yBlock++)
         {
-            block1PtrCopy = buffer;
-
             // B1
             decode1_ret = decodeMacroBlockfPtr(decode6_mmx_ret, p_gMacroBlock1Buffer, buffer, 0 /*14h*/, 0, 0);
             calling_conv_hack2(buffer, p_gMacroBlock1Buffer); // << didn't change gMacroBlock1Buffer!
 
             dataSizeBytes = 4 * dataSizeDWords;
             block2Ptr = dataSizeBytes + buffer;
-            block2PtrCopy = block2Ptr;
 
             // B2
-            decode2_ret = decodeMacroBlockfPtr(decode1_ret, p_gMacroBlock2Buffer, block2Ptr, 0, block1PtrCopy, p_gMacroBlock1Buffer); // last 2 args are unused?
+            decode2_ret = decodeMacroBlockfPtr(decode1_ret, p_gMacroBlock2Buffer, block2Ptr, 0, buffer, p_gMacroBlock1Buffer); // last 2 args are unused?
             calling_conv_hack2(block2Ptr, p_gMacroBlock2Buffer);
             block3Ptr = dataSizeBytes + block2Ptr;
 
             // B3
-            decode3_ret = decodeMacroBlockfPtr(decode2_ret, p_gMacroBlock3Buffer, block3Ptr, 1, block2PtrCopy, p_gMacroBlock2Buffer);
-            block3PtrCopy = block3Ptr;
+            decode3_ret = decodeMacroBlockfPtr(decode2_ret, p_gMacroBlock3Buffer, block3Ptr, 1, block2Ptr, p_gMacroBlock2Buffer);
             calling_conv_hack2(block3Ptr, p_gMacroBlock3Buffer);
             block4Ptr = dataSizeBytes + block3Ptr;
-            block4PtrCopy = block4Ptr;
 
             // B4
-            decode4_ret = decodeMacroBlockfPtr(decode3_ret, p_gMacroBlock4Buffer, block4Ptr, 1, block3PtrCopy, p_gMacroBlock3Buffer);
+            decode4_ret = decodeMacroBlockfPtr(decode3_ret, p_gMacroBlock4Buffer, block4Ptr, 1, block3Ptr, p_gMacroBlock3Buffer);
             calling_conv_hack2(block4Ptr, p_gMacroBlock4Buffer);
             block5Ptr = dataSizeBytes + block4Ptr;
-            block5PtrCopy = block5Ptr;
 
             // B5
-            decode5_ret = decodeMacroBlockfPtr(decode4_ret, p_gMacroBlock5Buffer, block5Ptr, 1, block4PtrCopy, p_gMacroBlock4Buffer);
+            decode5_ret = decodeMacroBlockfPtr(decode4_ret, p_gMacroBlock5Buffer, block5Ptr, 1, block4Ptr, p_gMacroBlock4Buffer);
             calling_conv_hack2(block5Ptr, p_gMacroBlock5Buffer);
             block6Ptr = dataSizeBytes + block5Ptr;
 
             // B6
-            decode6_mmx_ret = decodeMacroBlockfPtr(decode5_ret, p_gMacroBlock6Buffer, block6Ptr, 1, block5PtrCopy, p_gMacroBlock5Buffer);
+            decode6_mmx_ret = decodeMacroBlockfPtr(decode5_ret, p_gMacroBlock6Buffer, block6Ptr, 1, block5Ptr, p_gMacroBlock5Buffer);
             calling_conv_hack2(block6Ptr, p_gMacroBlock6Buffer);
             buffer = dataSizeBytes + block6Ptr;
 
