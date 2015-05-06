@@ -136,20 +136,20 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
 
     // Take the non MMX path - this function replaces the code that was gurded by this, probably don't matter what its set to now :)
     *p_gCpuSupportsMMX = false;
-
     // Force no dithering or scaling
-    dword_62EFE0 = 0;
-    gMacroBlockStripWidthInBytes = 32;
+    //dword_62EFE0 = 0;
+   // gMacroBlockStripWidthInBytes = 32;
 
-    int(__cdecl *decodeMacroBlockfPtr)(int, int *, int, DWORD, int, int *) = nullptr;
 
     if (!thisPtr->mHasVideo)
     {
         return 0;
     }
 
+    // No effect if no incremented
     ++thisPtr->field_6C;
-  
+
+    int(__cdecl *decodeMacroBlockfPtr)(int, int *, int, DWORD, int, int *) = nullptr;
     if (thisPtr->keyFrameRate <= 1)
     {
         // Should never happen - at least with the test data
@@ -183,13 +183,9 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
     int xoff = 0;
     auto buf = (unsigned short int*)pScreenBuffer;
 
-
-
     // For 320x240 image we have a 20x16 macro block grid (because 320/16 and 240/16)
     for (unsigned int xBlock = 0; xBlock < thisPtr->nNumMacroblocksX; xBlock++)
     {
-        unsigned char* pScreenBufferCurrentPos = pScreenBuffer;
-  
         int yoff = 0;
         for (unsigned int yBlock = 0; yBlock < thisPtr->nNumMacroblocksY; yBlock++)
         {
@@ -227,112 +223,70 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
             do_blit_output_no_mmx(block6Output, Y4_block);
             block1Output = dataSizeBytes + block6Output;
 
-            if (dword_62EFE0 & 1) // Hit on 2x2 dithering
+            // convert the Y1 Y2 Y3 Y4 and Cb and Cr blocks into a 16x16 array of (Y, Cb, Cr) pixels
+            struct Macroblock_YCbCr_Struct
             {
-                do_write_block_bit1_no_mmx((int)pScreenBufferCurrentPos);
-                //  write_block_bit1_no_mmx_ptr(dataSizeBytes);// sets width too small and images look weird
-            }
-            else if (dword_62EFE0 & 4)
-            {
-                // Not expected for the test video
-                abort();
-                //write_block_bit4_no_mmx(dataSizeBytes);// plays at half height?
-            }
-            else if (dword_62EFE0 & 8) // Hit on "no dithering", 2x1 dithering
-            {
-                abort();
-                // Not expected for the test video
-                //write_block_bit8_no_mmx(dataSizeBytes);// seems to be the "normal" case
-            }
-            else
-            {
-                // When no dithering or scaling?
+                float Y;
+                float Cb;
+                float Cr;
+            };
 
-                // convert the Y1 Y2 Y3 Y4 and Cb and Cr blocks into a 16x16 array of (Y, Cb, Cr) pixels
-                struct Macroblock_YCbCr_Struct
+            Macroblock_YCbCr_Struct Macroblock_YCbCr[16][16] = {};
+
+            for (int x = 0; x < 8; x++)
+            {
+                for (int y = 0; y < 8; y++)
                 {
-                    float Y;
-                    float Cb;
-                    float Cr;
-                };
+                    Macroblock_YCbCr[x][y].Y = static_cast<float>(Y1_block[To1d(x, y)]);
+                    Macroblock_YCbCr[x + 8][y].Y = static_cast<float>(Y2_block[To1d(x, y)]);
+                    Macroblock_YCbCr[x][y + 8].Y = static_cast<float>(Y3_block[To1d(x, y)]);
+                    Macroblock_YCbCr[x + 8][y + 8].Y = static_cast<float>(Y4_block[To1d(x, y)]);
 
-                Macroblock_YCbCr_Struct Macroblock_YCbCr[16][16] = {};
+                    Macroblock_YCbCr[x * 2][y * 2].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
+                    Macroblock_YCbCr[x * 2 + 1][y * 2].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
+                    Macroblock_YCbCr[x * 2][y * 2 + 1].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
+                    Macroblock_YCbCr[x * 2 + 1][y * 2 + 1].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
 
-                for (int x = 0; x < 8; x++)
-                {
-                    for (int y = 0; y < 8; y++)
-                    {
-                        Macroblock_YCbCr[x][y].Y = static_cast<float>(Y1_block[To1d(x, y)]);
-                        Macroblock_YCbCr[x + 8][y].Y = static_cast<float>(Y2_block[To1d(x, y)]);
-                        Macroblock_YCbCr[x][y + 8].Y = static_cast<float>(Y3_block[To1d(x, y)]);
-                        Macroblock_YCbCr[x + 8][y + 8].Y = static_cast<float>(Y4_block[To1d(x, y)]);
-
-                        Macroblock_YCbCr[x * 2][y * 2].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
-                        Macroblock_YCbCr[x * 2 + 1][y * 2].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
-                        Macroblock_YCbCr[x * 2][y * 2 + 1].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
-                        Macroblock_YCbCr[x * 2 + 1][y * 2 + 1].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
-
-                        Macroblock_YCbCr[x * 2][y * 2].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
-                        Macroblock_YCbCr[x * 2 + 1][y * 2].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
-                        Macroblock_YCbCr[x * 2][y * 2 + 1].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
-                        Macroblock_YCbCr[x * 2 + 1][y * 2 + 1].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
-                    }
+                    Macroblock_YCbCr[x * 2][y * 2].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
+                    Macroblock_YCbCr[x * 2 + 1][y * 2].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
+                    Macroblock_YCbCr[x * 2][y * 2 + 1].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
+                    Macroblock_YCbCr[x * 2 + 1][y * 2 + 1].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
                 }
-
-                // Convert the (Y, Cb, Cr) pixels into RGB pixels
-                struct Macroblock_RGB_Struct
-                {
-                    unsigned char Red;
-                    unsigned char Green;
-                    unsigned char Blue;
-                };
-
-                Macroblock_RGB_Struct Macroblock_RGB[16][16] = {};
-
-                for (int x = 0; x < 16; x++)
-                {
-                    for (int y = 0; y < 16; y++)
-                    {
-                        // Not sure if Cb/Cr are the other way around in mem/names :S
-                        const float r = (Macroblock_YCbCr[x][y].Y ) + 1.402f * Macroblock_YCbCr[x][y].Cb;
-                        const float g = (Macroblock_YCbCr[x][y].Y ) - 0.3437f * Macroblock_YCbCr[x][y].Cr - 0.7143f * Macroblock_YCbCr[x][y].Cb;
-                        const float b = (Macroblock_YCbCr[x][y].Y ) + 1.772f * Macroblock_YCbCr[x][y].Cr;
-                     
-
-
-                        Macroblock_RGB[x][y].Red = Clamp(r);
-                        Macroblock_RGB[x][y].Green = Clamp(g);
-                        Macroblock_RGB[x][y].Blue = Clamp(b);
-
-                        SetElement(x + xoff, y + yoff, buf, 
-                            RGB565(
-                            Macroblock_RGB[x][y].Red, 
-                            Macroblock_RGB[x][y].Green, 
-                            Macroblock_RGB[x][y].Blue));
-                    }
-                }
-
-                // The code above replaces this
-                //do_write_block_other_bits_no_mmx((int)pScreenBufferCurrentPos);// half height, every other horizontal block is skipped?
             }
 
-            // Moves the blit pos down by 16 pixels (1280 is from (320*2)*2 which is the frame width in bytes doubled)
-            pScreenBufferCurrentPos += 16 * gMacroBlockHeightSpacing;
-
-            if (dword_62EFE0 & 8)
+            // Convert the (Y, Cb, Cr) pixels into RGB pixels
+            struct Macroblock_RGB_Struct
             {
-                // Moves by another 16, thus 32 pixels down, this is for when the output is scaled by x2
-                pScreenBufferCurrentPos += 16 * gMacroBlockHeightSpacing;
-            }
+                unsigned char Red;
+                unsigned char Green;
+                unsigned char Blue;
+            };
 
+            Macroblock_RGB_Struct Macroblock_RGB[16][16] = {};
+
+            for (int x = 0; x < 16; x++)
+            {
+                for (int y = 0; y < 16; y++)
+                {
+                    // Not sure if Cb/Cr are the other way around in mem/names :S
+                    const float r = (Macroblock_YCbCr[x][y].Y) + 1.402f * Macroblock_YCbCr[x][y].Cb;
+                    const float g = (Macroblock_YCbCr[x][y].Y) - 0.3437f * Macroblock_YCbCr[x][y].Cr - 0.7143f * Macroblock_YCbCr[x][y].Cb;
+                    const float b = (Macroblock_YCbCr[x][y].Y) + 1.772f * Macroblock_YCbCr[x][y].Cr;
+
+                    Macroblock_RGB[x][y].Red = Clamp(r);
+                    Macroblock_RGB[x][y].Green = Clamp(g);
+                    Macroblock_RGB[x][y].Blue = Clamp(b);
+
+                    SetElement(x + xoff, y + yoff, buf,
+                        RGB565(
+                        Macroblock_RGB[x][y].Red,
+                        Macroblock_RGB[x][y].Green,
+                        Macroblock_RGB[x][y].Blue));
+                }
+            }
             yoff += 16;
         }
-
-        // Amount to move along the frame buffer to next to the next vertical "strip" of blocks to write
-
         xoff += 16;
-
-        pScreenBuffer += gMacroBlockStripWidthInBytes; 
     }
 
 
