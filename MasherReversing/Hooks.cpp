@@ -207,7 +207,7 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
             const int afterBlock3Ptr = decodeMacroBlockfPtr(afterBlock2Ptr, Y1_block, block3Output, 1, 0, 0);
             do_blit_output_no_mmx(block3Output, Y1_block);
             const int block4Output = dataSizeBytes + block3Output;
-
+  
             // B4
             const int afterBlock4Ptr = decodeMacroBlockfPtr(afterBlock3Ptr, Y2_block, block4Output, 1, 0, 0);
             do_blit_output_no_mmx(block4Output, Y2_block);
@@ -222,6 +222,7 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
             bitstreamCurPos = decodeMacroBlockfPtr(afterBlock5Ptr, Y4_block, block6Output, 1, 0, 0);
             do_blit_output_no_mmx(block6Output, Y4_block);
             block1Output = dataSizeBytes + block6Output;
+            
 
             // convert the Y1 Y2 Y3 Y4 and Cb and Cr blocks into a 16x16 array of (Y, Cb, Cr) pixels
             struct Macroblock_YCbCr_Struct
@@ -293,6 +294,134 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
     // The app doesn't seem to do anything with the return value
     return 0;
 }
+
+/*
+unsigned int __usercall ddv_func7_DecodeMacroBlock<eax>(DecodeMacroBlock_Struct *this<ebp>)
+{
+    int v1; // ebx@1
+    DWORD *v2; // esi@1
+    int endPtr; // edx@3
+    _DWORD *output_q; // ebp@3
+    unsigned int counter; // edi@3
+    int v6; // esi@3
+    unsigned int outptr; // edx@3
+    int dataPtr; // edx@5
+    unsigned int macroBlockWord; // eax@6
+    unsigned int blockNumberQ; // edi@9
+    int index1; // eax@14
+    int index2; // esi@14
+    int index3; // ecx@14
+    signed int v14; // eax@15
+    int cnt; // ecx@15
+    unsigned int v16; // ecx@15
+    int v17; // esi@15
+    int idx; // ebx@16
+    int outVal; // ecx@18
+    unsigned int macroBlockWord1; // eax@20
+    int v21; // esi@21
+    unsigned int v22; // edi@21
+    int v23; // ebx@21
+    signed int v24; // eax@21
+    int v25; // ecx@21
+    DecodeMacroBlock_Struct *thisPtr; // [sp-4h] [bp-10h]@3
+
+    v1 = this->ZeroOrOneConstant;                 // off 14
+    v2 = g_252_buffer_unk_63580C;
+    if (!this->ZeroOrOneConstant)
+        v2 = g_252_buffer_unk_635A0C;
+    v6 = (unsigned int)v2 >> 2;
+    counter = 0;
+    outptr = this->mOutput >> 1;
+    thisPtr = this;
+    output_q = this->mCoEffsBuffer;               // off 10 quantised coefficients
+    endPtr = outptr - 1;
+    do
+        ++endPtr;
+    while (*(_WORD *)(2 * endPtr) == 0xFE00u);
+    *output_q = (v1 << 10) + 2 * (*(_WORD *)(2 * endPtr) << 21 >> 22);
+    dataPtr = endPtr + 1;
+    if (*(_BYTE *)(2 * dataPtr - 2) & 1)
+    {
+        do
+        {
+            macroBlockWord1 = *(_WORD *)(2 * dataPtr++);
+            if (macroBlockWord1 == 0xFE00)
+                break;
+            v21 = (macroBlockWord1 >> 10) + v6;
+            v22 = (macroBlockWord1 >> 10) + counter;
+            v23 = g_block_related_1_dword_42B0C8[v22];
+            v24 = output_q[v23] + (macroBlockWord1 << 22);
+            HIWORD(v25) = HIWORD(v24);
+            counter = v22 + 1;
+            LOWORD(v25) = (*(_DWORD *)(4 * v21) * (v24 >> 22) + 4) >> 3;
+            v6 = v21 + 1;
+            output_q[v23] = v25;
+        } while (counter < 63);                     // 63 AC values?
+    }
+    else
+    {
+        while (1)
+        {
+            macroBlockWord = *(_WORD *)(2 * dataPtr++);
+            if (macroBlockWord == 0xFE00)
+                break;
+            v16 = macroBlockWord;
+            v14 = macroBlockWord << 22;
+            v16 >>= 10;
+            v17 = v16 + v6;
+            cnt = v16 + 1;
+            while (1)
+            {
+                --cnt;
+                idx = g_block_related_1_dword_42B0C8[counter];
+                if (!cnt)
+                    break;
+                output_q[idx] = 0;
+                ++counter;
+            }
+            HIWORD(outVal) = HIWORD(v14);
+            ++counter;
+            LOWORD(outVal) = (*(_DWORD *)(4 * v17) * (v14 >> 22) + 4) >> 3;
+            v6 = v17 + 1;
+            output_q[idx] = outVal;
+            if (counter >= 63)                      // 63 AC values?
+                goto exit_func;
+        }
+        if (counter)
+        {
+            blockNumberQ = counter + 1;
+            if (blockNumberQ & 3)
+            {
+                output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ++]] = 0;
+                if (blockNumberQ & 3)
+                {
+                    output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ++]] = 0;
+                    if (blockNumberQ & 3)
+                        output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ++]] = 0;
+                }
+            }
+            while (blockNumberQ != 64)              // 63 AC values?
+            {
+                index1 = g_block_related_1_dword_42B0C8[blockNumberQ];
+                index2 = g_block_related_2_dword_42B0CC[blockNumberQ];
+                index3 = g_block_related_3_dword_42B0D0[blockNumberQ];
+                output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ]] = 0;
+                output_q[index1] = 0;
+                output_q[index2] = 0;
+                output_q[index3] = 0;
+                blockNumberQ += 4;
+            }
+        }
+        else
+        {
+            memset(output_q + 1, 0, 252u);
+        }
+    }
+exit_func:
+    thisPtr->mOutput = 2 * dataPtr;
+    return thisPtr->mOutput;                      // off 8
+}
+*/
 
 void SetElement(int x, int y, unsigned short int* ptr, unsigned short int value)
 {
