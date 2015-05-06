@@ -1,5 +1,10 @@
 #include "Hooks.hpp"
 #include "jmphookedfunction.hpp"
+#include <algorithm>
+
+#undef min
+#undef max
+#undef RGB
 
 #pragma pack(1)
 #pragma pack(push)
@@ -91,6 +96,40 @@ static void do_blit_output_no_mmx(int macroBlockBuffer, int* decodedBitStream) /
     }
 }
 
+static int To1d(int x, int y)
+{
+    // 8x8 index to x64 index
+    return y * 8 + x;
+}
+
+void SetElement(int x, int y, unsigned short int* ptr, unsigned short int value);
+
+// This can probably be made more generic still, but probably no point.
+// We base stuff off of this:
+template <int r_bits, int g_bits, int b_bits>
+inline unsigned short RGB(unsigned char r, unsigned char g, unsigned char b) {
+    return ((((r >> (8 - r_bits)) << g_bits) |
+        (g >> (8 - g_bits))) << b_bits) |
+        (b >> (8 - b_bits));
+}
+
+// We can make wrappers like this to handle other colour orders:
+template <int r_bits, int g_bits, int b_bits>
+inline unsigned short BGR(unsigned char r, unsigned char g, unsigned char b) {
+    return RGB<b_bits, g_bits, r_bits>(b, g, r);
+}
+
+// And then more wrappers for syntactic sugar:
+inline unsigned short RGB565(unsigned char r, unsigned char g, unsigned char b) {
+    return RGB<5, 6, 5>(r, g, b);
+}
+unsigned char Clamp(float v)
+{
+    if (v < 0.0f) v = 0.0f;
+    if (v > 255.0f) v = 255.0f;
+    return (unsigned char)v;
+};
+
 static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
     OutputDebugString("ddv__func5_block_decoder_q\n");
@@ -140,46 +179,52 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
     }
 
     int bitstreamCurPos = (int)thisPtr->mDecodedBitStream;
+    
+    int xoff = 0;
+    auto buf = (unsigned short int*)pScreenBuffer;
+
+
 
     // For 320x240 image we have a 20x16 macro block grid (because 320/16 and 240/16)
     for (unsigned int xBlock = 0; xBlock < thisPtr->nNumMacroblocksX; xBlock++)
     {
         unsigned char* pScreenBufferCurrentPos = pScreenBuffer;
   
+        int yoff = 0;
         for (unsigned int yBlock = 0; yBlock < thisPtr->nNumMacroblocksY; yBlock++)
         {
             // 2 chroma blocks and 4 Luma in YUV 4:2:0
 
             // B1
-            const int afterBlock1Ptr = decodeMacroBlockfPtr(bitstreamCurPos, p_gMacroBlock1Buffer, block1Output, 0, 0, 0);
-            do_blit_output_no_mmx(block1Output, p_gMacroBlock1Buffer); // Inverse DCT?
+            const int afterBlock1Ptr = decodeMacroBlockfPtr(bitstreamCurPos, Cr_block, block1Output, 0, 0, 0);
+            do_blit_output_no_mmx(block1Output, Cr_block); // Inverse DCT?
 
             const int dataSizeBytes = 4 * thisPtr->mBlockDataSize_q; // Convert to byte count 64*4=256
             int block2Output = dataSizeBytes + block1Output;
 
             // B2
-            const int afterBlock2Ptr = decodeMacroBlockfPtr(afterBlock1Ptr, p_gMacroBlock2Buffer, block2Output, 0, 0, 0);
-            do_blit_output_no_mmx(block2Output, p_gMacroBlock2Buffer);
+            const int afterBlock2Ptr = decodeMacroBlockfPtr(afterBlock1Ptr, Cb_block, block2Output, 0, 0, 0);
+            do_blit_output_no_mmx(block2Output, Cb_block);
             const int block3Output = dataSizeBytes + block2Output;
 
             // B3
-            const int afterBlock3Ptr = decodeMacroBlockfPtr(afterBlock2Ptr, p_gMacroBlock3Buffer, block3Output, 1, 0, 0);
-            do_blit_output_no_mmx(block3Output, p_gMacroBlock3Buffer);
+            const int afterBlock3Ptr = decodeMacroBlockfPtr(afterBlock2Ptr, Y1_block, block3Output, 1, 0, 0);
+            do_blit_output_no_mmx(block3Output, Y1_block);
             const int block4Output = dataSizeBytes + block3Output;
 
             // B4
-            const int afterBlock4Ptr = decodeMacroBlockfPtr(afterBlock3Ptr, p_gMacroBlock4Buffer, block4Output, 1, 0, 0);
-            do_blit_output_no_mmx(block4Output, p_gMacroBlock4Buffer);
+            const int afterBlock4Ptr = decodeMacroBlockfPtr(afterBlock3Ptr, Y2_block, block4Output, 1, 0, 0);
+            do_blit_output_no_mmx(block4Output, Y2_block);
             const int block5Output = dataSizeBytes + block4Output;
 
             // B5
-            const int afterBlock5Ptr = decodeMacroBlockfPtr(afterBlock4Ptr, p_gMacroBlock5Buffer, block5Output, 1, 0, 0);
-            do_blit_output_no_mmx(block5Output, p_gMacroBlock5Buffer);
+            const int afterBlock5Ptr = decodeMacroBlockfPtr(afterBlock4Ptr, Y3_block, block5Output, 1, 0, 0);
+            do_blit_output_no_mmx(block5Output, Y3_block);
             const int block6Output = dataSizeBytes + block5Output;
 
             // B6
-            bitstreamCurPos = decodeMacroBlockfPtr(afterBlock5Ptr, p_gMacroBlock6Buffer, block6Output, 1, 0, 0);
-            do_blit_output_no_mmx(block6Output, p_gMacroBlock6Buffer);
+            bitstreamCurPos = decodeMacroBlockfPtr(afterBlock5Ptr, Y4_block, block6Output, 1, 0, 0);
+            do_blit_output_no_mmx(block6Output, Y4_block);
             block1Output = dataSizeBytes + block6Output;
 
             if (dword_62EFE0 & 1) // Hit on 2x2 dithering
@@ -203,8 +248,72 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
             {
                 // When no dithering or scaling?
 
-                // YUV to RGB?
-                do_write_block_other_bits_no_mmx((int)pScreenBufferCurrentPos);// half height, every other horizontal block is skipped?
+                // convert the Y1 Y2 Y3 Y4 and Cb and Cr blocks into a 16x16 array of (Y, Cb, Cr) pixels
+                struct Macroblock_YCbCr_Struct
+                {
+                    float Y;
+                    float Cb;
+                    float Cr;
+                };
+
+                Macroblock_YCbCr_Struct Macroblock_YCbCr[16][16] = {};
+
+                for (int x = 0; x < 8; x++)
+                {
+                    for (int y = 0; y < 8; y++)
+                    {
+                        Macroblock_YCbCr[x][y].Y = static_cast<float>(Y1_block[To1d(x, y)]);
+                        Macroblock_YCbCr[x + 8][y].Y = static_cast<float>(Y2_block[To1d(x, y)]);
+                        Macroblock_YCbCr[x][y + 8].Y = static_cast<float>(Y3_block[To1d(x, y)]);
+                        Macroblock_YCbCr[x + 8][y + 8].Y = static_cast<float>(Y4_block[To1d(x, y)]);
+
+                        Macroblock_YCbCr[x * 2][y * 2].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
+                        Macroblock_YCbCr[x * 2 + 1][y * 2].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
+                        Macroblock_YCbCr[x * 2][y * 2 + 1].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
+                        Macroblock_YCbCr[x * 2 + 1][y * 2 + 1].Cb = static_cast<float>(Cb_block[To1d(x, y)]);
+
+                        Macroblock_YCbCr[x * 2][y * 2].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
+                        Macroblock_YCbCr[x * 2 + 1][y * 2].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
+                        Macroblock_YCbCr[x * 2][y * 2 + 1].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
+                        Macroblock_YCbCr[x * 2 + 1][y * 2 + 1].Cr = static_cast<float>(Cr_block[To1d(x, y)]);
+                    }
+                }
+
+                // Convert the (Y, Cb, Cr) pixels into RGB pixels
+                struct Macroblock_RGB_Struct
+                {
+                    unsigned char Red;
+                    unsigned char Green;
+                    unsigned char Blue;
+                };
+
+                Macroblock_RGB_Struct Macroblock_RGB[16][16] = {};
+
+                for (int x = 0; x < 16; x++)
+                {
+                    for (int y = 0; y < 16; y++)
+                    {
+                        // Not sure if Cb/Cr are the other way around in mem/names :S
+                        const float r = (Macroblock_YCbCr[x][y].Y ) + 1.402f * Macroblock_YCbCr[x][y].Cb;
+                        const float g = (Macroblock_YCbCr[x][y].Y ) - 0.3437f * Macroblock_YCbCr[x][y].Cr - 0.7143f * Macroblock_YCbCr[x][y].Cb;
+                        const float b = (Macroblock_YCbCr[x][y].Y ) + 1.772f * Macroblock_YCbCr[x][y].Cr;
+                     
+
+
+                        Macroblock_RGB[x][y].Red = Clamp(r);
+                        Macroblock_RGB[x][y].Green = Clamp(g);
+                        Macroblock_RGB[x][y].Blue = Clamp(b);
+
+                        SetElement(x + xoff, y + yoff, buf, 
+                            RGB565(
+                            Macroblock_RGB[x][y].Red, 
+                            Macroblock_RGB[x][y].Green, 
+                            Macroblock_RGB[x][y].Blue));
+                    }
+                }
+
+                // The code above replaces this
+                //do_write_block_other_bits_no_mmx((int)pScreenBufferCurrentPos);// half height, every other horizontal block is skipped?
             }
 
             // Moves the blit pos down by 16 pixels (1280 is from (320*2)*2 which is the frame width in bytes doubled)
@@ -215,20 +324,26 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
                 // Moves by another 16, thus 32 pixels down, this is for when the output is scaled by x2
                 pScreenBufferCurrentPos += 16 * gMacroBlockHeightSpacing;
             }
+
+            yoff += 16;
         }
 
         // Amount to move along the frame buffer to next to the next vertical "strip" of blocks to write
 
+        xoff += 16;
 
-        // Seems to be the width of the blitted macro block strip in bytes
-        // thus no scaling = 16 pixels
-        // 2x1 scaling = 32 pixels
-        // and 2x2 scaling = 32 pixels
         pScreenBuffer += gMacroBlockStripWidthInBytes; 
     }
 
+
     // The app doesn't seem to do anything with the return value
     return 0;
+}
+
+void SetElement(int x, int y, unsigned short int* ptr, unsigned short int value)
+{
+    const int kWidth = 640;
+    ptr[(kWidth * y) + x] = value;
 }
 
 static JmpHookedFunction<ddv_func7_DecodeMacroBlock>* ddv_func7_DecodeMacroBlock_hook;
