@@ -166,11 +166,11 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
     DWORD block1Output = thisPtr->mMacroBlockBuffer_q;
     
     // Done once for the whole 320x240 image
-    int decodeRet = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream); // TODO: Reimpl
+    const int firstWordOfRawBitStreamData = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream); // TODO: Reimpl
 
     // Each block only seems to have 1 colour if this isn't called, but then resizing the window seems to fix it sometimes (perhaps causes
     // this function to be called else where).
-    after_block_decode_no_effect_q_ptr(decodeRet); // TODO: Reimpl
+    after_block_decode_no_effect_q_ptr(firstWordOfRawBitStreamData); // TODO: Reimpl
 
     // Sanity check
     if (thisPtr->nNumMacroblocksX <= 0 || thisPtr->nNumMacroblocksY <= 0)
@@ -296,132 +296,204 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
 }
 
 /*
-unsigned int __usercall ddv_func7_DecodeMacroBlock<eax>(DecodeMacroBlock_Struct *this<ebp>)
+int __cdecl decode_bitstream_q(_WORD *pFrameData, unsigned int *pOutput)
 {
-    int v1; // ebx@1
-    DWORD *v2; // esi@1
-    int endPtr; // edx@3
-    _DWORD *output_q; // ebp@3
-    unsigned int counter; // edi@3
-    int v6; // esi@3
-    unsigned int outptr; // edx@3
-    int dataPtr; // edx@5
-    unsigned int macroBlockWord; // eax@6
-    unsigned int blockNumberQ; // edi@9
-    int index1; // eax@14
-    int index2; // esi@14
-    int index3; // ecx@14
-    signed int v14; // eax@15
-    int cnt; // ecx@15
-    unsigned int v16; // ecx@15
-    int v17; // esi@15
-    int idx; // ebx@16
-    int outVal; // ecx@18
-    unsigned int macroBlockWord1; // eax@20
-    int v21; // esi@21
-    unsigned int v22; // edi@21
-    int v23; // ebx@21
-    signed int v24; // eax@21
-    int v25; // ecx@21
-    DecodeMacroBlock_Struct *thisPtr; // [sp-4h] [bp-10h]@3
+    int v2; // eax@1
+    int v3; // edx@1
+    char v4; // cl@1
+    int v5; // edi@1
+    int v6; // esi@1
+    int firstFrameWord; // eax@1
+    int v8; // edx@1
+    __int64 v9; // qt0@1
+    unsigned int v10; // ebx@2
+    char v11; // ch@3
+    char v12; // cl@3
+    int v13; // eax@4
+    __int64 v14; // qt0@6
+    int v15; // eax@8
+    int v16; // eax@10
+    __int64 v17; // qt0@13
+    int v18; // eax@13
+    int v19; // eax@15
+    int v20; // eax@17
+    __int64 v21; // qt0@20
+    int v22; // eax@20
+    int v23; // eax@22
+    int v24; // eax@24
+    int v25; // edx@26
+    char v26; // cl@26
+    int v27; // ebx@26
+    int v28; // eax@27
+    char v29; // ch@28
+    char v30; // cl@28
+    int v31; // eax@29
+    int data_size_q; // [sp+Ch] [bp-4h]@1
+    unsigned int v34; // [sp+18h] [bp+8h]@1
 
-    v1 = this->ZeroOrOneConstant;                 // off 14
-    v2 = g_252_buffer_unk_63580C;
-    if (!this->ZeroOrOneConstant)
-        v2 = g_252_buffer_unk_635A0C;
-    v6 = (unsigned int)v2 >> 2;
-    counter = 0;
-    outptr = this->mOutput >> 1;
-    thisPtr = this;
-    output_q = this->mCoEffsBuffer;               // off 10 quantised coefficients
-    endPtr = outptr - 1;
-    do
-        ++endPtr;
-    while (*(_WORD *)(2 * endPtr) == 0xFE00u);
-    *output_q = (v1 << 10) + 2 * (*(_WORD *)(2 * endPtr) << 21 >> 22);
-    dataPtr = endPtr + 1;
-    if (*(_BYTE *)(2 * dataPtr - 2) & 1)
+    firstFrameWord = *pFrameData;
+    data_size_q = firstFrameWord;
+    v34 = (unsigned int)(pFrameData + 1);
+    v8 = __ROL__(*(_DWORD *)(2 * (v34 >> 1)), 16);
+    v6 = (v34 >> 1) + 2;
+    HIDWORD(v9) = firstFrameWord;
+    LODWORD(v9) = v8;
+    v3 = v8 << 11;
+    v4 = 11;
+    v2 = ((unsigned __int64)(v9 << 11) >> 32) & 0x7FF;
+    *(_WORD *)(2 * ((unsigned int)pOutput >> 1)) = v2;// store in output
+    v5 = ((unsigned int)pOutput >> 1) + 1;
+    while (1)
     {
         do
         {
-            macroBlockWord1 = *(_WORD *)(2 * dataPtr++);
-            if (macroBlockWord1 == 0xFE00)
-                break;
-            v21 = (macroBlockWord1 >> 10) + v6;
-            v22 = (macroBlockWord1 >> 10) + counter;
-            v23 = g_block_related_1_dword_42B0C8[v22];
-            v24 = output_q[v23] + (macroBlockWord1 << 22);
-            HIWORD(v25) = HIWORD(v24);
-            counter = v22 + 1;
-            LOWORD(v25) = (*(_DWORD *)(4 * v21) * (v24 >> 22) + 4) >> 3;
-            v6 = v21 + 1;
-            output_q[v23] = v25;
-        } while (counter < 63);                     // 63 AC values?
-    }
-    else
-    {
-        while (1)
-        {
-            macroBlockWord = *(_WORD *)(2 * dataPtr++);
-            if (macroBlockWord == 0xFE00)
-                break;
-            v16 = macroBlockWord;
-            v14 = macroBlockWord << 22;
-            v16 >>= 10;
-            v17 = v16 + v6;
-            cnt = v16 + 1;
             while (1)
             {
-                --cnt;
-                idx = g_block_related_1_dword_42B0C8[counter];
-                if (!cnt)
-                    break;
-                output_q[idx] = 0;
-                ++counter;
-            }
-            HIWORD(outVal) = HIWORD(v14);
-            ++counter;
-            LOWORD(outVal) = (*(_DWORD *)(4 * v17) * (v14 >> 22) + 4) >> 3;
-            v6 = v17 + 1;
-            output_q[idx] = outVal;
-            if (counter >= 63)                      // 63 AC values?
-                goto exit_func;
-        }
-        if (counter)
-        {
-            blockNumberQ = counter + 1;
-            if (blockNumberQ & 3)
-            {
-                output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ++]] = 0;
-                if (blockNumberQ & 3)
+                do
                 {
-                    output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ++]] = 0;
-                    if (blockNumberQ & 3)
-                        output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ++]] = 0;
-                }
+                    while (1)
+                    {
+                        do
+                        {
+                            while (1)
+                            {
+                                while (1)
+                                {
+                                    v10 = (unsigned __int64)(unsigned int)v3 << 13 >> 32;
+                                    if (v10 >= 0x20)
+                                        break;
+                                    v27 = (unsigned __int64)(unsigned int)v3 << 17 >> 32;
+                                    v26 = v4 + 8;
+                                    v25 = v3 << 8;
+                                    if (v26 & 0x10)
+                                    {
+                                        v28 = *(_WORD *)(2 * v6);
+                                        v26 &= 0xFu;
+                                        ++v6;
+                                        v2 = v28 << v26;
+                                        v25 |= v2;
+                                    }
+                                    v29 = v26;
+                                    v30 = byte_42A5C0[4 * v27];
+                                    v3 = v25 << v30;
+                                    v4 = v29 + v30;
+                                    if (v4 & 0x10)
+                                    {
+                                        v31 = *(_WORD *)(2 * v6);
+                                        v4 &= 0xFu;
+                                        ++v6;
+                                        v2 = v31 << v4;
+                                        v3 |= v2;
+                                    }
+                                    *(_WORD *)(2 * v5++) = word_42A5C2[2 * v27];
+                                }
+                                v11 = v4;
+                                v12 = byte_41A5C0[8 * v10];
+                                v3 <<= v12;
+                                v4 = v11 + v12;
+                                if (v4 & 0x10)
+                                {
+                                    v13 = *(_WORD *)(2 * v6);
+                                    v4 &= 0xFu;
+                                    ++v6;
+                                    v2 = v13 << v4;
+                                    v3 |= v2;
+                                }
+                                LOWORD(v2) = word_41A5C2[4 * v10];
+                                if ((_WORD)v2 != 31775)
+                                    break;
+                                HIDWORD(v14) = v2;
+                                LODWORD(v14) = v3;
+                                *(_WORD *)(2 * v5) = (unsigned __int64)(v14 << 16) >> 32;
+                                v2 = *(_WORD *)(2 * v6++) << v4;
+                                v3 = v2 | (v3 << 16);
+                                ++v5;
+                            }
+                            *(_WORD *)(2 * v5++) = v2;
+                            if ((_WORD)v2 == 0xFE00u)
+                            {
+                                v15 = (unsigned __int64)(unsigned int)v3 << 11 >> 32;
+                                if (v15 == 0x3FF)
+                                    return data_size_q;
+                                v2 = v15 & 0x7FF;
+                                v3 <<= 11;
+                                *(_WORD *)(2 * v5) = v2;
+                                v4 += 11;
+                                ++v5;
+                                if (v4 & 0x10)
+                                {
+                                    v16 = *(_WORD *)(2 * v6);
+                                    v4 &= 0xFu;
+                                    ++v6;
+                                    v2 = v16 << v4;
+                                    v3 |= v2;
+                                }
+                            }
+                            LOWORD(v2) = word_41A5C4[4 * v10];
+                        } while (!(_WORD)v2);
+                        if ((_WORD)v2 != 31775)
+                            break;
+                        HIDWORD(v17) = v2;
+                        LODWORD(v17) = v3;
+                        *(_WORD *)(2 * v5) = (unsigned __int64)(v17 << 16) >> 32;
+                        v18 = *(_WORD *)(2 * v6++);
+                        v2 = v18 << v4;
+                        ++v5;
+                        v3 = v2 | (v3 << 16);
+                    }
+                    *(_WORD *)(2 * v5++) = v2;
+                    if ((_WORD)v2 == 0xFE00u)
+                    {
+                        v19 = (unsigned __int64)(unsigned int)v3 << 11 >> 32;
+                        if (v19 == 1023)
+                            return data_size_q;
+                        v2 = v19 & 0x7FF;
+                        *(_WORD *)(2 * v5++) = v2;
+                        v4 += 11;
+                        v3 <<= 11;
+                        if (v4 & 0x10)
+                        {
+                            v20 = *(_WORD *)(2 * v6);
+                            v4 &= 0xFu;
+                            ++v6;
+                            v2 = v20 << v4;
+                            v3 |= v2;
+                        }
+                    }
+                    LOWORD(v2) = word_41A5C6[4 * v10];
+                } while (!(_WORD)v2);
+                if ((_WORD)v2 != 31775)
+                    break;
+                HIDWORD(v21) = v2;
+                LODWORD(v21) = v3;
+                *(_WORD *)(2 * v5) = (unsigned __int64)(v21 << 16) >> 32;
+                v22 = *(_WORD *)(2 * v6++);
+                v2 = v22 << v4;
+                ++v5;
+                v3 = v2 | (v3 << 16);
             }
-            while (blockNumberQ != 64)              // 63 AC values?
-            {
-                index1 = g_block_related_1_dword_42B0C8[blockNumberQ];
-                index2 = g_block_related_2_dword_42B0CC[blockNumberQ];
-                index3 = g_block_related_3_dword_42B0D0[blockNumberQ];
-                output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ]] = 0;
-                output_q[index1] = 0;
-                output_q[index2] = 0;
-                output_q[index3] = 0;
-                blockNumberQ += 4;
-            }
-        }
-        else
+            *(_WORD *)(2 * v5++) = v2;
+        } while ((_WORD)v2 != 0xFE00u);
+        v23 = (unsigned __int64)(unsigned int)v3 << 11 >> 32;
+        if (v23 == 0x3FF)
+            break;
+        v2 = v23 & 0x7FF;
+        *(_WORD *)(2 * v5++) = v2;
+        v4 += 11;
+        v3 <<= 11;
+        if (v4 & 0x10)
         {
-            memset(output_q + 1, 0, 252u);
+            v24 = *(_WORD *)(2 * v6);
+            v4 &= 0xFu;
+            ++v6;
+            v2 = v24 << v4;
+            v3 |= v2;
         }
     }
-exit_func:
-    thisPtr->mOutput = 2 * dataPtr;
-    return thisPtr->mOutput;                      // off 8
+    return data_size_q;
 }
 */
+
 
 void SetElement(int x, int y, unsigned short int* ptr, unsigned short int value)
 {
