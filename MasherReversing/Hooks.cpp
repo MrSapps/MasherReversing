@@ -161,7 +161,7 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
 
     // Each block only seems to have 1 colour if this isn't called, but then resizing the window seems to fix it sometimes (perhaps causes
     // this function to be called else where).
-    after_block_decode_no_effect_q_ptr(99); // TODO: Reimpl
+    after_block_decode_no_effect_q_ptr(firstWordOfRawBitStreamData); // TODO: Reimpl
 
     // Sanity check
     if (thisPtr->nNumMacroblocksX <= 0 || thisPtr->nNumMacroblocksY <= 0)
