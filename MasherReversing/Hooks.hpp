@@ -77,4 +77,15 @@ static DWORD& gMacroBlockHeightSpacing = *p_dword_62EFD8;
 static DWORD* p_dword_62EFD4 = (DWORD*)0x0062EFD4;
 static DWORD& gMacroBlockStripWidthInBytes = *p_dword_62EFD4;
 
+
+static char* gBitsToShiftByTable_byte_42A5C0 = (char*)0x42A5C0;
+static char* byte_41A5C0 = (char*)0x41A5C0;
+
+static unsigned short int* gOutputTbl_word_42A5C2 = (unsigned short int*)0x42A5C2;
+static unsigned short int* word_41A5C2 = (unsigned short int*)0x41A5C2;
+
+static unsigned short int* word_41A5C4 = (unsigned short int*)0x41A5C4;
+static unsigned short int* word_41A5C6 = (unsigned short int*)0x41A5C6;
+
+
 void InstallHooks();

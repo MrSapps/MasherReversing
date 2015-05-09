@@ -131,6 +131,7 @@ unsigned char Clamp(float v)
 };
 
 static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, int yoff);
+int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput);
 
 static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
@@ -157,7 +158,10 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
     }
  
     // Done once for the whole 320x240 image
-    const int firstWordOfRawBitStreamData = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream); // TODO: Reimpl
+   // const int firstWordOfRawBitStreamData = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream); // TODO: Reimpl
+    const int firstWordOfRawBitStreamData = decode_bitstream((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream);
+
+    
 
     // Each block only seems to have 1 colour if this isn't called, but then resizing the window seems to fix it sometimes (perhaps causes
     // this function to be called else where).
@@ -283,54 +287,60 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
     }
 }
 
-/*
-int __cdecl decode_bitstream_q(_WORD *pFrameData, unsigned int *pOutput)
+int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
 {
-    int v2; // eax@1
-    int v3; // edx@1
-    char v4; // cl@1
-    int v5; // edi@1
-    int v6; // esi@1
+    DWORD rawWord4; // eax@1
+    DWORD v3; // edx@1
+    char bitsCounterQ; // cl@1
+    int pOut; // edi@1
+    int rawBitStreamPtr; // esi@1
     int firstFrameWord; // eax@1
     int v8; // edx@1
-    __int64 v9; // qt0@1
-    unsigned int v10; // ebx@2
+
+    LARGE_INTEGER v9; // qt0@1
+    unsigned int table_index_2; // ebx@2
     char v11; // ch@3
     char v12; // cl@3
-    int v13; // eax@4
-    __int64 v14; // qt0@6
+    int rawWord3; // eax@4
+    LARGE_INTEGER outputWord1; // qt0@6
     int v15; // eax@8
-    int v16; // eax@10
-    __int64 v17; // qt0@13
-    int v18; // eax@13
+    int rawWord5; // eax@10
+    LARGE_INTEGER v17; // qt0@13
+    int rawWord6; // eax@13
     int v19; // eax@15
-    int v20; // eax@17
-    __int64 v21; // qt0@20
-    int v22; // eax@20
+    int rawWord7; // eax@17
+    LARGE_INTEGER v21; // qt0@20
+    int rawWord8; // eax@20
     int v23; // eax@22
-    int v24; // eax@24
-    int v25; // edx@26
-    char v26; // cl@26
-    int v27; // ebx@26
-    int v28; // eax@27
-    char v29; // ch@28
-    char v30; // cl@28
-    int v31; // eax@29
-    int data_size_q; // [sp+Ch] [bp-4h]@1
-    unsigned int v34; // [sp+18h] [bp+8h]@1
+    int rawWord9; // eax@24
+    DWORD v25; // edx@26
+    char bitsToShiftBy; // cl@26
+    int table_index_1; // ebx@26
+    int rawWord1; // eax@27
+    char bitsToShiftByCopy; // ch@28
+    char bitsToShiftFromTbl; // cl@28
+    int rawWord2; // eax@29
+    int AC_Coefficient; // [sp+Ch] [bp-4h]@1
+    unsigned int secondWordPtr; // [sp+18h] [bp+8h]@1
 
     firstFrameWord = *pFrameData;
-    data_size_q = firstFrameWord;
-    v34 = (unsigned int)(pFrameData + 1);
-    v8 = __ROL__(*(_DWORD *)(2 * (v34 >> 1)), 16);
-    v6 = (v34 >> 1) + 2;
-    HIDWORD(v9) = firstFrameWord;
-    LODWORD(v9) = v8;
+    AC_Coefficient = firstFrameWord;
+    secondWordPtr = (unsigned int)(pFrameData + 1);
+    
+    v8 = *(DWORD *)(2 * (secondWordPtr >> 1));
+    __asm
+    {
+        rol v8, 16
+    }
+
+    rawBitStreamPtr = (secondWordPtr >> 1) + 2;
+    v9.HighPart = firstFrameWord;
+    v9.LowPart = v8;
     v3 = v8 << 11;
-    v4 = 11;
-    v2 = ((unsigned __int64)(v9 << 11) >> 32) & 0x7FF;
-    *(_WORD *)(2 * ((unsigned int)pOutput >> 1)) = v2;// store in output
-    v5 = ((unsigned int)pOutput >> 1) + 1;
+    bitsCounterQ = 11;
+    rawWord4 = ((unsigned __int64)(v9.QuadPart << 11) >> 32) & 0x7FF;
+    *(WORD *)(2 * ((unsigned int)pOutput >> 1)) = rawWord4;// store in output
+    pOut = ((unsigned int)pOutput >> 1) + 1;
     while (1)
     {
         do
@@ -347,140 +357,150 @@ int __cdecl decode_bitstream_q(_WORD *pFrameData, unsigned int *pOutput)
                             {
                                 while (1)
                                 {
-                                    v10 = (unsigned __int64)(unsigned int)v3 << 13 >> 32;
-                                    if (v10 >= 0x20)
+                                    table_index_2 = (unsigned __int64)v3 << 13 >> 32;
+                                    if (table_index_2 >= 32)
                                         break;
-                                    v27 = (unsigned __int64)(unsigned int)v3 << 17 >> 32;
-                                    v26 = v4 + 8;
+                                    table_index_1 = (unsigned __int64)v3 << 17 >> 32;
+                                    bitsToShiftBy = bitsCounterQ + 8;// 11+8=19
                                     v25 = v3 << 8;
-                                    if (v26 & 0x10)
+                                    if (bitsToShiftBy & 0x10)   // r1 - 0x10 = 0b10 = end of vlc?
                                     {
-                                        v28 = *(_WORD *)(2 * v6);
-                                        v26 &= 0xFu;
-                                        ++v6;
-                                        v2 = v28 << v26;
-                                        v25 |= v2;
+                                        rawWord1 = *(WORD *)(2 * rawBitStreamPtr);
+                                        bitsToShiftBy &= 0xFu;
+                                        ++rawBitStreamPtr;
+                                        rawWord4 = rawWord1 << bitsToShiftBy;
+                                        v25 |= rawWord4;
                                     }
-                                    v29 = v26;
-                                    v30 = byte_42A5C0[4 * v27];
-                                    v3 = v25 << v30;
-                                    v4 = v29 + v30;
-                                    if (v4 & 0x10)
+                                    bitsToShiftByCopy = bitsToShiftBy;
+                                    bitsToShiftFromTbl = gBitsToShiftByTable_byte_42A5C0[4 * table_index_1];// all globals in here seem to be part of the same data
+                                    v3 = v25 << bitsToShiftFromTbl;
+                                    bitsCounterQ = bitsToShiftByCopy + bitsToShiftFromTbl;
+                                    if (bitsCounterQ & 0x10)    // same as > 16? pull another shifted byte in if so?
                                     {
-                                        v31 = *(_WORD *)(2 * v6);
-                                        v4 &= 0xFu;
-                                        ++v6;
-                                        v2 = v31 << v4;
-                                        v3 |= v2;
+                                        rawWord2 = *(WORD *)(2 * rawBitStreamPtr);
+                                        bitsCounterQ &= 0xFu;
+                                        ++rawBitStreamPtr;
+                                        rawWord4 = rawWord2 << bitsCounterQ;
+                                        v3 |= rawWord4;
                                     }
-                                    *(_WORD *)(2 * v5++) = word_42A5C2[2 * v27];
+                                    *(WORD *)(2 * pOut++) = gOutputTbl_word_42A5C2[2 * table_index_1];
                                 }
-                                v11 = v4;
-                                v12 = byte_41A5C0[8 * v10];
+                                v11 = bitsCounterQ;
+                                v12 = byte_41A5C0[8 * table_index_2];
                                 v3 <<= v12;
-                                v4 = v11 + v12;
-                                if (v4 & 0x10)
+                                bitsCounterQ = v11 + v12;
+                                if (bitsCounterQ & 0x10)      // r3
                                 {
-                                    v13 = *(_WORD *)(2 * v6);
-                                    v4 &= 0xFu;
-                                    ++v6;
-                                    v2 = v13 << v4;
-                                    v3 |= v2;
+                                    rawWord3 = *(WORD *)(2 * rawBitStreamPtr);
+                                    bitsCounterQ &= 0xFu;
+                                    ++rawBitStreamPtr;
+                                    rawWord4 = rawWord3 << bitsCounterQ;
+                                    v3 |= rawWord4;
                                 }
-                                LOWORD(v2) = word_41A5C2[4 * v10];
-                                if ((_WORD)v2 != 31775)
+
+                                // Set loword
+                                rawWord4 = rawWord4 & 0x0000FFFF;
+                                rawWord4 |= word_41A5C2[4 * table_index_2] & 0xFFFF;
+
+                                if ((WORD)rawWord4 != 0x7C1F)
                                     break;
-                                HIDWORD(v14) = v2;
-                                LODWORD(v14) = v3;
-                                *(_WORD *)(2 * v5) = (unsigned __int64)(v14 << 16) >> 32;
-                                v2 = *(_WORD *)(2 * v6++) << v4;
-                                v3 = v2 | (v3 << 16);
-                                ++v5;
+                                outputWord1.HighPart = rawWord4;
+                                outputWord1.LowPart = v3;
+                                *(WORD *)(2 * pOut) = (unsigned __int64)(outputWord1.QuadPart << 16) >> 32;
+                                rawWord4 = *(WORD *)(2 * rawBitStreamPtr++) << bitsCounterQ;
+                                v3 = rawWord4 | (v3 << 16);
+                                ++pOut;
                             }
-                            *(_WORD *)(2 * v5++) = v2;
-                            if ((_WORD)v2 == 0xFE00u)
+                            *(WORD *)(2 * pOut++) = rawWord4;
+                            if ((WORD)rawWord4 == 0xFE00u)
                             {
-                                v15 = (unsigned __int64)(unsigned int)v3 << 11 >> 32;
+                                v15 = (unsigned __int64)v3 << 11 >> 32;
                                 if (v15 == 0x3FF)
-                                    return data_size_q;
-                                v2 = v15 & 0x7FF;
+                                    return AC_Coefficient;
+                                rawWord4 = v15 & 0x7FF;
                                 v3 <<= 11;
-                                *(_WORD *)(2 * v5) = v2;
-                                v4 += 11;
-                                ++v5;
-                                if (v4 & 0x10)
+                                *(WORD *)(2 * pOut) = rawWord4;
+                                bitsCounterQ += 11;
+                                ++pOut;
+                                if (bitsCounterQ & 0x10)      // r4
                                 {
-                                    v16 = *(_WORD *)(2 * v6);
-                                    v4 &= 0xFu;
-                                    ++v6;
-                                    v2 = v16 << v4;
-                                    v3 |= v2;
+                                    rawWord5 = *(WORD *)(2 * rawBitStreamPtr);
+                                    bitsCounterQ &= 0xFu;
+                                    ++rawBitStreamPtr;
+                                    rawWord4 = rawWord5 << bitsCounterQ;
+                                    v3 |= rawWord4;
                                 }
                             }
-                            LOWORD(v2) = word_41A5C4[4 * v10];
-                        } while (!(_WORD)v2);
-                        if ((_WORD)v2 != 31775)
-                            break;
-                        HIDWORD(v17) = v2;
-                        LODWORD(v17) = v3;
-                        *(_WORD *)(2 * v5) = (unsigned __int64)(v17 << 16) >> 32;
-                        v18 = *(_WORD *)(2 * v6++);
-                        v2 = v18 << v4;
-                        ++v5;
-                        v3 = v2 | (v3 << 16);
-                    }
-                    *(_WORD *)(2 * v5++) = v2;
-                    if ((_WORD)v2 == 0xFE00u)
-                    {
-                        v19 = (unsigned __int64)(unsigned int)v3 << 11 >> 32;
-                        if (v19 == 1023)
-                            return data_size_q;
-                        v2 = v19 & 0x7FF;
-                        *(_WORD *)(2 * v5++) = v2;
-                        v4 += 11;
-                        v3 <<= 11;
-                        if (v4 & 0x10)
+
+                            // Set low word
+                            rawWord4 = rawWord4 & 0x0000FFFF;
+                            rawWord4 |= word_41A5C4[4 * table_index_2] & 0xFFFF;
+                        } while (!(WORD)rawWord4);
+                        if ((WORD)rawWord4 != 0x7C1F)
                         {
-                            v20 = *(_WORD *)(2 * v6);
-                            v4 &= 0xFu;
-                            ++v6;
-                            v2 = v20 << v4;
-                            v3 |= v2;
+                            break;
+                        }
+                        v17.HighPart = rawWord4;
+                        v17.LowPart = v3;
+                        *(WORD *)(2 * pOut) = (unsigned __int64)(v17.QuadPart << 16) >> 32;
+                        rawWord6 = *(WORD *)(2 * rawBitStreamPtr++);
+                        rawWord4 = rawWord6 << bitsCounterQ;
+                        ++pOut;
+                        v3 = rawWord4 | (v3 << 16);
+                    }
+                    *(WORD *)(2 * pOut++) = rawWord4;
+                    if ((WORD)rawWord4 == 0xFE00u)
+                    {
+                        v19 = (unsigned __int64)v3 << 11 >> 32;
+                        if (v19 == 0x3FF)
+                            return AC_Coefficient;
+                        rawWord4 = v19 & 0x7FF;
+                        *(WORD *)(2 * pOut++) = rawWord4;
+                        bitsCounterQ += 11;
+                        v3 <<= 11;
+                        if (bitsCounterQ & 0x10)          // r5
+                        {
+                            rawWord7 = *(WORD *)(2 * rawBitStreamPtr);
+                            bitsCounterQ &= 0xFu;
+                            ++rawBitStreamPtr;
+                            rawWord4 = rawWord7 << bitsCounterQ;
+                            v3 |= rawWord4;
                         }
                     }
-                    LOWORD(v2) = word_41A5C6[4 * v10];
-                } while (!(_WORD)v2);
-                if ((_WORD)v2 != 31775)
+
+                    rawWord4 = rawWord4 & 0x0000FFFF;
+                    rawWord4 |= word_41A5C6[4 * table_index_2] & 0xFFFF;
+                } while (!(WORD)rawWord4);
+                if ((WORD)rawWord4 != 0x7C1F)
                     break;
-                HIDWORD(v21) = v2;
-                LODWORD(v21) = v3;
-                *(_WORD *)(2 * v5) = (unsigned __int64)(v21 << 16) >> 32;
-                v22 = *(_WORD *)(2 * v6++);
-                v2 = v22 << v4;
-                ++v5;
-                v3 = v2 | (v3 << 16);
+                v21.HighPart = rawWord4;
+                v21.LowPart = v3;
+                *(WORD *)(2 * pOut) = (unsigned __int64)(v21.QuadPart << 16) >> 32;
+                rawWord8 = *(WORD *)(2 * rawBitStreamPtr++);
+                rawWord4 = rawWord8 << bitsCounterQ;
+                ++pOut;
+                v3 = rawWord4 | (v3 << 16);
             }
-            *(_WORD *)(2 * v5++) = v2;
-        } while ((_WORD)v2 != 0xFE00u);
-        v23 = (unsigned __int64)(unsigned int)v3 << 11 >> 32;
+            *(WORD *)(2 * pOut++) = rawWord4;
+        } while ((WORD)rawWord4 != 0xFE00u);       // FE 00 is in the raw data
+        v23 = (unsigned __int64)v3 << 11 >> 32;
         if (v23 == 0x3FF)
             break;
-        v2 = v23 & 0x7FF;
-        *(_WORD *)(2 * v5++) = v2;
-        v4 += 11;
+        rawWord4 = v23 & 0x7FF;
+        *(WORD *)(2 * pOut++) = rawWord4;
+        bitsCounterQ += 11;
         v3 <<= 11;
-        if (v4 & 0x10)
+        if (bitsCounterQ & 0x10)                  // r6
         {
-            v24 = *(_WORD *)(2 * v6);
-            v4 &= 0xFu;
-            ++v6;
-            v2 = v24 << v4;
-            v3 |= v2;
+            rawWord9 = *(WORD *)(2 * rawBitStreamPtr);
+            bitsCounterQ &= 0xFu;
+            ++rawBitStreamPtr;
+            rawWord4 = rawWord9 << bitsCounterQ;
+            v3 |= rawWord4;
         }
     }
-    return data_size_q;
+    return AC_Coefficient;
 }
-*/
 
 
 void SetElement(int x, int y, unsigned short int* ptr, unsigned short int value)
