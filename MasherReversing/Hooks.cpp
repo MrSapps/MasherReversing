@@ -286,11 +286,11 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
         }
     }
 }
-static inline void OutputWordAndAdvance(char& bitsToShiftBy, int& rawWord1, int& rawBitStreamPtr, DWORD& rawWord4, DWORD& v25)
+static inline void OutputWordAndAdvance(char& bitsToShiftBy, int& rawWord1, WORD*& rawBitStreamPtr, DWORD& rawWord4, DWORD& v25)
 {
     if (bitsToShiftBy & 0x10)   // 0b10000 if bit 5 set
     {
-        rawWord1 = *(WORD *)(2 * rawBitStreamPtr);
+        rawWord1 = *rawBitStreamPtr;
         bitsToShiftBy &= 0xFu;
         ++rawBitStreamPtr;
         rawWord4 = rawWord1 << bitsToShiftBy;
@@ -298,12 +298,12 @@ static inline void OutputWordAndAdvance(char& bitsToShiftBy, int& rawWord1, int&
     }
 }
 
-static inline void OutputWordAndAdvance2(LARGE_INTEGER& outputWord1, int& rawBitStreamPtr, DWORD& rawWord4, int& pOut, char& bitsCounterQ, DWORD& v3)
+static inline void OutputWordAndAdvance2(LARGE_INTEGER& outputWord1, WORD*& rawBitStreamPtr, DWORD& rawWord4, int& pOut, char& bitsCounterQ, DWORD& v3)
 {
     outputWord1.HighPart = rawWord4;
     outputWord1.LowPart = v3;
     *(WORD *)(2 * pOut) = (unsigned __int64)(outputWord1.QuadPart << 16) >> 32;
-    rawWord4 = *(WORD *)(2 * rawBitStreamPtr++) << bitsCounterQ;
+    rawWord4 = *rawBitStreamPtr++ << bitsCounterQ;
     v3 = rawWord4 | (v3 << 16);
     ++pOut;
 }
@@ -318,7 +318,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
     DWORD v3; // edx@1
     char bitsCounterQ; // cl@1
     int pOut; // edi@1
-    int rawBitStreamPtr; // esi@1
+    WORD* rawBitStreamPtr; // esi@1
     int firstFrameWord; // eax@1
     int v8; // edx@1
 
@@ -344,19 +344,23 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
     char bitsToShiftFromTbl; // cl@28
     int rawWord2; // eax@29
     int AC_Coefficient; // [sp+Ch] [bp-4h]@1
-    unsigned int secondWordPtr; // [sp+18h] [bp+8h]@1
+    DWORD* secondWordPtr; // [sp+18h] [bp+8h]@1
 
     firstFrameWord = *pFrameData;
     AC_Coefficient = firstFrameWord;
-    secondWordPtr = (unsigned int)(pFrameData + 1);
-    
-    v8 = *(DWORD *)(2 * (secondWordPtr >> 1));
+
+    secondWordPtr = (DWORD*)(pFrameData + 1);
+
+    v8 = *secondWordPtr;
+
+
     __asm
     {
         rol v8, 16
     }
 
-    rawBitStreamPtr = (secondWordPtr >> 1) + 2;
+    rawBitStreamPtr = (pFrameData + 3);
+
     v9.HighPart = firstFrameWord;
     v9.LowPart = v8;
     v3 = v8 << 11;      // Take first 11 bits?
@@ -379,7 +383,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
                         {
                             while (1)
                             {
-                                while (1)
+                                while (1) // or while(table_index_2 < 32)
                                 {
                                     table_index_2 = (unsigned __int64)v3 << 13 >> 32; // 0x1FFF / 8191 table size? 8192/4=2048 entries?
                                     if (table_index_2 >= 32)
@@ -400,7 +404,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
                                     OutputWordAndAdvance(bitsCounterQ, rawWord2, rawBitStreamPtr, rawWord4, v3);
 
                                     *(WORD *)(2 * pOut++) = gOutputTbl_word_42A5C2[2 * table_index_1];
-                                }
+                                } // End while
 
                                 bitCounterCopy = bitsCounterQ;
                                 tblValueBits = byte_41A5C0[8 * table_index_2];
@@ -420,7 +424,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
                                 }
 
                                 OutputWordAndAdvance2(outputWord1, rawBitStreamPtr, rawWord4, pOut, bitsCounterQ, v3);
-                            }
+                            } // End while
                             *(WORD *)(2 * pOut++) = rawWord4;
 
                             if ((WORD)rawWord4 == MDEC_END)
@@ -452,7 +456,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
                         }
 
                         OutputWordAndAdvance2(v17, rawBitStreamPtr, rawWord4, pOut, bitsCounterQ, v3);
-                    }
+                    } // End while
                     
                     *(WORD *)(2 * pOut++) = rawWord4;
 
@@ -483,7 +487,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
 
 
                 OutputWordAndAdvance2(v21, rawBitStreamPtr, rawWord4, pOut, bitsCounterQ, v3);
-            }
+            } // End while
             *(WORD *)(2 * pOut++) = rawWord4;
         } while ((WORD)rawWord4 != MDEC_END);       // FE 00 is in the raw data
         
