@@ -131,7 +131,7 @@ unsigned char Clamp(float v)
 };
 
 static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, int yoff);
-int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput);
+int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput);
 
 static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
@@ -159,7 +159,7 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
  
     // Done once for the whole 320x240 image
    // const int firstWordOfRawBitStreamData = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream); // TODO: Reimpl
-    const int firstWordOfRawBitStreamData = decode_bitstream((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream);
+    const int firstWordOfRawBitStreamData = decode_bitstream((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned short int*)thisPtr->mDecodedBitStream);
 
     
 
@@ -298,13 +298,15 @@ static inline void OutputWordAndAdvance(char& bitsToShiftBy, int& rawWord1, WORD
     }
 }
 
-static inline void OutputWordAndAdvance2(LARGE_INTEGER& outputWord1, WORD*& rawBitStreamPtr, DWORD& rawWord4, int& pOut, char& bitsCounterQ, DWORD& v3)
+static inline void OutputWordAndAdvance2(LARGE_INTEGER& outputWord1, WORD*& rawBitStreamPtr, DWORD& rawWord4, unsigned short int*& pOut, char& bitsCounterQ, DWORD& v3)
 {
     outputWord1.HighPart = rawWord4;
     outputWord1.LowPart = v3;
-    *(WORD *)(2 * pOut) = (unsigned __int64)(outputWord1.QuadPart << 16) >> 32;
+    *pOut = (unsigned __int64)(outputWord1.QuadPart << 16) >> 32;
     rawWord4 = *rawBitStreamPtr++ << bitsCounterQ;
     v3 = rawWord4 | (v3 << 16);
+
+    // TODO: only move 1 byte not 2?
     ++pOut;
 }
 
@@ -312,12 +314,25 @@ static inline void OutputWordAndAdvance2(LARGE_INTEGER& outputWord1, WORD*& rawB
 #define MASK_10_BITS 0x3FF
 #define MDEC_END 0xFE00u
 
-int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
+static void SetLoWord(DWORD& v, WORD lo)
+{
+    WORD hiWord = HIWORD(v);
+    v = MAKELPARAM(lo, hiWord);
+}
+
+/*
+Expected:
+(b2 00) (00 fe) (d6 07) 00 fe 94 05 04 00 f0 03 05 00 04 00 ff 03 fe 03 ff
+
+Actual:
+(b2 00) (b2 fe) b2 fe b2 fe ff 0f ff 0f ff ff ff ff ff ff ff ff ff ff ff
+*/
+int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 {
     DWORD rawWord4; // eax@1
     DWORD v3; // edx@1
     char bitsCounterQ; // cl@1
-    int pOut; // edi@1
+    unsigned short int* pOut; // edi@1
     WORD* rawBitStreamPtr; // esi@1
     int firstFrameWord; // eax@1
     int v8; // edx@1
@@ -363,11 +378,11 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
 
     v9.HighPart = firstFrameWord;
     v9.LowPart = v8;
-    v3 = v8 << 11;      // Take first 11 bits?
+    v3 = v8 << 11;      // Take first 11 bits? Last usage of v8
     bitsCounterQ = 11;
     rawWord4 = ((unsigned __int64)(v9.QuadPart << 11) >> 32) & MASK_11_BITS;
-    *(WORD *)(2 * ((unsigned int)pOutput >> 1)) = rawWord4;// store in output
-    pOut = ((unsigned int)pOutput >> 1) + 1;
+    *pOutput = rawWord4; // store in output
+    pOut = pOutput + 1;
 
     while (1)
     {
@@ -403,7 +418,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
                                     
                                     OutputWordAndAdvance(bitsCounterQ, rawWord2, rawBitStreamPtr, rawWord4, v3);
 
-                                    *(WORD *)(2 * pOut++) = gOutputTbl_word_42A5C2[2 * table_index_1];
+                                    *pOut++ = gOutputTbl_word_42A5C2[2 * table_index_1];
                                 } // End while
 
                                 bitCounterCopy = bitsCounterQ;
@@ -413,10 +428,8 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
 
                                 OutputWordAndAdvance(bitsCounterQ, rawWord3, rawBitStreamPtr, rawWord4, v3);
 
-                               
-                                rawWord4 = rawWord4 & 0x0000FFFF;
-                                rawWord4 |= word_41A5C2[4 * table_index_2] & 0xFFFF;
-
+                                SetLoWord(rawWord4, word_41A5C2[4 * table_index_2]);
+                   
                                
                                 if ((WORD)rawWord4 != 0x7C1F) // 0b 11111 00000 11111
                                 {
@@ -425,7 +438,8 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
 
                                 OutputWordAndAdvance2(outputWord1, rawBitStreamPtr, rawWord4, pOut, bitsCounterQ, v3);
                             } // End while
-                            *(WORD *)(2 * pOut++) = rawWord4;
+
+                            *pOut++ = rawWord4;
 
                             if ((WORD)rawWord4 == MDEC_END)
                             {
@@ -436,8 +450,10 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
                                 }
                                 rawWord4 = v15 & MASK_11_BITS;
                                 v3 <<= 11;
-                                *(WORD *)(2 * pOut) = rawWord4;
+                                *pOut = rawWord4;
                                 bitsCounterQ += 11;
+
+                                // TODO: only 1 byte not 2?
                                 ++pOut;
                                 
                                 OutputWordAndAdvance(bitsCounterQ, rawWord5, rawBitStreamPtr, rawWord4, v3);
@@ -445,8 +461,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
                             }
 
                             // Set low word
-                            rawWord4 = rawWord4 & 0x0000FFFF;
-                            rawWord4 |= word_41A5C4[4 * table_index_2] & 0xFFFF;
+                            SetLoWord(rawWord4, word_41A5C4[4 * table_index_2]);
                         } while (!(WORD)rawWord4);
                         
                        
@@ -458,7 +473,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
                         OutputWordAndAdvance2(v17, rawBitStreamPtr, rawWord4, pOut, bitsCounterQ, v3);
                     } // End while
                     
-                    *(WORD *)(2 * pOut++) = rawWord4;
+                    *pOut++ = rawWord4;
 
                     if ((WORD)rawWord4 == MDEC_END)
                     {
@@ -468,15 +483,15 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
                             return AC_Coefficient;
                         }
                         rawWord4 = t11Bits & MASK_11_BITS;
-                        *(WORD *)(2 * pOut++) = rawWord4;
+                        *pOut++ = rawWord4;
                         bitsCounterQ += 11;
                         v3 <<= 11;
 
                         OutputWordAndAdvance(bitsCounterQ, rawWord7, rawBitStreamPtr, rawWord4, v3);
                     }
 
-                    rawWord4 = rawWord4 & 0x0000FFFF;
-                    rawWord4 |= word_41A5C6[4 * table_index_2] & 0xFFFF;
+                    SetLoWord(rawWord4, word_41A5C6[4 * table_index_2]);
+
                 } while (!(WORD)rawWord4);
 
               
@@ -488,7 +503,9 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
 
                 OutputWordAndAdvance2(v21, rawBitStreamPtr, rawWord4, pOut, bitsCounterQ, v3);
             } // End while
-            *(WORD *)(2 * pOut++) = rawWord4;
+
+            *pOut++ = rawWord4;
+
         } while ((WORD)rawWord4 != MDEC_END);       // FE 00 is in the raw data
         
         tmp11Bits2 = (unsigned __int64)v3 << 11 >> 32;
@@ -497,7 +514,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned int *pOutput)
             break;
         }
         rawWord4 = tmp11Bits2 & MASK_11_BITS; // Mask 11 bits
-        *(WORD *)(2 * pOut++) = rawWord4; // Add to output
+        *pOut++ = rawWord4; // Add to output
         bitsCounterQ += 11; // Consumed 11 bits
         v3 <<= 11; // Shift v4 by consumed bits
 
