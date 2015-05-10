@@ -297,125 +297,6 @@ static void SetLoWord(DWORD& v, WORD lo)
     v = MAKELPARAM(lo, hiWord);
 }
 
-/*
-42A5C0 - indexing at * 4 returning 1 (bits to shift)
-42A5C2 - indexing at * 2 returning 2 (output word)
-
-41A5C0 - indexing * 8 returning 1 (bits to shift)
-41A5C2 - indexing * 4 returning 2 - sets lo word
-41A5C4 - indeding * 4 returning 2 - sets lo word
-41A5C6 - indexing * 4 returning 2 - sets lo word
-
-0x42A5C0-0x41A5C0
-0x10000 = 65536, 64kb table x2
-
-Unique elements of table 2:
-
-Bits
-0
-6
-7
-8
-9
-10
-11
-12
-13
-
-W1
-0
-4
-7
-8
-9
-10
-11
-1013
-1014
-1015
-1016
-1017
-1020
-1026
-1028
-1029
-2043
-2044
-2046
-2050
-2051
-2052
-3068
-3069
-3070
-3075
-4093
-4098
-4099
-5117
-5118
-5121
-5122
-6142
-6143
-6145
-6146
-7166
-7167
-7169
-7170
-8190
-8191
-8193
-8194
-9214
-9215
-9217
-10239
-14337
-15359
-15361
-16383
-16385
-17407
-17409
-18431
-18433
-19455
-19457
-20479
-20481
-21503
-21505
-22527
-31775 0x7C1F
-
-W2
-0
-1
-2
-3
-1021
-1022
-1023
-1025
-2047
-2049
-3071
-3073
-4095
-4097
-5119
-31775
-65024
-
-W3
-0
-1
-1023
-65024
-*/
-
 int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 {
     DWORD rawWord4; // eax@1
@@ -423,7 +304,6 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
     char bitsToShiftBy; // cl@1
     unsigned short int* pOut; // edi@1
     WORD* rawBitStreamPtr; // esi@1
-    int v8; // edx@1
 
 
     unsigned int table_index_2; // ebx@2
@@ -440,24 +320,22 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 
     int rawWord2; // eax@29
     int AC_Coefficient; // [sp+Ch] [bp-4h]@1
-    DWORD* secondWordPtr; // [sp+18h] [bp+8h]@1
 
 
     AC_Coefficient = *pFrameData;
 
-    secondWordPtr = (DWORD*)(pFrameData + 1);
+    const DWORD* secondWordPtr = (DWORD*)(pFrameData + 1);
+    const unsigned int v8 = *secondWordPtr; // Last used
 
-    v8 = *secondWordPtr; // Last used
-
+    rawBitStreamPtr = (pFrameData + 3);
+    
     __asm
     {
         rol v8, 16
     }
 
-    rawBitStreamPtr = (pFrameData + 3);
 
-    rawWord4 = (v8 >> (32 - 11)) & MASK_11_BITS; 
-
+    rawWord4 = v8 >> (32 - 11);
     v3 = v8 << 11;      //  number of zero-value AC Coefficients? End v8 use
     bitsToShiftBy = 11;
   
@@ -485,7 +363,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                     {
                                         break;
                                     }
-                                    table_index_1 = v3 >> (32-17); // 0x1FFFF / 131071, 131072/4=32768 entries?
+                                    table_index_1 = v3 >> (32-17); // 0x1FFFF / 131072, 131072/4=32768 entries?
                                   
                                     v3 = v3 << 8;
                                     bitsToShiftBy = bitsToShiftBy + 8;
