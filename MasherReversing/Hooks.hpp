@@ -107,9 +107,5 @@ static_assert(sizeof(Tbl2) == 8, "Wrong size");
 static Tbl1* gTbl1 = (Tbl1*)0x42A5C0;
 static Tbl2* gTbl2 = (Tbl2*)0x41A5C0;
 
-//static unsigned short int* word_41A5C2 = (unsigned short int*)0x41A5C2;
-//static unsigned short int* word_41A5C4 = (unsigned short int*)0x41A5C4;
-//static unsigned short int* word_41A5C6 = (unsigned short int*)0x41A5C6;
-
 
 void InstallHooks();

@@ -2,6 +2,7 @@
 #include "jmphookedfunction.hpp"
 #include <algorithm>
 #include <string>
+#include <set>
 
 #undef min
 #undef max
@@ -312,6 +313,111 @@ static void SetLoWord(DWORD& v, WORD lo)
 0x42A5C0-0x41A5C0
 0x10000 = 65536, 64kb table x2
 
+Unique elements of table 2:
+
+Bits
+0
+6
+7
+8
+9
+10
+11
+12
+13
+
+W1
+0
+4
+7
+8
+9
+10
+11
+1013
+1014
+1015
+1016
+1017
+1020
+1026
+1028
+1029
+2043
+2044
+2046
+2050
+2051
+2052
+3068
+3069
+3070
+3075
+4093
+4098
+4099
+5117
+5118
+5121
+5122
+6142
+6143
+6145
+6146
+7166
+7167
+7169
+7170
+8190
+8191
+8193
+8194
+9214
+9215
+9217
+10239
+14337
+15359
+15361
+16383
+16385
+17407
+17409
+18431
+18433
+19455
+19457
+20479
+20481
+21503
+21505
+22527
+31775 0x7C1F
+
+W2
+0
+1
+2
+3
+1021
+1022
+1023
+1025
+2047
+2049
+3071
+3073
+4095
+4097
+5119
+31775
+65024
+
+W3
+0
+1
+1023
+65024
 */
 
 int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
@@ -358,7 +464,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 
     v9.HighPart = *pFrameData;
     v9.LowPart = v8;
-    rawWord4 = ((unsigned __int64)(v9.QuadPart << 11) >> 32) & MASK_11_BITS; // end of v9 use
+    rawWord4 = ((v9.QuadPart << 11) >> 32) & MASK_11_BITS; // end of v9 use
 
     v3 = v8 << 11;      //  number of zero-value AC Coefficients? End v8 use
     bitsToShiftBy = 11;
@@ -382,12 +488,12 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                             {
                                 while (1)
                                 {
-                                    table_index_2 = (unsigned __int64)v3 << 13 >> 32; // 0x1FFF / 8191 table size? 8192/4=2048 entries?
+                                    table_index_2 = v3 >> (32-13); // 0x1FFF / 8191 table size? 8192/8=1024 entries?
                                     if (table_index_2 >= 32)
                                     {
                                         break;
                                     }
-                                    table_index_1 = (unsigned __int64)v3 << 17 >> 32; // 0x1FFFF / 131071, 131072/4=32768 entries?
+                                    table_index_1 = v3 >> (32-17); // 0x1FFFF / 131071, 131072/4=32768 entries?
                                   
                                     v3 = v3 << 8;
                                     bitsToShiftBy = bitsToShiftBy + 8;// 11+8=19
@@ -403,14 +509,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 
                                     // Everything in the table is 0's after 4266 bytes 4266/2=2133 to perhaps 2048/4096 is max?
                                     *pOut++ = gTbl1[table_index_1].mOutputWord;
-                                    
-                                    /*
-                                    for (int i = 0; i < 0x1FFFF; i++)
-                                    {
-                                        auto w = gOutputTbl_word_42A5C2[2 * i];
-                                        std::string s = std::to_string(w);
-                                        OutputDebugString((s + "\n").c_str());
-                                    }*/
+
                                 } // End while
 
 
@@ -421,8 +520,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                 CheckForEscapeCode(bitsToShiftBy, rawWord3, rawBitStreamPtr, rawWord4, v3);
 
                                 SetLoWord(rawWord4, gTbl2[table_index_2].mOutputWord1);
-                   
-                               
+
                                 if ((WORD)rawWord4 != 0x7C1F) // 0b 11111 00000 11111
                                 {
                                     break;
@@ -435,7 +533,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 
                             if ((WORD)rawWord4 == MDEC_END)
                             {
-                                v15 = (unsigned __int64)v3 << 11 >> 32;
+                                v15 = v3 >> (32 - 11);
                                 if (v15 == MASK_10_BITS)
                                 {
                                     return AC_Coefficient;
@@ -468,7 +566,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 
                     if ((WORD)rawWord4 == MDEC_END)
                     {
-                        t11Bits = (unsigned __int64)v3 << 11 >> 32;
+                        t11Bits = v3 >> (32 - 11);
                         if (t11Bits == MASK_10_BITS)
                         {
                             return AC_Coefficient;
@@ -499,7 +597,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 
         } while ((WORD)rawWord4 != MDEC_END);       // FE 00 is in the raw data
         
-        tmp11Bits2 = (unsigned __int64)v3 << 11 >> 32;
+        tmp11Bits2 = v3 >> (32-11);
         if (tmp11Bits2 == MASK_10_BITS) // 10 bits
         {
             break;
