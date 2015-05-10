@@ -56,34 +56,12 @@ struct ddv_class
 static_assert(sizeof(ddv_class) == 0x94, "Structure size must match exactly!");
 
 // We can't compile the hook stubs as __thiscall, so __fastcall is used as a workaround/hack
-char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsigned char* screenBuffer);
-typedef decltype(&ddv__func5_block_decoder_q) ddv__func5_block_decoder_q_type;
+char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* screenBuffer);
+typedef decltype(&decode_ddv_frame) ddv__func5_block_decoder_q_type;
 
 static ddv__func5_block_decoder_q_type real_ddv__func5_block_decoder_q = (ddv__func5_block_decoder_q_type)0x00409FE0;
 static JmpHookedFunction<ddv__func5_block_decoder_q_type>* ddv_func6_decodes_block_q_hook;
 
-// Wrappers for hand made calling conventions
-static void do_write_block_bit1_no_mmx(int param) // TODO: Reimpl
-{
-    __asm
-    {
-        mov ecx, param
-        push ecx
-        call write_block_bit1_no_mmx_ptr
-        pop ecx
-    }
-}
-
-static void do_write_block_other_bits_no_mmx(int param) // TODO: Reimpl
-{
-    __asm
-    {
-        mov ecx, param
-            push ecx
-            call write_block_other_bits_no_mmx_ptr
-            pop ecx
-    }
-}
 
 static void do_blit_output_no_mmx(int macroBlockBuffer, int* decodedBitStream) // TODO: Reimpl
 {
@@ -133,7 +111,7 @@ unsigned char Clamp(float v)
 static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, int yoff);
 int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput);
 
-static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
+static char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
     if (!thisPtr->mHasVideo)
     {
@@ -149,19 +127,16 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
         // Should never happen - at least with the test data
         abort();
         // forcing this to get called resulting in really blocky video frames for keyframes > 1
-        //decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, _DWORD, int, int *))DecodeMacroBlockReleated_Q;
+        //decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, _DWORD, int, int *))DecodeMacroBlockReleated_Q; // TODO: Reimpl
     }
     else
     {
         // gending uses this one - this outputs macroblock coefficients?
-        decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, DWORD, int, int *))ddv_func7_DecodeMacroBlock_ptr;
+        decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, DWORD, int, int *))ddv_func7_DecodeMacroBlock_ptr; // TODO: Reimpl
     }
  
     // Done once for the whole 320x240 image
-   // const int firstWordOfRawBitStreamData = decode_bitstream_q_ptr((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned int*)thisPtr->mDecodedBitStream); // TODO: Reimpl
     const int firstWordOfRawBitStreamData = decode_bitstream((WORD*)thisPtr->mRawFrameBitStreamData, (unsigned short int*)thisPtr->mDecodedBitStream);
-
-    
 
     // Each block only seems to have 1 colour if this isn't called, but then resizing the window seems to fix it sometimes (perhaps causes
     // this function to be called else where).
@@ -188,7 +163,7 @@ static char __fastcall ddv__func5_block_decoder_q(void* hack, ddv_class *thisPtr
             const int dataSizeBytes = thisPtr->mBlockDataSize_q * 4; // Convert to byte count 64*4=256
 
             const int afterBlock1Ptr = decodeMacroBlockfPtr(bitstreamCurPos, Cr_block, block1Output, 0, 0, 0);
-            do_blit_output_no_mmx(block1Output, Cr_block);
+            do_blit_output_no_mmx(block1Output, Cr_block); // TODO: Reimpl
             const int block2Output = dataSizeBytes + block1Output;
 
             const int afterBlock2Ptr = decodeMacroBlockfPtr(afterBlock1Ptr, Cb_block, block2Output, 0, 0, 0);
@@ -320,13 +295,7 @@ static void SetLoWord(DWORD& v, WORD lo)
     v = MAKELPARAM(lo, hiWord);
 }
 
-/*
-Expected:
-(b2 00) (00 fe) (d6 07) 00 fe 94 05 04 00 f0 03 05 00 04 00 ff 03 fe 03 ff
 
-Actual:
-(b2 00) (b2 fe) b2 fe b2 fe ff 0f ff 0f ff ff ff ff ff ff ff ff ff ff ff
-*/
 int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 {
     DWORD rawWord4; // eax@1
@@ -535,5 +504,5 @@ static JmpHookedFunction<ddv_func7_DecodeMacroBlock>* ddv_func7_DecodeMacroBlock
 
 void InstallHooks()
 {
-    ddv_func6_decodes_block_q_hook = new JmpHookedFunction<ddv__func5_block_decoder_q_type>(real_ddv__func5_block_decoder_q, &ddv__func5_block_decoder_q);
+    ddv_func6_decodes_block_q_hook = new JmpHookedFunction<ddv__func5_block_decoder_q_type>(real_ddv__func5_block_decoder_q, &decode_ddv_frame);
 }
