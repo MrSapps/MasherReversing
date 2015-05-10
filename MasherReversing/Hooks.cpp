@@ -1,6 +1,7 @@
 #include "Hooks.hpp"
 #include "jmphookedfunction.hpp"
 #include <algorithm>
+#include <string>
 
 #undef min
 #undef max
@@ -264,11 +265,12 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
 static inline void CheckForEscapeCode(char& bitsToShiftBy, int& rawWord1, WORD*& rawBitStreamPtr, DWORD& rawWord4, DWORD& v25)
 {
     // I think this is used as an escape code?
-    if (bitsToShiftBy & 0x10)   // 0b10000 if bit 5 set
+    if (bitsToShiftBy & 16)   // 0b10000 if bit 5 set
     {
         rawWord1 = *rawBitStreamPtr;
-        bitsToShiftBy &= 15;
         ++rawBitStreamPtr;
+
+        bitsToShiftBy &= 15;
         rawWord4 = rawWord1 << bitsToShiftBy;
         v25 |= rawWord4;
     }
@@ -279,12 +281,12 @@ static inline void OutputWordAndAdvance(WORD*& rawBitStreamPtr, DWORD& rawWord4,
     LARGE_INTEGER outputWord1;
     outputWord1.HighPart = rawWord4;
     outputWord1.LowPart = v3;
+
     *pOut = outputWord1.QuadPart << 16 >> 32;
+    ++pOut;
+
     rawWord4 = *rawBitStreamPtr++ << numBitsToShiftBy;
     v3 = rawWord4 | (v3 << 16);
-
-
-    ++pOut;
 }
 
 #define MASK_11_BITS 0x7FF
@@ -298,6 +300,19 @@ static void SetLoWord(DWORD& v, WORD lo)
     v = MAKELPARAM(lo, hiWord);
 }
 
+/*
+42A5C0 - indexing at * 4 returning 1 (bits to shift)
+42A5C2 - indexing at * 2 returning 2 (output word)
+
+41A5C0 - indexing * 8 returning 1 (bits to shift)
+41A5C2 - indexing * 4 returning 2 - sets lo word
+41A5C4 - indeding * 4 returning 2 - sets lo word
+41A5C6 - indexing * 4 returning 2 - sets lo word
+
+0x42A5C0-0x41A5C0
+0x10000 = 65536, 64kb table x2
+
+*/
 
 int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 {
@@ -321,7 +336,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
     int rawWord9; // eax@24
     int table_index_1; // ebx@26
     int rawWord1; // eax@27
-    char bitsToShiftFromTbl; // cl@28
+
     int rawWord2; // eax@29
     int AC_Coefficient; // [sp+Ch] [bp-4h]@1
     DWORD* secondWordPtr; // [sp+18h] [bp+8h]@1
@@ -380,13 +395,22 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                     CheckForEscapeCode(bitsToShiftBy, rawWord1, rawBitStreamPtr, rawWord4, v3);
 
                                    
-                                    bitsToShiftFromTbl = gBitsToShiftByTable_byte_42A5C0[4 * table_index_1];// all globals in here seem to be part of the same data
+                                    const char bitsToShiftFromTbl = gBitsToShiftByTable_byte_42A5C0[4 * table_index_1];// all globals in here seem to be part of the same data
                                     v3 = v3 << bitsToShiftFromTbl;
                                     bitsToShiftBy = bitsToShiftBy + bitsToShiftFromTbl;
                                     
                                     CheckForEscapeCode(bitsToShiftBy, rawWord2, rawBitStreamPtr, rawWord4, v3);
 
+                                    // Everything in the table is 0's after 4266 bytes 4266/2=2133 to perhaps 2048/4096 is max?
                                     *pOut++ = gOutputTbl_word_42A5C2[2 * table_index_1];
+                                    
+                                    /*
+                                    for (int i = 0; i < 0x1FFFF; i++)
+                                    {
+                                        auto w = gOutputTbl_word_42A5C2[2 * i];
+                                        std::string s = std::to_string(w);
+                                        OutputDebugString((s + "\n").c_str());
+                                    }*/
                                 } // End while
 
 
@@ -421,7 +445,6 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                 *pOut = rawWord4;
                                 bitsToShiftBy += 11;
 
-                                // TODO: only 1 byte not 2?
                                 ++pOut;
                                 
                                 CheckForEscapeCode(bitsToShiftBy, rawWord5, rawBitStreamPtr, rawWord4, v3);
