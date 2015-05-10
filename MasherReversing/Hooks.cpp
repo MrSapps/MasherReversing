@@ -279,11 +279,7 @@ static inline void CheckForEscapeCode(char& bitsToShiftBy, int& rawWord1, WORD*&
 
 static inline void OutputWordAndAdvance(WORD*& rawBitStreamPtr, DWORD& rawWord4, unsigned short int*& pOut, char& numBitsToShiftBy, DWORD& v3)
 {
-    LARGE_INTEGER outputWord1;
-    outputWord1.HighPart = rawWord4;
-    outputWord1.LowPart = v3;
-
-    *pOut = outputWord1.QuadPart << 16 >> 32;
+    *pOut = v3 >> (32 - 16);
     ++pOut;
 
     rawWord4 = *rawBitStreamPtr++ << numBitsToShiftBy;
@@ -429,7 +425,6 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
     WORD* rawBitStreamPtr; // esi@1
     int v8; // edx@1
 
-    LARGE_INTEGER v9; // qt0@1
 
     unsigned int table_index_2; // ebx@2
     char tblValueBits; // cl@3
@@ -454,7 +449,6 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 
     v8 = *secondWordPtr; // Last used
 
-
     __asm
     {
         rol v8, 16
@@ -462,9 +456,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 
     rawBitStreamPtr = (pFrameData + 3);
 
-    v9.HighPart = *pFrameData;
-    v9.LowPart = v8;
-    rawWord4 = ((v9.QuadPart << 11) >> 32) & MASK_11_BITS; // end of v9 use
+    rawWord4 = (v8 >> (32 - 11)) & MASK_11_BITS; 
 
     v3 = v8 << 11;      //  number of zero-value AC Coefficients? End v8 use
     bitsToShiftBy = 11;
@@ -496,12 +488,12 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                     table_index_1 = v3 >> (32-17); // 0x1FFFF / 131071, 131072/4=32768 entries?
                                   
                                     v3 = v3 << 8;
-                                    bitsToShiftBy = bitsToShiftBy + 8;// 11+8=19
+                                    bitsToShiftBy = bitsToShiftBy + 8;
 
                                     CheckForEscapeCode(bitsToShiftBy, rawWord1, rawBitStreamPtr, rawWord4, v3);
 
                                    
-                                    const char bitsToShiftFromTbl = gTbl1[table_index_1].mBitsToShift;// all globals in here seem to be part of the same data
+                                    const char bitsToShiftFromTbl = gTbl1[table_index_1].mBitsToShift;
                                     v3 = v3 << bitsToShiftFromTbl;
                                     bitsToShiftBy = bitsToShiftBy + bitsToShiftFromTbl;
                                     
