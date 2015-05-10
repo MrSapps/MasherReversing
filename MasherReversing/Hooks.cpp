@@ -395,14 +395,14 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                     CheckForEscapeCode(bitsToShiftBy, rawWord1, rawBitStreamPtr, rawWord4, v3);
 
                                    
-                                    const char bitsToShiftFromTbl = gBitsToShiftByTable_byte_42A5C0[4 * table_index_1];// all globals in here seem to be part of the same data
+                                    const char bitsToShiftFromTbl = gTbl1[table_index_1].mBitsToShift;// all globals in here seem to be part of the same data
                                     v3 = v3 << bitsToShiftFromTbl;
                                     bitsToShiftBy = bitsToShiftBy + bitsToShiftFromTbl;
                                     
                                     CheckForEscapeCode(bitsToShiftBy, rawWord2, rawBitStreamPtr, rawWord4, v3);
 
                                     // Everything in the table is 0's after 4266 bytes 4266/2=2133 to perhaps 2048/4096 is max?
-                                    *pOut++ = gOutputTbl_word_42A5C2[2 * table_index_1];
+                                    *pOut++ = gTbl1[table_index_1].mOutputWord;
                                     
                                     /*
                                     for (int i = 0; i < 0x1FFFF; i++)
@@ -414,13 +414,13 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                 } // End while
 
 
-                                tblValueBits = byte_41A5C0[8 * table_index_2];
+                                tblValueBits = gTbl2[table_index_2].mBitsToShift;
                                 v3 <<= tblValueBits;
                                 bitsToShiftBy = bitsToShiftBy + tblValueBits;
 
                                 CheckForEscapeCode(bitsToShiftBy, rawWord3, rawBitStreamPtr, rawWord4, v3);
 
-                                SetLoWord(rawWord4, word_41A5C2[4 * table_index_2]);
+                                SetLoWord(rawWord4, gTbl2[table_index_2].mOutputWord1);
                    
                                
                                 if ((WORD)rawWord4 != 0x7C1F) // 0b 11111 00000 11111
@@ -452,7 +452,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                             }
 
                             // Set low word
-                            SetLoWord(rawWord4, word_41A5C4[4 * table_index_2]);
+                            SetLoWord(rawWord4, gTbl2[table_index_2].mOutputWord2);
                         } while (!(WORD)rawWord4);
                         
                        
@@ -481,7 +481,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                         CheckForEscapeCode(bitsToShiftBy, rawWord7, rawBitStreamPtr, rawWord4, v3);
                     }
 
-                    SetLoWord(rawWord4, word_41A5C6[4 * table_index_2]);
+                    SetLoWord(rawWord4, gTbl2[table_index_2].mOutputWord3);
 
                 } while (!(WORD)rawWord4);
 

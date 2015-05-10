@@ -78,14 +78,38 @@ static DWORD* p_dword_62EFD4 = (DWORD*)0x0062EFD4;
 static DWORD& gMacroBlockStripWidthInBytes = *p_dword_62EFD4;
 
 
-static char* gBitsToShiftByTable_byte_42A5C0 = (char*)0x42A5C0;
-static char* byte_41A5C0 = (char*)0x41A5C0;
+#pragma pack(push)
+#pragma pack(1)
+struct Tbl1
+{
+    char mBitsToShift;
+    char padding;
+    WORD mOutputWord;
+};
+#pragma pack(pop)
+static_assert(sizeof(Tbl1) == 4, "Wrong size");
 
-static unsigned short int* gOutputTbl_word_42A5C2 = (unsigned short int*)0x42A5C2;
-static unsigned short int* word_41A5C2 = (unsigned short int*)0x41A5C2;
 
-static unsigned short int* word_41A5C4 = (unsigned short int*)0x41A5C4;
-static unsigned short int* word_41A5C6 = (unsigned short int*)0x41A5C6;
+#pragma pack(push)
+#pragma pack(1)
+struct Tbl2
+{
+    char mBitsToShift;
+    char padding;
+    WORD mOutputWord1;
+    WORD mOutputWord2;
+    WORD mOutputWord3;
+};
+#pragma pack(pop)
+static_assert(sizeof(Tbl2) == 8, "Wrong size");
+
+
+static Tbl1* gTbl1 = (Tbl1*)0x42A5C0;
+static Tbl2* gTbl2 = (Tbl2*)0x41A5C0;
+
+//static unsigned short int* word_41A5C2 = (unsigned short int*)0x41A5C2;
+//static unsigned short int* word_41A5C4 = (unsigned short int*)0x41A5C4;
+//static unsigned short int* word_41A5C6 = (unsigned short int*)0x41A5C6;
 
 
 void InstallHooks();
