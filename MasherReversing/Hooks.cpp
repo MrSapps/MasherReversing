@@ -279,8 +279,7 @@ static inline void CheckForEscapeCode(char& bitsToShiftBy, int& rawWord1, WORD*&
 
 static inline void OutputWordAndAdvance(WORD*& rawBitStreamPtr, DWORD& rawWord4, unsigned short int*& pOut, char& numBitsToShiftBy, DWORD& v3)
 {
-    *pOut = v3 >> (32 - 16);
-    ++pOut;
+    *pOut++ = v3 >> (32 - 16);
 
     rawWord4 = *rawBitStreamPtr++ << numBitsToShiftBy;
     v3 = rawWord4 | (v3 << 16);
@@ -297,21 +296,28 @@ static void SetLoWord(DWORD& v, WORD lo)
     v = MAKELPARAM(lo, hiWord);
 }
 
+static DWORD GetBits(DWORD value, DWORD numBits)
+{
+    return value >> (32 - numBits);
+}
+
+static void SkipBits(DWORD& value, DWORD numBits)
+{
+    value = value << numBits;
+}
+
 int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 {
     DWORD rawWord4; // eax@1
     DWORD v3; // edx@1
     char bitsToShiftBy; // cl@1
-    unsigned short int* pOut; // edi@1
     WORD* rawBitStreamPtr; // esi@1
 
 
     unsigned int table_index_2; // ebx@2
     char tblValueBits; // cl@3
     int rawWord3; // eax@4
-    int v15; // eax@8
     int rawWord5; // eax@10
-    int t11Bits; // eax@15
     int rawWord7; // eax@17
     int tmp11Bits2; // eax@22
     int rawWord9; // eax@24
@@ -325,7 +331,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
     AC_Coefficient = *pFrameData;
 
     const DWORD* secondWordPtr = (DWORD*)(pFrameData + 1);
-    const unsigned int v8 = *secondWordPtr; // Last used
+    DWORD v8 = *secondWordPtr; // Last used
 
     rawBitStreamPtr = (pFrameData + 3);
     
@@ -335,12 +341,12 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
     }
 
 
-    rawWord4 = v8 >> (32 - 11);
-    v3 = v8 << 11;      //  number of zero-value AC Coefficients? End v8 use
+    rawWord4 = GetBits(v8, 11);
+    SkipBits(v8, 11);
+    v3 = v8;
     bitsToShiftBy = 11;
   
-    *pOutput = rawWord4; // store in output
-    pOut = pOutput + 1;
+    *pOutput++ = rawWord4; // store in output
 
     while (1)
     {
@@ -358,14 +364,14 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                             {
                                 while (1)
                                 {
-                                    table_index_2 = v3 >> (32-13); // 0x1FFF / 8191 table size? 8192/8=1024 entries?
+                                    table_index_2 = GetBits(v3, 13); // 0x1FFF / 8191 table size? 8192/8=1024 entries?
                                     if (table_index_2 >= 32)
                                     {
                                         break;
                                     }
-                                    table_index_1 = v3 >> (32-17); // 0x1FFFF / 131072, 131072/4=32768 entries?
+                                    table_index_1 = GetBits(v3, 17); // 0x1FFFF / 131072, 131072/4=32768 entries?
                                   
-                                    v3 = v3 << 8;
+                                    SkipBits(v3, 8);
                                     bitsToShiftBy = bitsToShiftBy + 8;
 
                                     CheckForEscapeCode(bitsToShiftBy, rawWord1, rawBitStreamPtr, rawWord4, v3);
@@ -378,7 +384,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                     CheckForEscapeCode(bitsToShiftBy, rawWord2, rawBitStreamPtr, rawWord4, v3);
 
                                     // Everything in the table is 0's after 4266 bytes 4266/2=2133 to perhaps 2048/4096 is max?
-                                    *pOut++ = gTbl1[table_index_1].mOutputWord;
+                                    *pOutput++ = gTbl1[table_index_1].mOutputWord;
 
                                 } // End while
 
@@ -396,22 +402,22 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                     break;
                                 }
 
-                                OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOut, bitsToShiftBy, v3);
+                                OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOutput, bitsToShiftBy, v3);
                             } // End while
 
-                            *pOut++ = rawWord4;
+                            *pOutput++ = rawWord4;
 
                             if ((WORD)rawWord4 == MDEC_END)
                             {
-                                v15 = v3 >> (32 - 11);
+                                int v15 = GetBits(v3, 11);
                                 if (v15 == MASK_10_BITS)
                                 {
                                     return AC_Coefficient;
                                 }
                                 rawWord4 = v15 & MASK_11_BITS;
-                                v3 <<= 11;
+                                SkipBits(v3, 11);
                                 bitsToShiftBy += 11;
-                                *pOut++ = rawWord4;
+                                *pOutput++ = rawWord4;
 
                                 CheckForEscapeCode(bitsToShiftBy, rawWord5, rawBitStreamPtr, rawWord4, v3);
 
@@ -427,22 +433,22 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                             break;
                         }
 
-                        OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOut, bitsToShiftBy, v3);
+                        OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOutput, bitsToShiftBy, v3);
                     } // End while
                     
-                    *pOut++ = rawWord4;
+                    *pOutput++ = rawWord4;
 
                     if ((WORD)rawWord4 == MDEC_END)
                     {
-                        t11Bits = v3 >> (32 - 11);
+                        int t11Bits = GetBits(v3, 11);
                         if (t11Bits == MASK_10_BITS)
                         {
                             return AC_Coefficient;
                         }
                         rawWord4 = t11Bits & MASK_11_BITS;
-                        *pOut++ = rawWord4;
+                        *pOutput++ = rawWord4;
                         bitsToShiftBy += 11;
-                        v3 <<= 11;
+                        SkipBits(v3, 11);
 
                         CheckForEscapeCode(bitsToShiftBy, rawWord7, rawBitStreamPtr, rawWord4, v3);
                     }
@@ -458,22 +464,22 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                 }
 
 
-                OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOut, bitsToShiftBy, v3);
+                OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOutput, bitsToShiftBy, v3);
             } // End while
 
-            *pOut++ = rawWord4;
+            *pOutput++ = rawWord4;
 
         } while ((WORD)rawWord4 != MDEC_END);       // FE 00 is in the raw data
         
-        tmp11Bits2 = v3 >> (32-11);
+        tmp11Bits2 = GetBits(v3, 11);
         if (tmp11Bits2 == MASK_10_BITS) // 10 bits
         {
             return AC_Coefficient;
         }
         rawWord4 = tmp11Bits2 & MASK_11_BITS; // Mask 11 bits
-        *pOut++ = rawWord4; // Add to output
+        *pOutput++ = rawWord4; // Add to output
         bitsToShiftBy += 11; // Consumed 11 bits
-        v3 <<= 11; // Shift v4 by consumed bits - now  number of zero-value AC Coefficients?
+        SkipBits(v3, 11);
 
         CheckForEscapeCode(bitsToShiftBy, rawWord9, rawBitStreamPtr, rawWord4, v3);
 
