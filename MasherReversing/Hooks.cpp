@@ -309,39 +309,21 @@ static void SkipBits(DWORD& value, char numBits, char& bitPosCounter)
 
 int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 {
-    DWORD rawWord4; // eax@1
-    DWORD v3; // edx@1
-
-    WORD* rawBitStreamPtr; // esi@1
-
-
-    unsigned int table_index_2; // ebx@2
-    int rawWord3; // eax@4
-    int rawWord5; // eax@10
-    int rawWord7; // eax@17
-    int rawWord9; // eax@24
-    int rawWord1; // eax@27
-
-    int rawWord2; // eax@29
+    unsigned int table_index_2 = 0; // ebx@2
     int ret = *pFrameData;
-
-
-
     DWORD v8 = *(DWORD*)(pFrameData + 1);
-
-    rawBitStreamPtr = (pFrameData + 3);
+    WORD* rawBitStreamPtr = (pFrameData + 3);
     
     __asm
     {
         rol v8, 16
     }
 
-
-    rawWord4 = GetBits(v8, 11);
+    DWORD rawWord4 = GetBits(v8, 11);
 
     char bitsShiftedCounter = 0;
     SkipBits(v8, 11, bitsShiftedCounter);
-    v3 = v8;
+    DWORD v3 = v8;
 
     *pOutput++ = rawWord4; // store in output
 
@@ -370,6 +352,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                   
                                     SkipBits(v3, 8, bitsShiftedCounter);
 
+                                    int rawWord1;
                                     CheckForEscapeCode(bitsShiftedCounter, rawWord1, rawBitStreamPtr, rawWord4, v3);
 
                                    
@@ -377,6 +360,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 
                                     SkipBits(v3, bitsToShiftFromTbl, bitsShiftedCounter);
 
+                                    int rawWord2;
                                     CheckForEscapeCode(bitsShiftedCounter, rawWord2, rawBitStreamPtr, rawWord4, v3);
 
                                     // Everything in the table is 0's after 4266 bytes 4266/2=2133 to perhaps 2048/4096 is max?
@@ -389,6 +373,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                 
                                 SkipBits(v3, tblValueBits, bitsShiftedCounter);
 
+                                int rawWord3;
                                 CheckForEscapeCode(bitsShiftedCounter, rawWord3, rawBitStreamPtr, rawWord4, v3);
 
                                 SetLoWord(rawWord4, gTbl2[table_index_2].mOutputWord1);
@@ -416,6 +401,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                 rawWord4 = v15 & MASK_11_BITS;
                                 *pOutput++ = rawWord4;
 
+                                int rawWord5;
                                 CheckForEscapeCode(bitsShiftedCounter, rawWord5, rawBitStreamPtr, rawWord4, v3);
 
                             }
@@ -447,6 +433,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                         rawWord4 = t11Bits & MASK_11_BITS;
                         *pOutput++ = rawWord4;
 
+                        int rawWord7;
                         CheckForEscapeCode(bitsShiftedCounter, rawWord7, rawBitStreamPtr, rawWord4, v3);
                     }
 
@@ -480,6 +467,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
         *pOutput++ = rawWord4;
       
     
+        int rawWord9;
         CheckForEscapeCode(bitsShiftedCounter, rawWord9, rawBitStreamPtr, rawWord4, v3);
 
     }
