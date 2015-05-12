@@ -301,37 +301,33 @@ static DWORD GetBits(DWORD value, DWORD numBits)
     return value >> (32 - numBits);
 }
 
-static void SkipBits(DWORD& value, DWORD numBits)
+static void SkipBits(DWORD& value, char numBits, char& bitPosCounter)
 {
     value = value << numBits;
+    bitPosCounter += numBits;
 }
 
 int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 {
     DWORD rawWord4; // eax@1
     DWORD v3; // edx@1
-    char bitsToShiftBy; // cl@1
+
     WORD* rawBitStreamPtr; // esi@1
 
 
     unsigned int table_index_2; // ebx@2
-    char tblValueBits; // cl@3
     int rawWord3; // eax@4
     int rawWord5; // eax@10
     int rawWord7; // eax@17
-    int tmp11Bits2; // eax@22
     int rawWord9; // eax@24
-    int table_index_1; // ebx@26
     int rawWord1; // eax@27
 
     int rawWord2; // eax@29
-    int AC_Coefficient; // [sp+Ch] [bp-4h]@1
+    int ret = *pFrameData;
 
 
-    AC_Coefficient = *pFrameData;
 
-    const DWORD* secondWordPtr = (DWORD*)(pFrameData + 1);
-    DWORD v8 = *secondWordPtr; // Last used
+    DWORD v8 = *(DWORD*)(pFrameData + 1);
 
     rawBitStreamPtr = (pFrameData + 3);
     
@@ -342,10 +338,11 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 
 
     rawWord4 = GetBits(v8, 11);
-    SkipBits(v8, 11);
+
+    char bitsShiftedCounter = 0;
+    SkipBits(v8, 11, bitsShiftedCounter);
     v3 = v8;
-    bitsToShiftBy = 11;
-  
+
     *pOutput++ = rawWord4; // store in output
 
     while (1)
@@ -369,19 +366,18 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                     {
                                         break;
                                     }
-                                    table_index_1 = GetBits(v3, 17); // 0x1FFFF / 131072, 131072/4=32768 entries?
+                                    const int table_index_1 = GetBits(v3, 17); // 0x1FFFF / 131072, 131072/4=32768 entries?
                                   
-                                    SkipBits(v3, 8);
-                                    bitsToShiftBy = bitsToShiftBy + 8;
+                                    SkipBits(v3, 8, bitsShiftedCounter);
 
-                                    CheckForEscapeCode(bitsToShiftBy, rawWord1, rawBitStreamPtr, rawWord4, v3);
+                                    CheckForEscapeCode(bitsShiftedCounter, rawWord1, rawBitStreamPtr, rawWord4, v3);
 
                                    
                                     const char bitsToShiftFromTbl = gTbl1[table_index_1].mBitsToShift;
-                                    v3 = v3 << bitsToShiftFromTbl;
-                                    bitsToShiftBy = bitsToShiftBy + bitsToShiftFromTbl;
-                                    
-                                    CheckForEscapeCode(bitsToShiftBy, rawWord2, rawBitStreamPtr, rawWord4, v3);
+
+                                    SkipBits(v3, bitsToShiftFromTbl, bitsShiftedCounter);
+
+                                    CheckForEscapeCode(bitsShiftedCounter, rawWord2, rawBitStreamPtr, rawWord4, v3);
 
                                     // Everything in the table is 0's after 4266 bytes 4266/2=2133 to perhaps 2048/4096 is max?
                                     *pOutput++ = gTbl1[table_index_1].mOutputWord;
@@ -389,11 +385,11 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                 } // End while
 
 
-                                tblValueBits = gTbl2[table_index_2].mBitsToShift;
-                                v3 <<= tblValueBits;
-                                bitsToShiftBy = bitsToShiftBy + tblValueBits;
+                                const char tblValueBits = gTbl2[table_index_2].mBitsToShift;
+                                
+                                SkipBits(v3, tblValueBits, bitsShiftedCounter);
 
-                                CheckForEscapeCode(bitsToShiftBy, rawWord3, rawBitStreamPtr, rawWord4, v3);
+                                CheckForEscapeCode(bitsShiftedCounter, rawWord3, rawBitStreamPtr, rawWord4, v3);
 
                                 SetLoWord(rawWord4, gTbl2[table_index_2].mOutputWord1);
 
@@ -402,28 +398,28 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                     break;
                                 }
 
-                                OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOutput, bitsToShiftBy, v3);
+                                OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOutput, bitsShiftedCounter, v3);
                             } // End while
 
                             *pOutput++ = rawWord4;
 
                             if ((WORD)rawWord4 == MDEC_END)
                             {
-                                int v15 = GetBits(v3, 11);
+                                const int v15 = GetBits(v3, 11);
+                                SkipBits(v3, 11, bitsShiftedCounter);
+
                                 if (v15 == MASK_10_BITS)
                                 {
-                                    return AC_Coefficient;
+                                    return ret;
                                 }
+
                                 rawWord4 = v15 & MASK_11_BITS;
-                                SkipBits(v3, 11);
-                                bitsToShiftBy += 11;
                                 *pOutput++ = rawWord4;
 
-                                CheckForEscapeCode(bitsToShiftBy, rawWord5, rawBitStreamPtr, rawWord4, v3);
+                                CheckForEscapeCode(bitsShiftedCounter, rawWord5, rawBitStreamPtr, rawWord4, v3);
 
                             }
 
-                            // Set low word
                             SetLoWord(rawWord4, gTbl2[table_index_2].mOutputWord2);
                         } while (!(WORD)rawWord4);
                         
@@ -433,24 +429,25 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                             break;
                         }
 
-                        OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOutput, bitsToShiftBy, v3);
+                        OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOutput, bitsShiftedCounter, v3);
                     } // End while
                     
                     *pOutput++ = rawWord4;
 
                     if ((WORD)rawWord4 == MDEC_END)
                     {
-                        int t11Bits = GetBits(v3, 11);
+                        const int t11Bits = GetBits(v3, 11);
+                        SkipBits(v3, 11, bitsShiftedCounter);
+
                         if (t11Bits == MASK_10_BITS)
                         {
-                            return AC_Coefficient;
+                            return ret;
                         }
+
                         rawWord4 = t11Bits & MASK_11_BITS;
                         *pOutput++ = rawWord4;
-                        bitsToShiftBy += 11;
-                        SkipBits(v3, 11);
 
-                        CheckForEscapeCode(bitsToShiftBy, rawWord7, rawBitStreamPtr, rawWord4, v3);
+                        CheckForEscapeCode(bitsShiftedCounter, rawWord7, rawBitStreamPtr, rawWord4, v3);
                     }
 
                     SetLoWord(rawWord4, gTbl2[table_index_2].mOutputWord3);
@@ -464,27 +461,29 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                 }
 
 
-                OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOutput, bitsToShiftBy, v3);
+                OutputWordAndAdvance(rawBitStreamPtr, rawWord4, pOutput, bitsShiftedCounter, v3);
             } // End while
 
             *pOutput++ = rawWord4;
 
-        } while ((WORD)rawWord4 != MDEC_END);       // FE 00 is in the raw data
+        } while ((WORD)rawWord4 != MDEC_END);
         
-        tmp11Bits2 = GetBits(v3, 11);
-        if (tmp11Bits2 == MASK_10_BITS) // 10 bits
-        {
-            return AC_Coefficient;
-        }
-        rawWord4 = tmp11Bits2 & MASK_11_BITS; // Mask 11 bits
-        *pOutput++ = rawWord4; // Add to output
-        bitsToShiftBy += 11; // Consumed 11 bits
-        SkipBits(v3, 11);
+        const int tmp11Bits2 = GetBits(v3, 11);
+        SkipBits(v3, 11, bitsShiftedCounter);
 
-        CheckForEscapeCode(bitsToShiftBy, rawWord9, rawBitStreamPtr, rawWord4, v3);
+        if (tmp11Bits2 == MASK_10_BITS)
+        {
+            return ret;
+        }
+
+        rawWord4 = tmp11Bits2 & MASK_11_BITS;
+        *pOutput++ = rawWord4;
+      
+    
+        CheckForEscapeCode(bitsShiftedCounter, rawWord9, rawBitStreamPtr, rawWord4, v3);
 
     }
-    return AC_Coefficient;
+    return ret;
 }
 
 
