@@ -410,11 +410,9 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
                                 }
                                 rawWord4 = v15 & MASK_11_BITS;
                                 v3 <<= 11;
-                                *pOut = rawWord4;
                                 bitsToShiftBy += 11;
+                                *pOut++ = rawWord4;
 
-                                ++pOut;
-                                
                                 CheckForEscapeCode(bitsToShiftBy, rawWord5, rawBitStreamPtr, rawWord4, v3);
 
                             }
@@ -470,7 +468,7 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
         tmp11Bits2 = v3 >> (32-11);
         if (tmp11Bits2 == MASK_10_BITS) // 10 bits
         {
-            break;
+            return AC_Coefficient;
         }
         rawWord4 = tmp11Bits2 & MASK_11_BITS; // Mask 11 bits
         *pOut++ = rawWord4; // Add to output
