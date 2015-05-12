@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string>
 #include <set>
+#include <stdint.h>
 
 #undef min
 #undef max
@@ -64,16 +65,11 @@ typedef decltype(&decode_ddv_frame) ddv__func5_block_decoder_q_type;
 static ddv__func5_block_decoder_q_type real_ddv__func5_block_decoder_q = (ddv__func5_block_decoder_q_type)0x00409FE0;
 static JmpHookedFunction<ddv__func5_block_decoder_q_type>* ddv_func6_decodes_block_q_hook;
 
+void idct(int16_t* pSource, int32_t* pDestination);
 
-static void do_blit_output_no_mmx(int macroBlockBuffer, int* decodedBitStream) // TODO: Reimpl
+static void do_blit_output_no_mmx(int macroBlockBuffer, int* decodedBitStream)
 {
-    __asm
-    {
-        push decodedBitStream
-        push macroBlockBuffer
-        call blit_output_no_mmx_ptr
-        add esp, 8
-    }
+    idct((int16_t*)macroBlockBuffer, decodedBitStream);
 }
 
 static int To1d(int x, int y)
@@ -112,6 +108,54 @@ unsigned char Clamp(float v)
 
 static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, int yoff);
 int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput);
+
+void half_idct(int32_t* pSource, int32_t* pDestination, int nPitch, int nIncrement, int nShift)
+{
+    int32_t pTemp[8];
+
+    for (int i = 0; i < 8; i++)
+    {
+        pTemp[4] = pSource[0 * nPitch] * 8192 + pSource[2 * nPitch] * 10703 + pSource[4 * nPitch] * 8192 + pSource[6 * nPitch] * 4433;
+        pTemp[5] = pSource[0 * nPitch] * 8192 + pSource[2 * nPitch] * 4433 - pSource[4 * nPitch] * 8192 - pSource[6 * nPitch] * 10704;
+        pTemp[6] = pSource[0 * nPitch] * 8192 - pSource[2 * nPitch] * 4433 - pSource[4 * nPitch] * 8192 + pSource[6 * nPitch] * 10704;
+        pTemp[7] = pSource[0 * nPitch] * 8192 - pSource[2 * nPitch] * 10703 + pSource[4 * nPitch] * 8192 - pSource[6 * nPitch] * 4433;
+
+        pTemp[0] = pSource[1 * nPitch] * 11363 + pSource[3 * nPitch] * 9633 + pSource[5 * nPitch] * 6437 + pSource[7 * nPitch] * 2260;
+        pTemp[1] = pSource[1 * nPitch] * 9633 - pSource[3 * nPitch] * 2259 - pSource[5 * nPitch] * 11362 - pSource[7 * nPitch] * 6436;
+        pTemp[2] = pSource[1 * nPitch] * 6437 - pSource[3 * nPitch] * 11362 + pSource[5 * nPitch] * 2261 + pSource[7 * nPitch] * 9633;
+        pTemp[3] = pSource[1 * nPitch] * 2260 - pSource[3 * nPitch] * 6436 + pSource[5 * nPitch] * 9633 - pSource[7 * nPitch] * 11363;
+
+        pDestination[0 * nPitch] = (pTemp[4] + pTemp[0]) >> nShift;
+        pDestination[1 * nPitch] = (pTemp[5] + pTemp[1]) >> nShift;
+        pDestination[2 * nPitch] = (pTemp[6] + pTemp[2]) >> nShift;
+        pDestination[3 * nPitch] = (pTemp[7] + pTemp[3]) >> nShift;
+        pDestination[4 * nPitch] = (pTemp[7] - pTemp[3]) >> nShift;
+        pDestination[5 * nPitch] = (pTemp[6] - pTemp[2]) >> nShift;
+        pDestination[6 * nPitch] = (pTemp[5] - pTemp[1]) >> nShift;
+        pDestination[7 * nPitch] = (pTemp[4] - pTemp[0]) >> nShift;
+
+        pSource += nIncrement;
+        pDestination += nIncrement;
+    }
+}
+
+// 0x40ED90
+void idct(int16_t* pSource, int32_t* pDestination)
+{
+    int32_t pTemp[64];
+    int32_t pExtendedSource[64];
+
+    // Source is passed as signed 16 bits stored every 32 bits
+    // We sign extend it at the beginning like Masher does
+    for (int i = 0; i < 64; i++)
+    {
+        pExtendedSource[i] = pSource[i * 2];
+    }
+
+    half_idct(pExtendedSource, pTemp, 8, 1, 11);
+    half_idct(pTemp, pDestination, 1, 8, 18);
+}
+
 
 static char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
@@ -307,17 +351,14 @@ static void SkipBits(DWORD& value, char numBits, char& bitPosCounter)
     bitPosCounter += numBits;
 }
 
-int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
+int decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
 {
-    unsigned int table_index_2 = 0; // ebx@2
+    unsigned int table_index_2 = 0;
     int ret = *pFrameData;
     DWORD v8 = *(DWORD*)(pFrameData + 1);
     WORD* rawBitStreamPtr = (pFrameData + 3);
     
-    __asm
-    {
-        rol v8, 16
-    }
+    v8 = (v8 << 16) | (v8 >> 16); // Swap words
 
     DWORD rawWord4 = GetBits(v8, 11);
 
@@ -463,10 +504,9 @@ int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput)
             return ret;
         }
 
-        rawWord4 = tmp11Bits2 & MASK_11_BITS;
+        rawWord4 = tmp11Bits2;
         *pOutput++ = rawWord4;
       
-    
         int rawWord9;
         CheckForEscapeCode(bitsShiftedCounter, rawWord9, rawBitStreamPtr, rawWord4, v3);
 
