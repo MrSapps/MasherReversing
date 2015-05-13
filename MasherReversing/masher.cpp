@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <vector>
+#include <SDL.h>
 
 struct DDVHeaderPart1
 {

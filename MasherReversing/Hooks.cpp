@@ -4,6 +4,7 @@
 #include <string>
 #include <set>
 #include <stdint.h>
+#include <SDL.h>
 
 #undef min
 #undef max
