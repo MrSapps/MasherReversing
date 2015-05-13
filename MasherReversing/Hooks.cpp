@@ -5,10 +5,69 @@
 #include <set>
 #include <stdint.h>
 #include <SDL.h>
+#include <iostream>
 
 #undef min
 #undef max
 #undef RGB
+
+SDL_Window *win = nullptr;
+SDL_Renderer *ren = nullptr;
+SDL_Texture *sdlTexture = nullptr;
+
+int StartSDL()
+{
+    if (win) { return 0; }
+
+    if (SDL_Init(SDL_INIT_VIDEO) != 0)
+    {
+        std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
+    win = SDL_CreateWindow("Masher", 100, 100, 640, 480, SDL_WINDOW_SHOWN);
+    if (win == nullptr)
+    {
+        std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return 1;
+    }
+
+    ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (ren == nullptr)
+    {
+        SDL_DestroyWindow(win);
+        std::cout << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return 1;
+    }
+   
+    sdlTexture = SDL_CreateTexture(ren,
+        SDL_PIXELFORMAT_RGB565,
+        SDL_TEXTUREACCESS_STREAMING,
+        320, 240);
+
+    return 0;
+}
+
+Uint16 pixels[240*320] = {};
+
+void FlipSDL()
+{
+    SDL_UpdateTexture(sdlTexture, NULL, pixels, 320 * sizeof(Uint16));
+
+    SDL_RenderClear(ren);
+    SDL_RenderCopy(ren, sdlTexture, NULL, NULL);
+    SDL_RenderPresent(ren);
+}
+
+void StopSDL()
+{
+    SDL_DestroyRenderer(ren);
+    SDL_DestroyWindow(win);
+    SDL_Quit();
+}
+
 
 #pragma pack(1)
 #pragma pack(push)
@@ -160,6 +219,8 @@ void idct(int16_t* pSource, int32_t* pDestination)
 
 static char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
+    StartSDL();
+
     if (!thisPtr->mHasVideo)
     {
         return 0;
@@ -240,9 +301,18 @@ static char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned
         xoff += 16;
     }
 
+    FlipSDL();
+
     // The app doesn't seem to do anything with the return value
     return 0;
 }
+
+void SetElement2(int x, int y, unsigned short int* ptr, unsigned short int value)
+{
+    const int kWidth = 320;
+    ptr[(kWidth * y) + x] = value;
+}
+
 
 static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, int yoff)
 {
@@ -301,6 +371,12 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
             Macroblock_RGB[x][y].Blue = Clamp(b);
 
             SetElement(x + xoff, y + yoff, pFrameBuffer,
+                RGB565(
+                Macroblock_RGB[x][y].Red,
+                Macroblock_RGB[x][y].Green,
+                Macroblock_RGB[x][y].Blue));
+
+            SetElement2(x + xoff, y + yoff, pixels,
                 RGB565(
                 Macroblock_RGB[x][y].Red,
                 Macroblock_RGB[x][y].Green,
