@@ -1,6 +1,7 @@
 #pragma once
 
 #include <windows.h>
+#include <memory>
 
 // functions:
 // int __usercall ddv_func7_DecodeMacroBlock<eax>(int thisPtr<ebp>)

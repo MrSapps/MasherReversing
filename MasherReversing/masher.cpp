@@ -42,56 +42,68 @@ struct DDVHeaderPart3
     uint32_t framesInterleave;
 };
 
-// Frame data for 16x8 1 frame DDV where one block of 8x8 is black and the other
-// is white is:
-// 01 00 10 00 A0 00 27 11 AB 2B 3F 9B 04 0A 40 01 
-// 01 43 80 49 01 8E 7E A2 FF 13 00 00
+int StartSDL()
+{
+    if (SDL_Init(SDL_INIT_VIDEO) != 0)
+    {
+        std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
+        return 1;
+    }
 
-// ddv_play_frame
-// -> calls_decode_block_q
-//    -> decode_bitstream_q < decodes the bitstream with a (FE F0) terminated buffer?
-// -> ddv_func7_DecodeMacroBlock x6
-// Maybe before or after
-// -> j_ddv__func5_block_decoder_q
-//   -> ddv__func5_block_decoder_q
-//      -> Either x6 blit_output_mmx_q or x6 blit_output_no_asm_q
-// depending on supported cpu features. Before each blitter  func
-// ddv_func7_DecodeMacroBlock is called
-// finally depending on some other global set of flags  sub_40A2C0 or
-// the likes will be called, the others seem to skip blocks or change the overall
-// video height.
+    SDL_Window *win = SDL_CreateWindow("Masher", 100, 100, 640, 480, SDL_WINDOW_SHOWN);
+    if (win == nullptr)
+    {
+        std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return 1;
+    }
 
-// after bit stream decoding we seem to end up with:
-// 00 00 00 FE 00 00 00 FE 02 04 FE 0F 01 00 01 08
-// FF 03 01 08 FF 03 FF 13 00 FE F0 03 00 FE 08 04
-// 07 00 05 0C 05 00 03 1C 02 00 00 FE F0 03 00 FE << I assume "FE F0" is the end, or perhaps the previous "FE F0" instance
-// 00 00 00 00 00 00 00 00 41 00 00 00 31 00 00 00
-// 80 B8 42 00 10 01 F4 01 1C 00 00 00 00 00 00 00
-// 01 00 00 00 0C 04 00 00 10 04 00 00 88 05 00 00
-// 00 00 00 00 00 00 00 00 31 00 00 00 A1 00 00 00
-// A0 01 F4 01 01 00 00 00 01 00 00 00 0F 00 00 00
-// 01 00 00 00 00 00 00 00 10 00 00 00 08 00 00 00
-// 1A 00 00 00 18 00 00 00 0F 00 00 00 00 00 00 00
-// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-// 10 01 F4 01 60 01 F4 01 00 00 00 00 00 00 00 00
-// 00 00 00 00 00 00 00 00 01 00 00 00 01 00 00 00
-// 00 01 00 00 00 00 00 00 02 00 00 00 01 00 00 00
-// 00 01 F4 01 04 01 F4 01 00 00 00 00 00 00 00 00
-// 10 01 F4 01 22 00 00 00 00 00 00 00 E0 60 07 02
-// 40 00 00 00 00 00 00 00 A1 00 00 00 91 00 00 00
-// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-// 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-// 00 00 00 00 00 00 00 00 91 00 00 00 41 00 00 00 << Static ascii strings after this data, so this is the max possible size
+    SDL_Renderer *ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (ren == nullptr)
+    {
+        SDL_DestroyWindow(win);
+        std::cout << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return 1;
+    }
+
+    SDL_Event e;
+    bool quit = false;
+    while (!quit)
+    {
+        while (SDL_PollEvent(&e))
+        {
+            if (e.type == SDL_QUIT)
+            {
+                quit = true;
+            }
+            if (e.type == SDL_KEYDOWN)
+            {
+                quit = true;
+            }
+            if (e.type == SDL_MOUSEBUTTONDOWN)
+            {
+                quit = true;
+            }
+        }
+
+        SDL_RenderClear(ren);
+        SDL_RenderPresent(ren);
+    }
+
+    SDL_DestroyRenderer(ren);
+    SDL_DestroyWindow(win);
+    SDL_Quit();
+
+    return 0;
+}
 
 
 int main(int, char**)
 {
+
+    StartSDL();
+
     FILE* fp = fopen("Testing.DDV", "rb");
     //FILE* fp = fopen("Masher/GDENDING.DDV", "rb");
 
@@ -161,7 +173,9 @@ int main(int, char**)
         }
     }
 
+    
     fclose(fp);
+
     return 0;
 
 }

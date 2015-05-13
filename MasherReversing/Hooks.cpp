@@ -284,7 +284,7 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
         unsigned char Green;
         unsigned char Blue;
     };
-
+    
     Macroblock_RGB_Struct Macroblock_RGB[16][16] = {};
 
     for (int x = 0; x < 16; x++)

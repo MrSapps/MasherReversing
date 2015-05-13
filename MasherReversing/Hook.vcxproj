@@ -65,6 +65,9 @@
       </ModuleDefinitionFile>
       <AdditionalDependencies>$(ProjectDir)\SDL2-2.0.3\lib\x86\SDL2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(ProjectDir)\SDL2-2.0.3\lib\x86\SDL2.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -87,6 +90,9 @@
       </ModuleDefinitionFile>
       <AdditionalDependencies>$(ProjectDir)\SDL2-2.0.3\lib\x86\SDL2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(ProjectDir)\SDL2-2.0.3\lib\x86\SDL2.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Hooks.cpp" />
