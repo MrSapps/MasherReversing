@@ -216,67 +216,41 @@ void idct(int16_t* pSource, int32_t* pDestination)
     half_idct(pTemp, pDestination, 1, 8, 18);
 }
 
+//TODO: Part of the null buffers
 DWORD* gBlockWidthQ_before_635A0C = (DWORD*)0x635A08;
 DWORD* gBlockHeightQ_before_63580C = (DWORD*)0x635808;
 
+// TODO: these tables must be ripped
 DWORD* gQuant1_dword_42AEC8 = (DWORD*)0x42AEC8;
 DWORD* gQaunt2_dword_42AFC4 = (DWORD*)0x42AFC4;
 
+// TODO: Null buffers
 DWORD *g_252_buffer_unk_635A0C = (DWORD*)0x635A0C;
 DWORD *g_252_buffer_unk_63580C = (DWORD*)0x63580C;
 
-/*
-0x00635A0C  24 00 00 00, 24 00 00 00, 30 00 00 00, 2a 00 00 00, 30 00 00 00, 5e 00 00 00, 34 00 00 00, 34 00 00 00  $...$...0...*...0...^...4...4...
-0x00635A2C  5e 00 00 00, c6 00 00 00, 84 00 00 00, 70 00 00 00, 84 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00  ^...Æ.......p.......Æ...Æ...Æ...
-0x00635A4C  c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00  Æ...Æ...Æ...Æ...Æ...Æ...Æ...Æ...
-0x00635A6C  c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00  Æ...Æ...Æ...Æ...Æ...Æ...Æ...Æ...
-0x00635A8C  c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00  Æ...Æ...Æ...Æ...Æ...Æ...Æ...Æ...
-0x00635AAC  c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00  Æ...Æ...Æ...Æ...Æ...Æ...Æ...Æ...
-0x00635ACC  c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00  Æ...Æ...Æ...Æ...Æ...Æ...Æ...Æ...
-0x00635AEC  c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, c6 00 00 00, 00 00 00 00
-*/
-
-/*
-0x0063580C  18 00 00 00 16 00 00 00 14 00 00 00 18 00 00 00 1c 00 00 00 1c 00 00 00 1a 00 00 00 1c 00 00 00  ................................
-0x0063582C  20 00 00 00 30 00 00 00 26 00 00 00 20 00 00 00 22 00 00 00 24 00 00 00 30 00 00 00 2c 00 00 00   ...0...&... ..."...$...0...,...
-0x0063584C  2c 00 00 00 30 00 00 00 34 00 00 00 50 00 00 00 66 00 00 00 74 00 00 00 50 00 00 00 3a 00 00 00  ,...0...4...P...f...t...P...:...
-0x0063586C  4a 00 00 00 46 00 00 00 62 00 00 00 90 00 00 00 80 00 00 00 6e 00 00 00 70 00 00 00 66 00 00 00  J...F...b.......€...n...p...f...
-0x0063588C  72 00 00 00 78 00 00 00 7a 00 00 00 6e 00 00 00 8a 00 00 00 ae 00 00 00 88 00 00 00 80 00 00 00  r...x...z...n...Š...®...ˆ...€...
-0x006358AC  9c 00 00 00 b8 00 00 00 be 00 00 00 ae 00 00 00 a2 00 00 00 da 00 00 00 a0 00 00 00 70 00 00 00  œ...¸.......®...¢...Ú... ...p...
-0x006358CC  7c 00 00 00 ce 00 00 00 d0 00 00 00 ce 00 00 00 c4 00 00 00 e0 00 00 00 f2 00 00 00 e2 00 00 00  |...Î...Ð...Î...Ä...à...ò...â...
-0x006358EC  9a 00 00 00 b8 00 00 00 f0 00 00 00 c8 00 00 00 ce 00 00 00 ca 00 00 00 c6 00 00 00 00 00 00 00  š...¸...ð...È...Î...Ê...Æ.......
-*/
 static void after_block_decode_no_effect_q_impl(int quantScale)
 {
-    //signed int result; // eax@1
-    //int arrayVal; // edx@4
-
-    // I believe the static var was just used as an optimization to avoid re-calcing where possible
-    //result = sQuantScale;
-    //if (quantScale != sQuantScale)
+    *gBlockWidthQ_before_635A0C = 16;
+    *gBlockHeightQ_before_63580C = 16;
+    if (quantScale > 0)
     {
-        //result = 16;
-       // sQuantScale = quantScale;
-        *gBlockWidthQ_before_635A0C = 16;            // changes nothing
-        *gBlockHeightQ_before_63580C = 16;
-        if (quantScale)                           // don't do anything if no scale, maybe for all black images?
+        signed int result = 0;
+        do
         {
-            signed int result = 0;
-            do
-            {
-                g_252_buffer_unk_63580C[result] = quantScale * gQuant1_dword_42AEC8[result];
-                result++;
-                g_252_buffer_unk_635A0C[result-1] = quantScale * gQaunt2_dword_42AFC4[result];
-                
+            g_252_buffer_unk_63580C[result] = quantScale * gQuant1_dword_42AEC8[result];
+            result++;
+            g_252_buffer_unk_635A0C[result - 1] = quantScale * gQaunt2_dword_42AFC4[result];
 
-            } while (result < 63);                   // 252/4=63
-        }
-        else
-        {
-            memset(g_252_buffer_unk_635A0C, 16, 252  /*sizeof(g_252_buffer_unk_635A0C)*/); // DWORD[63]
-            memset(g_252_buffer_unk_63580C, 16, 252 /*sizeof(g_252_buffer_unk_63580C)*/);
-        }
+
+        } while (result < 63);                   // 252/4=63
     }
+    else
+    {
+        // These are simply null buffers to start with
+        memset(g_252_buffer_unk_635A0C, 16, 252  /*sizeof(g_252_buffer_unk_635A0C)*/); // DWORD[63]
+        memset(g_252_buffer_unk_63580C, 16, 252 /*sizeof(g_252_buffer_unk_63580C)*/);
+    }
+
 }
 
 
