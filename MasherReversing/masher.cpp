@@ -345,7 +345,7 @@ int main(int, char**)
         "prophecy.ddv"
     };
 
-    std::vector<std::string> msg1CdMovies =
+    std::vector<std::string> msg1Cd1Movies =
     {
         "GENBAKU.DDV",
         "KAITAI.DDV",
@@ -353,9 +353,21 @@ int main(int, char**)
         "POLICE.DDV"
     };
 
+    std::vector<std::string> msg1Cd2Movies =
+    {
+        "ALASKA.DDV",
+        "E399.DDV",
+        "IDENSHI.DDV",
+        "INUZORI.DDV",
+        "WANGAN.DDV"
+    };
+
+
     // TODO: gtilogo.ddv and prophecy.ddv do not render correctly
     std::string abesExoddusDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Exoddus\\";
     std::string msg1CdDir = "W:\\MOVIE\\";
+    std::string msg1Cd2Dir = "X:\\MOVIE\\";
+
     for (auto& file : debugs)
     {
         std::cout << "Playing: " << file.c_str() << std::endl;

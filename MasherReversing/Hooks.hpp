@@ -55,8 +55,8 @@ struct ddv_class
 };
 #pragma pack(pop)
 
-static_assert(sizeof(ddv_class) == 0x94, "Structure size must match exactly!");
 
+//static_assert(sizeof(ddv_class) == 0x94, "Structure size must match exactly!");
 
 char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer);
 
