@@ -464,6 +464,12 @@ int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, in
     return (int)dataPtr;
 }
 
+// One of these breaks prophcy DDV
+typedef int(__cdecl *ddv_func7_DecodeMacroBlock)(void* params);
+static ddv_func7_DecodeMacroBlock ddv_func7_DecodeMacroBlock_ptr = (ddv_func7_DecodeMacroBlock)0x0040E6B0;
+
+typedef signed int(__cdecl* after_block_decode_no_effect_q)(int a1);
+static after_block_decode_no_effect_q after_block_decode_no_effect_q_ptr = (after_block_decode_no_effect_q)0x0040E360;
 
 char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
@@ -488,8 +494,8 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
     else
     {
         // gending uses this one - this outputs macroblock coefficients?
-        //decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, DWORD, int, int *))ddv_func7_DecodeMacroBlock_ptr; // TODO: Reimpl
-        decodeMacroBlockfPtr = ddv_func7_DecodeMacroBlock_impl;
+        decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, DWORD, int, int *))ddv_func7_DecodeMacroBlock_ptr; // TODO: Reimpl
+        //decodeMacroBlockfPtr = ddv_func7_DecodeMacroBlock_impl;
     }
  
     // Done once for the whole 320x240 image
@@ -497,8 +503,8 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
 
     // Each block only seems to have 1 colour if this isn't called, but then resizing the window seems to fix it sometimes (perhaps causes
     // this function to be called else where).
-   // after_block_decode_no_effect_q_ptr(quantScale); // TODO: Reimpl
-    after_block_decode_no_effect_q_impl(quantScale);
+    after_block_decode_no_effect_q_ptr(quantScale); // TODO: Reimpl
+   // after_block_decode_no_effect_q_impl(quantScale);
 
     // Sanity check
     if (thisPtr->nNumMacroblocksX <= 0 || thisPtr->nNumMacroblocksY <= 0)
@@ -619,13 +625,13 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
             Macroblock_RGB[x][y].Green = Clamp(g);
             Macroblock_RGB[x][y].Blue = Clamp(b);
 
-            /*
+            
             SetElement(x + xoff, y + yoff, pFrameBuffer,
             RGB565(
             Macroblock_RGB[x][y].Red,
             Macroblock_RGB[x][y].Green,
             Macroblock_RGB[x][y].Blue));
-            */
+            
 
             if (!pixels.size())
             {
