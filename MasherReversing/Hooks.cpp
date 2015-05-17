@@ -799,7 +799,6 @@ void SetElement(int x, int y, unsigned short int* ptr, unsigned short int value)
     ptr[(kWidth * y) + x] = value;
 }
 
-static JmpHookedFunction<ddv_func7_DecodeMacroBlock>* ddv_func7_DecodeMacroBlock_hook;
 
 void InstallHooks()
 {
