@@ -5,6 +5,7 @@
 
 int StartSDL();
 void FlipSDL();
+void StopSDL();
 
 #pragma pack(1)
 #pragma pack(push)
