@@ -148,6 +148,27 @@ int main(int, char**)
         int c = 0;
         for (uint32_t frame = 0; frame < headerP1.numberOfFrames; frame++)
         {
+            SDL_Event event = {};
+            while (SDL_PollEvent(&event))
+            {
+                switch (event.type)
+                {
+                case SDL_WINDOWEVENT:
+                    switch (event.window.event)
+                    {
+                    case SDL_WINDOWEVENT_ENTER:
+                        break;
+
+                    case SDL_WINDOWEVENT_LEAVE:
+                        break;
+                    }
+                    break;
+
+                case SDL_KEYDOWN:
+                    break;
+                }
+            }
+
             //if (frame % ddv.framesInterleave == 0)
             {
                 unsigned int frameSize = pVideoFrameSizes[frame] + 4; // Always +4 if audio
@@ -162,7 +183,7 @@ int main(int, char**)
 
                 decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels);
                 // FlipSDL();
-                SDL_Delay(1);
+                //SDL_Delay(1);
             }
         }
     }
