@@ -255,11 +255,11 @@ const DWORD g_block_related_3_dword_42B0D0[64] =
     0x00000036, 0x0000002F, 0x00000037, 0x0000003E, 0x0000003F, 0x0000098E, 0x0000098E, 0x0000F384
 };
 
-DWORD* g_252_buffer_unk_635A0C = (DWORD*)0x635A08;
-DWORD* g_252_buffer_unk_63580C = (DWORD*)0x635808;
+//DWORD* g_252_buffer_unk_635A0C = (DWORD*)0x635A08;
+//DWORD* g_252_buffer_unk_63580C = (DWORD*)0x635808;
 
-//DWORD g_252_buffer_unk_635A0C[64] = {};
-//DWORD g_252_buffer_unk_63580C[64] = {};
+DWORD g_252_buffer_unk_635A0C[64] = {};
+DWORD g_252_buffer_unk_63580C[64] = {};
 
 static void after_block_decode_no_effect_q_impl(int quantScale)
 {
@@ -289,9 +289,10 @@ static void after_block_decode_no_effect_q_impl(int quantScale)
         signed int result = 0;
         do
         {
-            g_252_buffer_unk_63580C[1+result] = quantScale * gQuant1_dword_42AEC8[result];
+            auto val = gQuant1_dword_42AEC8[result];
             result++;
-            g_252_buffer_unk_635A0C[1+result - 1] = quantScale * gQaunt2_dword_42AFC4[result];
+            g_252_buffer_unk_63580C[result] = quantScale * val;
+            g_252_buffer_unk_635A0C[result] = quantScale * gQaunt2_dword_42AFC4[result];
 
 
         } while (result < 63);                   // 252/4=63
@@ -299,8 +300,13 @@ static void after_block_decode_no_effect_q_impl(int quantScale)
     else
     {
         // These are simply null buffers to start with
-        memset(&g_252_buffer_unk_635A0C[1], 16, 252  /*sizeof(g_252_buffer_unk_635A0C)*/); // DWORD[63]
-        memset(&g_252_buffer_unk_63580C[1], 16, 252 /*sizeof(g_252_buffer_unk_63580C)*/);
+        for (int i = 0; i < 64; i++)
+        {
+            g_252_buffer_unk_635A0C[i] = 16;
+            g_252_buffer_unk_63580C[i] = 16;
+        }
+       // memset(&g_252_buffer_unk_635A0C[1], 16, 252  /*sizeof(g_252_buffer_unk_635A0C)*/); // DWORD[63]
+       // memset(&g_252_buffer_unk_63580C[1], 16, 252 /*sizeof(g_252_buffer_unk_63580C)*/);
     }
 
 }
@@ -467,12 +473,14 @@ int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, in
     return (int)dataPtr;
 }
 
+/*
 // One of these breaks prophcy DDV
 typedef int(__cdecl *ddv_func7_DecodeMacroBlock)(void* params);
 static ddv_func7_DecodeMacroBlock ddv_func7_DecodeMacroBlock_ptr = (ddv_func7_DecodeMacroBlock)0x0040E6B0;
 
 typedef signed int(__cdecl* after_block_decode_no_effect_q)(int a1);
 static after_block_decode_no_effect_q after_block_decode_no_effect_q_ptr = (after_block_decode_no_effect_q)0x0040E360;
+*/
 
 char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
@@ -628,13 +636,13 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
             Macroblock_RGB[x][y].Green = Clamp(g);
             Macroblock_RGB[x][y].Blue = Clamp(b);
 
-            
+            /*
             SetElement(x + xoff, y + yoff, pFrameBuffer,
             RGB565(
             Macroblock_RGB[x][y].Red,
             Macroblock_RGB[x][y].Green,
             Macroblock_RGB[x][y].Blue));
-            
+            */
 
             if (!pixels.size())
             {
