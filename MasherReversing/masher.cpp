@@ -90,6 +90,17 @@ int main(int, char**)
         ddv.framesInterleave = headerP3.framesInterleave;
     }
 
+    ddv.mHasAudio = bHasAudio;
+    ddv.mHasVideo = bHasVideo;
+
+    ddv.nNumMacroblocksX = (ddv.width >> 4);
+    ddv.nNumMacroblocksY = (ddv.height >> 4);
+
+    ddv.mBlockDataSize_q = 64; // what should this be??
+
+    ddv.mDecodedBitStream = (DWORD)malloc(ddv.maxVideoFrameSize*4);
+    ddv.mMacroBlockBuffer_q = (DWORD)malloc(ddv.maxVideoFrameSize * 4);
+
     /*
     HANDLE mFileHandle;
     DWORD mRawFrameBitStreamData;
@@ -98,12 +109,8 @@ int main(int, char**)
     DWORD mUnknownBuffer4;
     DWORD mAudioFrameSizeBytesQ;
     DWORD mAudioFrameSizeBitsQ;
-    DWORD nNumMacroblocksX;
-    DWORD nNumMacroblocksY;
-    BYTE mHasAudio;
-    BYTE mHasVideo;
-    BYTE field_62;      // Padding?
-    BYTE field_63;      // Padding?
+
+
     DWORD mCurrentFrameNumber;
     DWORD mCurrentFrameNumber2;
     DWORD field_6C; // Some sort of counter
@@ -154,12 +161,20 @@ int main(int, char**)
             {
                 uint8_t* pAudio = &ppVideoFrames[frame][someOffset + 2];
 
-                int nDebug = 0;
+                /*
+                0x04DDD19C  02 00 10 00 a0 00 00 05 01 28 08 40 40 00 80 02  .... ....(.@@.€.
+                0x04DDD1AC  00 14 05 a0 20 00 00 01 00 0a 02 50 14 80 80 00  ...  ......P.€€.
+                */
+                ddv.mRawFrameBitStreamData = (DWORD)pAudio;
+       
+
+                decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels);
+                FlipSDL();
+                SDL_Delay(1000);
             }
 
-            decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels);
-            FlipSDL();
-            SDL_Delay(1000);
+
+
         }
     }
     else
@@ -170,7 +185,12 @@ int main(int, char**)
             ppVideoFrames[frame].resize(pVideoFrameSizes[frame]);
             fread(ppVideoFrames[frame].data(), pVideoFrameSizes[frame], 1, fp);
 
-        
+            ddv.mRawFrameBitStreamData = (DWORD)ppVideoFrames[frame].data();
+
+
+            decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels);
+            FlipSDL();
+            SDL_Delay(1000);
         }
     }
 

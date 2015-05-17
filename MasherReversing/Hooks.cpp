@@ -602,11 +602,13 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
             Macroblock_RGB[x][y].Green = Clamp(g);
             Macroblock_RGB[x][y].Blue = Clamp(b);
 
+            /*
             SetElement(x + xoff, y + yoff, pFrameBuffer,
                 RGB565(
                 Macroblock_RGB[x][y].Red,
                 Macroblock_RGB[x][y].Green,
                 Macroblock_RGB[x][y].Blue));
+                */
 
             SetElement2(x + xoff, y + yoff, pixels,
                 RGB565(
