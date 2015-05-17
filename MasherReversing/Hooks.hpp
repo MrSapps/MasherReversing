@@ -4,6 +4,7 @@
 #include <memory>
 
 int StartSDL();
+void SetSurfaceSize(int w, int h);
 void FlipSDL();
 void StopSDL();
 

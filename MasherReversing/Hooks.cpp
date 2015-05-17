@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <SDL.h>
 #include <iostream>
+#include <vector>
 
 #undef min
 #undef max
@@ -42,19 +43,35 @@ int StartSDL()
         return 1;
     }
    
-    sdlTexture = SDL_CreateTexture(ren,
-        SDL_PIXELFORMAT_RGB565,
-        SDL_TEXTUREACCESS_STREAMING,
-        320, 240);
 
     return 0;
 }
 
-Uint16 pixels[240*320] = {};
+int w = 0;
+std::vector<Uint16> pixels;
+
+void SetSurfaceSize(int w, int h)
+{
+    ::w = w;
+
+    if (sdlTexture)
+    {
+        SDL_DestroyTexture(sdlTexture);
+        sdlTexture = 0;
+    }
+
+    sdlTexture = SDL_CreateTexture(ren,
+        SDL_PIXELFORMAT_RGB565,
+        SDL_TEXTUREACCESS_STREAMING,
+        w, h);
+
+    pixels.resize(w*h);
+
+}
 
 void FlipSDL()
 {
-    SDL_UpdateTexture(sdlTexture, NULL, pixels, 320 * sizeof(Uint16));
+    SDL_UpdateTexture(sdlTexture, NULL, pixels.data(), w * sizeof(Uint16));
 
     SDL_RenderClear(ren);
     SDL_RenderCopy(ren, sdlTexture, NULL, NULL);
@@ -542,7 +559,7 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
 
 void SetElement2(int x, int y, unsigned short int* ptr, unsigned short int value)
 {
-    const int kWidth = 320;
+    const int kWidth = ::w;
     ptr[(kWidth * y) + x] = value;
 }
 
@@ -604,17 +621,24 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
 
             /*
             SetElement(x + xoff, y + yoff, pFrameBuffer,
-                RGB565(
-                Macroblock_RGB[x][y].Red,
-                Macroblock_RGB[x][y].Green,
-                Macroblock_RGB[x][y].Blue));
-                */
+            RGB565(
+            Macroblock_RGB[x][y].Red,
+            Macroblock_RGB[x][y].Green,
+            Macroblock_RGB[x][y].Blue));
+            */
 
-            SetElement2(x + xoff, y + yoff, pixels,
+            if (!pixels.size())
+            {
+                SetSurfaceSize(320, 240);  // Guess when running as a hook;
+            }
+
+            SetElement2(x + xoff, y + yoff, pixels.data(),
                 RGB565(
                 Macroblock_RGB[x][y].Red,
                 Macroblock_RGB[x][y].Green,
                 Macroblock_RGB[x][y].Blue));
+
+
         }
     }
 }

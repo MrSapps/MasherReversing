@@ -43,7 +43,7 @@ struct DDVHeaderPart3
     uint32_t framesInterleave;
 };
 
-extern Uint16 pixels[240 * 320];
+extern std::vector<Uint16> pixels;
 
 static void PlayDDV(const char* fileName)
 {
@@ -86,11 +86,23 @@ static void PlayDDV(const char* fileName)
         ddv.framesInterleave = headerP3.framesInterleave;
     }
 
+
     ddv.mHasAudio = bHasAudio;
     ddv.mHasVideo = bHasVideo;
 
-    ddv.nNumMacroblocksX = (ddv.width >> 4);
-    ddv.nNumMacroblocksY = (ddv.height >> 4);
+    ddv.nNumMacroblocksX = (ddv.width / 16);
+    if (ddv.width % 16 != 0)
+    {
+        ddv.nNumMacroblocksX++;
+    }
+
+    ddv.nNumMacroblocksY = (ddv.height / 16);
+    if (ddv.height % 16 != 0)
+    {
+        ddv.nNumMacroblocksY++;
+    }
+    SetSurfaceSize(ddv.nNumMacroblocksX * 16, ddv.nNumMacroblocksY*16);
+
 
     ddv.mBlockDataSize_q = 64; // what should this be??
 
@@ -150,7 +162,7 @@ static void PlayDDV(const char* fileName)
             uint8_t* pVideo = &ppVideoFrames[frame][4];
             ddv.mRawFrameBitStreamData = (DWORD)pVideo;
 
-            decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels);
+            decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels.data());
             //SDL_Delay(16*2);
         }
     }
@@ -165,7 +177,7 @@ static void PlayDDV(const char* fileName)
             ddv.mRawFrameBitStreamData = (DWORD)ppVideoFrames[frame].data();
 
 
-            decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels);
+            decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels.data());
             FlipSDL();
             SDL_Delay(1000);
         }
@@ -327,12 +339,27 @@ int main(int, char**)
         "vision.ddv"
     };
 
+    std::vector<std::string> debugs =
+    {
+        "gtilogo.ddv",
+        "prophecy.ddv"
+    };
+
+    std::vector<std::string> msg1CdMovies =
+    {
+        "GENBAKU.DDV",
+        "KAITAI.DDV",
+        "KASOU.DDV",
+        "POLICE.DDV"
+    };
+
     // TODO: gtilogo.ddv and prophecy.ddv do not render correctly
     std::string abesExoddusDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Exoddus\\";
-    for (auto& file : ddvs)
+    std::string msg1CdDir = "W:\\MOVIE\\";
+    for (auto& file : debugs)
     {
         std::cout << "Playing: " << file.c_str() << std::endl;
-        PlayDDV((abesExoddusDir+file).c_str());
+        PlayDDV((abesExoddusDir + file).c_str());
     }
 
     StopSDL();
