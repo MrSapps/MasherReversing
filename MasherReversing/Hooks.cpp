@@ -68,56 +68,6 @@ void StopSDL()
     SDL_Quit();
 }
 
-
-#pragma pack(1)
-#pragma pack(push)
-struct ddv_class
-{
-    HANDLE mFileHandle;
-    DWORD ddvVersion;
-    DWORD contains;
-    DWORD frameRate;
-    DWORD mNumberOfFrames;
-    DWORD field5;
-    DWORD width;
-    DWORD height;
-    DWORD maxVideoFrameSize;
-    DWORD field9;
-    DWORD keyFrameRate;
-    DWORD audioFormat;
-    DWORD sampleRate;
-    DWORD maxAudioFrameSize;
-    DWORD fieldE;
-    DWORD framesInterleave; 
-    DWORD mRawFrameBitStreamData;
-    DWORD mDecodedBitStream;
-    DWORD mLastUsedFrameBuffer;
-    DWORD mUnknownBuffer4;
-    DWORD mAudioFrameSizeBytesQ;
-    DWORD mAudioFrameSizeBitsQ;
-    DWORD nNumMacroblocksX;
-    DWORD nNumMacroblocksY;
-    BYTE mHasAudio;
-    BYTE mHasVideo;
-    BYTE field_62;      // Padding?
-    BYTE field_63;      // Padding?
-    DWORD mCurrentFrameNumber;
-    DWORD mCurrentFrameNumber2;
-    DWORD field_6C; // Some sort of counter
-    DWORD mUnknownBuffer1;
-    DWORD mFrameSizesArray;
-    DWORD field_78;
-    DWORD field_7C;
-    DWORD mCurrentFrameBuffer;
-    DWORD field_84;
-    DWORD mSizeOfWhatIsReadIntoMUnknownBuffer2;
-    DWORD mMacroBlockBuffer_q;
-    DWORD mBlockDataSize_q;
-};
-#pragma pack(pop)
-
-static_assert(sizeof(ddv_class) == 0x94, "Structure size must match exactly!");
-
 // We can't compile the hook stubs as __thiscall, so __fastcall is used as a workaround/hack
 char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* screenBuffer);
 typedef decltype(&decode_ddv_frame) ddv__func5_block_decoder_q_type;
@@ -498,7 +448,7 @@ int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, in
 }
 
 
-static char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
+char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
     StartSDL();
 

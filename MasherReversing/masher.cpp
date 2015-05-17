@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <SDL.h>
+#include "Hooks.hpp"
 
 struct DDVHeaderPart1
 {
@@ -42,14 +43,15 @@ struct DDVHeaderPart3
     uint32_t framesInterleave;
 };
 
+extern Uint16 pixels[240 * 320];
 
 
 int main(int, char**)
 {
+    StartSDL();
 
-
-    FILE* fp = fopen("Testing.DDV", "rb");
-    //FILE* fp = fopen("Masher/GDENDING.DDV", "rb");
+   // FILE* fp = fopen("Testing.DDV", "rb");
+    FILE* fp = fopen("Masher/GDENDING.DDV", "rb");
 
     DDVHeaderPart1 headerP1 = {};
     fread(&headerP1, sizeof(headerP1), 1, fp);
@@ -60,10 +62,61 @@ int main(int, char**)
     // Only read audio section if audio is present in the file
     DDVHeaderPart3 headerP3 = {};
     const bool bHasAudio = (headerP1.contains & 0x2) == 0x2;
+    const bool bHasVideo = (headerP1.contains & 0x1) == 0x1;
     if (bHasAudio)
     {
         fread(&headerP3, sizeof(headerP3), 1, fp);
     }
+
+    ddv_class ddv = {};
+    ddv.ddvVersion = headerP1.ddvVersion;
+    ddv.contains = headerP1.contains;
+    ddv.frameRate = headerP1.frameRate;
+    ddv.mNumberOfFrames = headerP1.numberOfFrames;
+
+    ddv.field5 = headerP2.field5;
+    ddv.width = headerP2.width;
+    ddv.height = headerP2.height;
+    ddv.maxAudioFrameSize = headerP2.maxVideoFrameSize;
+    ddv.field9 = headerP2.field9;
+    ddv.keyFrameRate = headerP2.keyFrameRate;
+    
+    if (bHasAudio)
+    {
+        ddv.audioFormat = headerP3.audioFormat;
+        ddv.sampleRate = headerP3.sampleRate;
+        ddv.maxAudioFrameSize = headerP3.maxAudioFrameSize;
+        ddv.fieldE = headerP3.fieldE;
+        ddv.framesInterleave = headerP3.framesInterleave;
+    }
+
+    /*
+    HANDLE mFileHandle;
+    DWORD mRawFrameBitStreamData;
+    DWORD mDecodedBitStream;
+    DWORD mLastUsedFrameBuffer;
+    DWORD mUnknownBuffer4;
+    DWORD mAudioFrameSizeBytesQ;
+    DWORD mAudioFrameSizeBitsQ;
+    DWORD nNumMacroblocksX;
+    DWORD nNumMacroblocksY;
+    BYTE mHasAudio;
+    BYTE mHasVideo;
+    BYTE field_62;      // Padding?
+    BYTE field_63;      // Padding?
+    DWORD mCurrentFrameNumber;
+    DWORD mCurrentFrameNumber2;
+    DWORD field_6C; // Some sort of counter
+    DWORD mUnknownBuffer1;
+    DWORD mFrameSizesArray;
+    DWORD field_78;
+    DWORD field_7C;
+    DWORD mCurrentFrameBuffer;
+    DWORD field_84;
+    DWORD mSizeOfWhatIsReadIntoMUnknownBuffer2;
+    DWORD mMacroBlockBuffer_q;
+    DWORD mBlockDataSize_q;
+    */
 
     const uint32_t audioArraySize = headerP3.framesInterleave;
     const uint32_t videoArraySize = headerP1.numberOfFrames;
@@ -103,6 +156,10 @@ int main(int, char**)
 
                 int nDebug = 0;
             }
+
+            decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels);
+            FlipSDL();
+            SDL_Delay(1000);
         }
     }
     else
