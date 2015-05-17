@@ -98,8 +98,8 @@ int main(int, char**)
 
     ddv.mBlockDataSize_q = 64; // what should this be??
 
-    ddv.mDecodedBitStream = (DWORD)malloc(ddv.maxVideoFrameSize*4);
-    ddv.mMacroBlockBuffer_q = (DWORD)malloc(ddv.maxVideoFrameSize * 4);
+    ddv.mDecodedBitStream = (DWORD)malloc(40000*50);
+    ddv.mMacroBlockBuffer_q = (DWORD)malloc(4000000*50);
 
     /*
     HANDLE mFileHandle;
@@ -145,33 +145,30 @@ int main(int, char**)
 
     if (bHasAudio)
     {
-        for (uint32_t frame = 0; frame < headerP1.numberOfFrames; frame++)
+        for (uint32_t frame = headerP3.framesInterleave; frame < headerP1.numberOfFrames; frame++)
         {
-            uint16_t someOffset = 0;
-            fread(&someOffset, 2, 1, fp);
+            ppVideoFrames[frame].resize(pVideoFrameSizes[frame] + 4);
+            fread(ppVideoFrames[frame].data(), pVideoFrameSizes[frame] + 4, 1, fp);
 
-            ppVideoFrames[frame].resize(pVideoFrameSizes[frame] + 2);
-            fread(ppVideoFrames[frame].data(), pVideoFrameSizes[frame] + 2, 1, fp);
+            uint8_t* pAudio = &ppVideoFrames[frame][0];
 
-            if (someOffset + 2 >= ppVideoFrames[frame].size())
-            {
-                std::cout << someOffset + 2 << " is out of bounds on frame " << frame << std::endl;
-            }
-            else
-            {
-                uint8_t* pAudio = &ppVideoFrames[frame][someOffset + 2];
+            char buffer[90000] = {};
+            fseek(fp, 0x609D, 0);
+            fread(buffer, 1, 90000, fp);
 
-                /*
-                0x04DDD19C  02 00 10 00 a0 00 00 05 01 28 08 40 40 00 80 02  .... ....(.@@.€.
-                0x04DDD1AC  00 14 05 a0 20 00 00 01 00 0a 02 50 14 80 80 00  ...  ......P.€€.
-                */
-                ddv.mRawFrameBitStreamData = (DWORD)pAudio;
-       
+            /*
+            0x04DDD19C  02 00 10 00 a0 00 00 05 01 28 08 40 40 00 80 02  .... ....(.@@.€.
+            0x04DDD1AC  00 14 05 a0 20 00 00 01 00 0a 02 50 14 80 80 00  ...  ......P.€€.
+            */
 
-                decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels);
-                FlipSDL();
-                SDL_Delay(1000);
-            }
+            // First offset is frame 5 at 0x609D for GENDING
+            ddv.mRawFrameBitStreamData = (DWORD)buffer;
+
+
+            decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels);
+           // FlipSDL();
+            SDL_Delay(100);
+
 
 
 
