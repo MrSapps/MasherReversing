@@ -253,6 +253,174 @@ static void after_block_decode_no_effect_q_impl(int quantScale)
 
 }
 
+// TODO: Rip any required tables
+int* g_block_related_1_dword_42B0C8 = (int*)0x42B0C8;
+int* g_block_related_unknown_dword_42B0C4 = (int*)0x42B0C4;
+int* g_block_related_2_dword_42B0CC = (int*)0x42B0CC;
+int* g_block_related_3_dword_42B0D0 = (int*)0x42B0D0;
+
+static void SetLoWord(DWORD& v, WORD lo)
+{
+    WORD hiWord = HIWORD(v);
+    v = MAKELPARAM(lo, hiWord);
+}
+
+static void SetHiWord(DWORD& v, WORD hi)
+{
+    WORD loWord = LOWORD(v);
+    v = MAKEWPARAM(loWord, hi);
+}
+
+// Return val becomes param 1
+int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, int outputBlockPtr, DWORD isYBlock, int unused1, int* unused2)
+{
+    int v1; // ebx@1
+    DWORD *v2; // esi@1
+    WORD* endPtr; // edx@3
+    DWORD *output_q; // ebp@3
+    unsigned int counter; // edi@3
+    int v6; // esi@3
+    WORD* outptr; // edx@3
+    WORD* dataPtr; // edx@5
+    unsigned int macroBlockWord; // eax@6
+    unsigned int blockNumberQ; // edi@9
+    int index1; // eax@14
+    int index2; // esi@14
+    int index3; // ecx@14
+    signed int v14; // eax@15
+    int cnt; // ecx@15
+    unsigned int v16; // ecx@15
+    int v17; // esi@15
+    int idx; // ebx@16
+    DWORD outVal; // ecx@18
+    unsigned int macroBlockWord1; // eax@20
+    int v21; // esi@21
+    unsigned int v22; // edi@21
+    int v23; // ebx@21
+    signed int v24; // eax@21
+    DWORD v25; // ecx@21
+   // DecodeMacroBlock_Struct *thisPtr; // [sp-4h] [bp-10h]@3
+
+    v1 = isYBlock /*this->ZeroOrOneConstant*/;                 // off 14
+    v2 = g_252_buffer_unk_63580C;
+    
+    if (!isYBlock /*this->ZeroOrOneConstant*/)
+    {
+        v2 = g_252_buffer_unk_635A0C;
+    }
+
+    v6 = (unsigned int)v2 >> 2;
+    counter = 0;
+    outptr = (WORD*)bitstreamPtr /*this->mOutput >> 1*/;
+    //thisPtr = this;
+    output_q = (DWORD*)outputBlockPtr /*this->mCoEffsBuffer*/;               // off 10 quantised coefficients
+    endPtr = outptr - 1;
+    
+    do
+    {
+        ++endPtr;
+    }
+    while (*endPtr == 0xFE00u);  // 0xFE00 == END_OF_BLOCK, hence this loop moves past the EOB
+    
+    *output_q = (v1 << 10) + 2 * (*endPtr << 21 >> 22);
+    dataPtr = endPtr + 1; // last use of endPtr
+
+
+    if (*(BYTE *)(dataPtr - 1) & 1)        // has video flag?
+    {
+        
+        do
+        {
+            macroBlockWord1 = *dataPtr++;// bail if end
+            if (macroBlockWord1 == 0xFE00)
+            {
+                break;
+            }
+            v21 = (macroBlockWord1 >> 10) + v6;
+            v22 = (macroBlockWord1 >> 10) + counter;
+            v23 = g_block_related_1_dword_42B0C8[v22];
+            v24 = output_q[v23] + (macroBlockWord1 << 22);
+            SetHiWord(v25, HIWORD(v24));
+            counter = v22 + 1;
+            SetLoWord(v25, (*(DWORD *)(4 * v21) * (v24 >> 22) + 4) >> 3);
+            v6 = v21 + 1;
+            output_q[v23] = v25;
+        } while (counter < 63);                     // 63 AC values?
+        
+    }
+    else
+    {
+        
+        while (1)
+        {
+            macroBlockWord = *dataPtr++;// bail if end
+            if (macroBlockWord == 0xFE00)
+            {
+                break;
+            }
+            v16 = macroBlockWord;
+            v14 = macroBlockWord << 22;
+            v16 >>= 10;
+            v17 = v16 + v6;
+            cnt = v16 + 1;
+            while (1)
+            {
+                --cnt;
+                idx = g_block_related_1_dword_42B0C8[counter];
+                if (!cnt)
+                {
+                    break;
+                }
+                output_q[idx] = 0;
+                ++counter;
+            }
+            SetHiWord(outVal, HIWORD(v14));
+            ++counter;
+            SetLoWord(outVal, (*(DWORD *)(4 * v17) * (v14 >> 22) + 4) >> 3);
+            v6 = v17 + 1;
+            output_q[idx] = outVal;
+            if (counter >= 63)                      // 63 AC values?
+            {
+                return (int)dataPtr;
+            }
+        }
+        if (counter)
+        {
+            blockNumberQ = counter + 1;
+            if (blockNumberQ & 3)
+            {
+                output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ++]] = 0;
+                if (blockNumberQ & 3)
+                {
+                    output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ++]] = 0;
+                    if (blockNumberQ & 3)
+                    {
+                        output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ++]] = 0;
+                    }
+                }
+            }
+            
+            while (blockNumberQ != 64)              // 63 AC values?
+            {
+                index1 = g_block_related_1_dword_42B0C8[blockNumberQ];
+                index2 = g_block_related_2_dword_42B0CC[blockNumberQ];
+                index3 = g_block_related_3_dword_42B0D0[blockNumberQ];
+                output_q[g_block_related_unknown_dword_42B0C4[blockNumberQ]] = 0;
+                output_q[index1] = 0;
+                output_q[index2] = 0;
+                output_q[index3] = 0;
+                blockNumberQ += 4;
+            }
+        }
+        else
+        {
+            memset(output_q + 1, 0, 252u);            // 63 dwords buffer
+        }
+        
+    }
+    return (int)dataPtr;
+}
+
 
 static char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
@@ -277,7 +445,8 @@ static char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned
     else
     {
         // gending uses this one - this outputs macroblock coefficients?
-        decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, DWORD, int, int *))ddv_func7_DecodeMacroBlock_ptr; // TODO: Reimpl
+        //decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, DWORD, int, int *))ddv_func7_DecodeMacroBlock_ptr; // TODO: Reimpl
+        decodeMacroBlockfPtr = ddv_func7_DecodeMacroBlock_impl;
     }
  
     // Done once for the whole 320x240 image
@@ -448,12 +617,6 @@ static inline void OutputWordAndAdvance(WORD*& rawBitStreamPtr, DWORD& rawWord4,
 #define MASK_10_BITS 0x3FF
 #define MASK_13_BITS 0x1FFF
 #define MDEC_END 0xFE00u
-
-static void SetLoWord(DWORD& v, WORD lo)
-{
-    WORD hiWord = HIWORD(v);
-    v = MAKELPARAM(lo, hiWord);
-}
 
 static DWORD GetBits(DWORD value, DWORD numBits)
 {
