@@ -131,8 +131,8 @@ int main(int, char**)
     std::vector<uint32_t> pAudioFrameSizes(audioArraySize);
     std::vector<uint32_t> pVideoFrameSizes(videoArraySize);
 
-    fread(pAudioFrameSizes.data(), audioArraySize * sizeof(uint32_t), 1, fp);
-    fread(pVideoFrameSizes.data(), videoArraySize * sizeof(uint32_t), 1, fp);
+    fread(pAudioFrameSizes.data(), audioArraySize, sizeof(uint32_t), fp);
+    fread(pVideoFrameSizes.data(), videoArraySize, sizeof(uint32_t), fp);
 
     std::vector<std::vector<uint8_t>> ppAudioFrames(headerP3.framesInterleave);
     std::vector<std::vector<uint8_t>> ppVideoFrames(headerP1.numberOfFrames);
@@ -145,33 +145,25 @@ int main(int, char**)
 
     if (bHasAudio)
     {
-        for (uint32_t frame = headerP3.framesInterleave; frame < headerP1.numberOfFrames; frame++)
+        int c = 0;
+        for (uint32_t frame = 0; frame < headerP1.numberOfFrames; frame++)
         {
-            ppVideoFrames[frame].resize(pVideoFrameSizes[frame] + 4);
-            fread(ppVideoFrames[frame].data(), pVideoFrameSizes[frame] + 4, 1, fp);
+            //if (frame % ddv.framesInterleave == 0)
+            {
+                unsigned int frameSize = pVideoFrameSizes[frame] + 4; // Always +4 if audio
+                ppVideoFrames[frame].resize(frameSize);
+                fread(ppVideoFrames[frame].data(), frameSize, 1, fp);
 
-            uint8_t* pAudio = &ppVideoFrames[frame][0];
+                uint8_t* pVideo = &ppVideoFrames[frame][4];
 
-            char buffer[90000] = {};
-            fseek(fp, 0x609D, 0);
-            fread(buffer, 1, 90000, fp);
-
-            /*
-            0x04DDD19C  02 00 10 00 a0 00 00 05 01 28 08 40 40 00 80 02  .... ....(.@@.€.
-            0x04DDD1AC  00 14 05 a0 20 00 00 01 00 0a 02 50 14 80 80 00  ...  ......P.€€.
-            */
-
-            // First offset is frame 5 at 0x609D for GENDING
-            ddv.mRawFrameBitStreamData = (DWORD)buffer;
+                // First offset is frame 5 at 0x609D for GENDING
+                ddv.mRawFrameBitStreamData = (DWORD)pVideo;
 
 
-            decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels);
-           // FlipSDL();
-            SDL_Delay(100);
-
-
-
-
+                decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels);
+                // FlipSDL();
+                SDL_Delay(1);
+            }
         }
     }
     else

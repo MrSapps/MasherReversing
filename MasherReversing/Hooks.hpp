@@ -41,8 +41,8 @@ struct ddv_class
     DWORD mCurrentFrameNumber;
     DWORD mCurrentFrameNumber2;
     DWORD field_6C; // Some sort of counter
-    DWORD mUnknownBuffer1;
-    DWORD mFrameSizesArray;
+    DWORD mVideoFrameSizesArray;        // After the audio/number of interleave frames
+    DWORD mCurrentVideoFrameSizePtr;
     DWORD field_78;
     DWORD field_7C;
     DWORD mCurrentFrameBuffer;
