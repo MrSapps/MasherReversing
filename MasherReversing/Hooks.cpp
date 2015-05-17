@@ -216,30 +216,26 @@ void idct(int16_t* pSource, int32_t* pDestination)
     half_idct(pTemp, pDestination, 1, 8, 18);
 }
 
-//TODO: Part of the null buffers
-DWORD* gBlockWidthQ_before_635A0C = (DWORD*)0x635A08;
-DWORD* gBlockHeightQ_before_63580C = (DWORD*)0x635808;
 
 // TODO: these tables must be ripped
 DWORD* gQuant1_dword_42AEC8 = (DWORD*)0x42AEC8;
 DWORD* gQaunt2_dword_42AFC4 = (DWORD*)0x42AFC4;
 
-// TODO: Null buffers
-DWORD *g_252_buffer_unk_635A0C = (DWORD*)0x635A0C;
-DWORD *g_252_buffer_unk_63580C = (DWORD*)0x63580C;
+DWORD g_252_buffer_unk_635A0C[64] = {};
+DWORD g_252_buffer_unk_63580C[64] = {};
 
 static void after_block_decode_no_effect_q_impl(int quantScale)
 {
-    *gBlockWidthQ_before_635A0C = 16;
-    *gBlockHeightQ_before_63580C = 16;
+    g_252_buffer_unk_63580C[0] = 16;
+    g_252_buffer_unk_635A0C[0] = 16;
     if (quantScale > 0)
     {
         signed int result = 0;
         do
         {
-            g_252_buffer_unk_63580C[result] = quantScale * gQuant1_dword_42AEC8[result];
+            g_252_buffer_unk_63580C[1+result] = quantScale * gQuant1_dword_42AEC8[result];
             result++;
-            g_252_buffer_unk_635A0C[result - 1] = quantScale * gQaunt2_dword_42AFC4[result];
+            g_252_buffer_unk_635A0C[1+result - 1] = quantScale * gQaunt2_dword_42AFC4[result];
 
 
         } while (result < 63);                   // 252/4=63
@@ -247,8 +243,8 @@ static void after_block_decode_no_effect_q_impl(int quantScale)
     else
     {
         // These are simply null buffers to start with
-        memset(g_252_buffer_unk_635A0C, 16, 252  /*sizeof(g_252_buffer_unk_635A0C)*/); // DWORD[63]
-        memset(g_252_buffer_unk_63580C, 16, 252 /*sizeof(g_252_buffer_unk_63580C)*/);
+        memset(&g_252_buffer_unk_635A0C[1], 16, 252  /*sizeof(g_252_buffer_unk_635A0C)*/); // DWORD[63]
+        memset(&g_252_buffer_unk_63580C[1], 16, 252 /*sizeof(g_252_buffer_unk_63580C)*/);
     }
 
 }
@@ -302,11 +298,11 @@ int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, in
    // DecodeMacroBlock_Struct *thisPtr; // [sp-4h] [bp-10h]@3
 
     v1 = isYBlock /*this->ZeroOrOneConstant*/;                 // off 14
-    v2 = g_252_buffer_unk_63580C;
+    v2 = &g_252_buffer_unk_63580C[1];
     
     if (!isYBlock /*this->ZeroOrOneConstant*/)
     {
-        v2 = g_252_buffer_unk_635A0C;
+        v2 = &g_252_buffer_unk_635A0C[1];
     }
 
     v6 = (unsigned int)v2 >> 2;
