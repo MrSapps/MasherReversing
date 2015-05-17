@@ -55,7 +55,7 @@ static_assert(sizeof(Tbl2) == 8, "Wrong size");
 
 // Note: Everything on the end of this table was nulls, so it might be too short, out of bounds too far should be capped
 // to return nulls
-static Tbl1 gTbl1[] =
+static const Tbl1 gTbl1[] =
 {
     { 0x00, 0x0000 },
     { 0x00, 0x0000 },
@@ -4327,7 +4327,7 @@ static Tbl1 gTbl1[] =
     { 0x01, 0x0000 }
 };
 
-static Tbl2 gTbl2[] = 
+static const Tbl2 gTbl2[] = 
 {
     { 0x00, 0x0000, 0x0000, 0x0000 },
     { 0x00, 0x0000, 0x0000, 0x0000 },
