@@ -255,8 +255,11 @@ const DWORD g_block_related_3_dword_42B0D0[64] =
     0x00000036, 0x0000002F, 0x00000037, 0x0000003E, 0x0000003F, 0x0000098E, 0x0000098E, 0x0000F384
 };
 
-DWORD g_252_buffer_unk_635A0C[64] = {};
-DWORD g_252_buffer_unk_63580C[64] = {};
+DWORD* g_252_buffer_unk_635A0C = (DWORD*)0x635A08;
+DWORD* g_252_buffer_unk_63580C = (DWORD*)0x635808;
+
+//DWORD g_252_buffer_unk_635A0C[64] = {};
+//DWORD g_252_buffer_unk_63580C[64] = {};
 
 static void after_block_decode_no_effect_q_impl(int quantScale)
 {
@@ -494,8 +497,8 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
     else
     {
         // gending uses this one - this outputs macroblock coefficients?
-        decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, DWORD, int, int *))ddv_func7_DecodeMacroBlock_ptr; // TODO: Reimpl
-        //decodeMacroBlockfPtr = ddv_func7_DecodeMacroBlock_impl;
+        //decodeMacroBlockfPtr = (int(__cdecl *)(int, int *, int, DWORD, int, int *))ddv_func7_DecodeMacroBlock_ptr; // TODO: Reimpl
+        decodeMacroBlockfPtr = ddv_func7_DecodeMacroBlock_impl;
     }
  
     // Done once for the whole 320x240 image
@@ -503,8 +506,8 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
 
     // Each block only seems to have 1 colour if this isn't called, but then resizing the window seems to fix it sometimes (perhaps causes
     // this function to be called else where).
-    after_block_decode_no_effect_q_ptr(quantScale); // TODO: Reimpl
-   // after_block_decode_no_effect_q_impl(quantScale);
+  //  after_block_decode_no_effect_q_ptr(quantScale); // TODO: Reimpl
+    after_block_decode_no_effect_q_impl(quantScale);
 
     // Sanity check
     if (thisPtr->nNumMacroblocksX <= 0 || thisPtr->nNumMacroblocksY <= 0)
