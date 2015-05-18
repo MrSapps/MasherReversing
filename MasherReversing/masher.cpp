@@ -106,8 +106,8 @@ static void PlayDDV(const char* fileName)
 
     ddv.mBlockDataSize_q = 64; // what should this be??
 
-    ddv.mDecodedBitStream = (DWORD*)malloc(40000 * 50); // TODO: correct size
-    ddv.mMacroBlockBuffer_q = (DWORD*)malloc(4000000 * 50); // TODO: Correct size
+    ddv.mDecodedBitStream = (WORD*)malloc(40000 * 150); // TODO: correct size
+    ddv.mMacroBlockBuffer_q = (WORD*)malloc(4000000 * 150); // TODO: Correct size
 
     const uint32_t audioArraySize = headerP3.framesInterleave;
     const uint32_t videoArraySize = headerP1.numberOfFrames;
@@ -126,12 +126,12 @@ static void PlayDDV(const char* fileName)
         ppAudioFrames[frame].resize(pAudioFrameSizes[frame]);
         fread(ppAudioFrames[frame].data(), pAudioFrameSizes[frame], 1, fp);
     }
+    SDL_Event event = {};
 
     if (bHasAudio)
     {
         for (uint32_t frame = 0; frame < headerP1.numberOfFrames; frame++)
         {
-            SDL_Event event = {};
             while (SDL_PollEvent(&event))
             {
                 switch (event.type)
@@ -160,7 +160,7 @@ static void PlayDDV(const char* fileName)
             DWORD audioOffset = *(DWORD*)ppVideoFrames[frame].data();
            
             uint8_t* pVideo = &ppVideoFrames[frame][4];
-            ddv.mRawFrameBitStreamData = (DWORD)pVideo;
+            ddv.mRawFrameBitStreamData = (WORD*)pVideo;
 
             const size_t numFramesLeft = headerP1.numberOfFrames - frame;
             if (numFramesLeft > headerP3.framesInterleave)
@@ -186,7 +186,7 @@ static void PlayDDV(const char* fileName)
             ppVideoFrames[frame].resize(pVideoFrameSizes[frame]);
             fread(ppVideoFrames[frame].data(), pVideoFrameSizes[frame], 1, fp);
 
-            ddv.mRawFrameBitStreamData = (DWORD)ppVideoFrames[frame].data();
+            ddv.mRawFrameBitStreamData = (WORD*)ppVideoFrames[frame].data();
 
 
             decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels.data());
@@ -375,11 +375,11 @@ int main(int, char**)
 
 
     // TODO: gtilogo.ddv and prophecy.ddv do not render correctly
-    std::string abesExoddusDir = "C:\\Users\\pmoran\\Desktop\\MasherReversing\\";
+    std::string abesExoddusDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Exoddus\\";
     std::string msg1CdDir = "W:\\MOVIE\\";
     std::string msg1Cd2Dir = "X:\\MOVIE\\";
 
-    for (auto& file : debugs)
+    for (auto& file : ddvs)
     {
         std::cout << "Playing: " << file.c_str() << std::endl;
         PlayDDV((abesExoddusDir + file).c_str());
