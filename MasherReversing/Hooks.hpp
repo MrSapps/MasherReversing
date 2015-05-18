@@ -29,7 +29,7 @@ struct ddv_class
     DWORD fieldE;
     DWORD framesInterleave;
     DWORD mRawFrameBitStreamData;
-    DWORD mDecodedBitStream;
+    DWORD* mDecodedBitStream;
     DWORD mLastUsedFrameBuffer;
     DWORD mUnknownBuffer4;
     DWORD mAudioFrameSizeBytesQ;
@@ -50,7 +50,7 @@ struct ddv_class
     DWORD mCurrentFrameBuffer;
     DWORD field_84;
     DWORD mSizeOfWhatIsReadIntoMUnknownBuffer2;
-    DWORD mMacroBlockBuffer_q;
+    DWORD* mMacroBlockBuffer_q;
     DWORD mBlockDataSize_q;
 };
 #pragma pack(pop)

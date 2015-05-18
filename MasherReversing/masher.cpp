@@ -106,8 +106,8 @@ static void PlayDDV(const char* fileName)
 
     ddv.mBlockDataSize_q = 64; // what should this be??
 
-    ddv.mDecodedBitStream = (DWORD)malloc(40000 * 50); // TODO: correct size
-    ddv.mMacroBlockBuffer_q = (DWORD)malloc(4000000 * 50); // TODO: Correct size
+    ddv.mDecodedBitStream = (DWORD*)malloc(40000 * 50); // TODO: correct size
+    ddv.mMacroBlockBuffer_q = (DWORD*)malloc(4000000 * 50); // TODO: Correct size
 
     const uint32_t audioArraySize = headerP3.framesInterleave;
     const uint32_t videoArraySize = headerP1.numberOfFrames;

@@ -94,7 +94,7 @@ static JmpHookedFunction<ddv__func5_block_decoder_q_type>* ddv_func6_decodes_blo
 
 void idct(int16_t* pSource, int32_t* pDestination);
 
-static void do_blit_output_no_mmx(int macroBlockBuffer, int* decodedBitStream)
+static void do_blit_output_no_mmx(DWORD* macroBlockBuffer, int* decodedBitStream)
 {
     idct((int16_t*)macroBlockBuffer, decodedBitStream);
 }
@@ -324,14 +324,14 @@ static void SetHiWord(DWORD& v, WORD hi)
 }
 
 // Return val becomes param 1
-int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, int outputBlockPtr, DWORD isYBlock, int unused1, int* unused2)
+DWORD* __cdecl ddv_func7_DecodeMacroBlock_impl(DWORD* bitstreamPtr, int * blockPtr, DWORD* outputBlockPtr, DWORD isYBlock, int unused1, int* unused2)
 {
     int v1; // ebx@1
     DWORD *v2; // esi@1
     WORD* endPtr; // edx@3
     DWORD *output_q; // ebp@3
     unsigned int counter; // edi@3
-    int v6; // esi@3
+    DWORD* v6; // esi@3
     WORD* outptr; // edx@3
     WORD* dataPtr; // edx@5
     unsigned int macroBlockWord; // eax@6
@@ -342,14 +342,14 @@ int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, in
     signed int v14; // eax@15
     int cnt; // ecx@15
     unsigned int v16; // ecx@15
-    int v17; // esi@15
+   // int v17; // esi@15
     int idx; // ebx@16
     DWORD outVal; // ecx@18
     unsigned int macroBlockWord1; // eax@20
-    int v21; // esi@21
+  //  int v21; // esi@21
     unsigned int v22; // edi@21
     int v23; // ebx@21
-    signed int v24; // eax@21
+ //   signed int v24; // eax@21
     DWORD v25; // ecx@21
    // DecodeMacroBlock_Struct *thisPtr; // [sp-4h] [bp-10h]@3
 
@@ -361,7 +361,7 @@ int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, in
         v2 = &g_252_buffer_unk_635A0C[1];
     }
 
-    v6 = (unsigned int)v2 >> 2;
+    v6 = v2;
     counter = 0;
     outptr = (WORD*)bitstreamPtr /*this->mOutput >> 1*/;
     //thisPtr = this;
@@ -388,13 +388,13 @@ int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, in
             {
                 break;
             }
-            v21 = (macroBlockWord1 >> 10) + v6;
+            DWORD* v21 = (macroBlockWord1 >> 10) + v6;
             v22 = (macroBlockWord1 >> 10) + counter;
             v23 = g_block_related_1_dword_42B0C8[v22];
-            v24 = output_q[v23] + (macroBlockWord1 << 22);
+            signed int v24 = output_q[v23] + (macroBlockWord1 << 22);
             SetHiWord(v25, HIWORD(v24));
             counter = v22 + 1;
-            SetLoWord(v25, (*(DWORD *)(4 * v21) * (v24 >> 22) + 4) >> 3);
+            SetLoWord(v25, ( *(DWORD *) (v21) * (v24 >> 22) + 4) >> 3);
             v6 = v21 + 1;
             output_q[v23] = v25;
         } while (counter < 63);                     // 63 AC values?
@@ -413,7 +413,7 @@ int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, in
             v16 = macroBlockWord;
             v14 = macroBlockWord << 22;
             v16 >>= 10;
-            v17 = v16 + v6;
+            DWORD* v17 = v16 + v6;
             cnt = v16 + 1;
             while (1)
             {
@@ -428,12 +428,12 @@ int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, in
             }
             SetHiWord(outVal, HIWORD(v14));
             ++counter;
-            SetLoWord(outVal, (*(DWORD *)(4 * v17) * (v14 >> 22) + 4) >> 3);
+            SetLoWord(outVal, (*(DWORD *)(v17) * (v14 >> 22) + 4) >> 3);
             v6 = v17 + 1;
             output_q[idx] = outVal;
             if (counter >= 63)                      // 63 AC values?
             {
-                return (int)dataPtr;
+                return (DWORD*)dataPtr;
             }
         }
         if (counter)
@@ -470,7 +470,7 @@ int __cdecl ddv_func7_DecodeMacroBlock_impl(int bitstreamPtr, int * blockPtr, in
         }
         
     }
-    return (int)dataPtr;
+    return (DWORD*)dataPtr;
 }
 
 /*
@@ -494,7 +494,7 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
     // No effect if no incremented
     ++thisPtr->field_6C;
 
-    int(__cdecl *decodeMacroBlockfPtr)(int, int *, int, DWORD, int, int *) = nullptr;
+    DWORD*(__cdecl *decodeMacroBlockfPtr)(DWORD*, int *, DWORD*, DWORD, int, int *) = nullptr;
     if (thisPtr->keyFrameRate <= 1)
     {
         // Should never happen - at least with the test data
@@ -523,11 +523,11 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
         return 0;
     }
 
-    int bitstreamCurPos = (int)thisPtr->mDecodedBitStream;
+    DWORD* bitstreamCurPos = thisPtr->mDecodedBitStream;
     
     int xoff = 0;
     auto buf = (unsigned short int*)pScreenBuffer;
-    DWORD block1Output = thisPtr->mMacroBlockBuffer_q;
+    DWORD* block1Output = thisPtr->mMacroBlockBuffer_q;
 
     // For 320x240 image we have a 20x16 macro block grid (because 320/16 and 240/16)
     for (unsigned int xBlock = 0; xBlock < thisPtr->nNumMacroblocksX; xBlock++)
@@ -537,25 +537,25 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
         {
             const int dataSizeBytes = thisPtr->mBlockDataSize_q * 4; // Convert to byte count 64*4=256
 
-            const int afterBlock1Ptr = decodeMacroBlockfPtr(bitstreamCurPos, Cr_block, block1Output, 0, 0, 0);
+            DWORD* afterBlock1Ptr = decodeMacroBlockfPtr(bitstreamCurPos, Cr_block, block1Output, 0, 0, 0);
             do_blit_output_no_mmx(block1Output, Cr_block); // TODO: Reimpl
-            const int block2Output = dataSizeBytes + block1Output;
+            DWORD* block2Output = dataSizeBytes + block1Output;
 
-            const int afterBlock2Ptr = decodeMacroBlockfPtr(afterBlock1Ptr, Cb_block, block2Output, 0, 0, 0);
+            DWORD* afterBlock2Ptr = decodeMacroBlockfPtr(afterBlock1Ptr, Cb_block, block2Output, 0, 0, 0);
             do_blit_output_no_mmx(block2Output, Cb_block);
-            const int block3Output = dataSizeBytes + block2Output;
+            DWORD* block3Output = dataSizeBytes + block2Output;
 
-            const int afterBlock3Ptr = decodeMacroBlockfPtr(afterBlock2Ptr, Y1_block, block3Output, 1, 0, 0);
+            DWORD* afterBlock3Ptr = decodeMacroBlockfPtr(afterBlock2Ptr, Y1_block, block3Output, 1, 0, 0);
             do_blit_output_no_mmx(block3Output, Y1_block);
-            const int block4Output = dataSizeBytes + block3Output;
+            DWORD* block4Output = dataSizeBytes + block3Output;
   
-            const int afterBlock4Ptr = decodeMacroBlockfPtr(afterBlock3Ptr, Y2_block, block4Output, 1, 0, 0);
+            DWORD* afterBlock4Ptr = decodeMacroBlockfPtr(afterBlock3Ptr, Y2_block, block4Output, 1, 0, 0);
             do_blit_output_no_mmx(block4Output, Y2_block);
-            const int block5Output = dataSizeBytes + block4Output;
+            DWORD* block5Output = dataSizeBytes + block4Output;
 
-            const int afterBlock5Ptr = decodeMacroBlockfPtr(afterBlock4Ptr, Y3_block, block5Output, 1, 0, 0);
+            DWORD* afterBlock5Ptr = decodeMacroBlockfPtr(afterBlock4Ptr, Y3_block, block5Output, 1, 0, 0);
             do_blit_output_no_mmx(block5Output, Y3_block);
-            const int block6Output = dataSizeBytes + block5Output;
+            DWORD* block6Output = dataSizeBytes + block5Output;
 
             bitstreamCurPos = decodeMacroBlockfPtr(afterBlock5Ptr, Y4_block, block6Output, 1, 0, 0);
             do_blit_output_no_mmx(block6Output, Y4_block);
