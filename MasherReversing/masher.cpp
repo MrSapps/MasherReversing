@@ -129,7 +129,6 @@ static void PlayDDV(const char* fileName)
 
     if (bHasAudio)
     {
-        int c = 0;
         for (uint32_t frame = 0; frame < headerP1.numberOfFrames; frame++)
         {
             SDL_Event event = {};
@@ -153,17 +152,30 @@ static void PlayDDV(const char* fileName)
                 }
             }
 
-            // IF audio then what is first DWORD? Offset within frame to audio data?
-
+      
             unsigned int frameSize = pVideoFrameSizes[frame] + 4; // Always +4 if audio
             ppVideoFrames[frame].resize(frameSize);
             fread(ppVideoFrames[frame].data(), frameSize, 1, fp);
 
+            DWORD audioOffset = *(DWORD*)ppVideoFrames[frame].data();
+           
             uint8_t* pVideo = &ppVideoFrames[frame][4];
             ddv.mRawFrameBitStreamData = (DWORD)pVideo;
 
+            const size_t numFramesLeft = headerP1.numberOfFrames - frame;
+            if (numFramesLeft > headerP3.framesInterleave)
+            {
+                uint8_t* pAudio = &ppVideoFrames[frame][4 + audioOffset];
+
+                const size_t audioSize = ppVideoFrames[frame].size() - audioOffset;
+                std::cout << "Frame size is " << audioSize <<  " first byte: " << (int)(*(pAudio+0)) << std::endl;
+            }
+
             decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels.data());
             //SDL_Delay(16*2);
+
+
+
         }
     }
     else
@@ -341,8 +353,7 @@ int main(int, char**)
 
     std::vector<std::string> debugs =
     {
-        "gtilogo.ddv",
-        "prophecy.ddv"
+        "MIP01C03.DDV"
     };
 
     std::vector<std::string> msg1Cd1Movies =
@@ -364,7 +375,7 @@ int main(int, char**)
 
 
     // TODO: gtilogo.ddv and prophecy.ddv do not render correctly
-    std::string abesExoddusDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Exoddus\\";
+    std::string abesExoddusDir = "C:\\Users\\pmoran\\Desktop\\MasherReversing\\";
     std::string msg1CdDir = "W:\\MOVIE\\";
     std::string msg1Cd2Dir = "X:\\MOVIE\\";
 
