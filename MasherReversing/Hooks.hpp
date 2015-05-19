@@ -30,8 +30,8 @@ struct ddv_class
     DWORD framesInterleave;
     WORD* mRawFrameBitStreamData;
     WORD* mDecodedBitStream;
-    DWORD mLastUsedFrameBuffer;
-    DWORD mUnknownBuffer4;
+    WORD* mAudioFramePtr;
+    WORD* mDecodedAudioFramePtr;
     DWORD mAudioFrameSizeBytesQ;
     DWORD mAudioFrameSizeBitsQ;
     DWORD nNumMacroblocksX;
