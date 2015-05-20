@@ -82,7 +82,7 @@ static void PlayDDV(const char* fileName)
         ddv.audioFormat = headerP3.audioFormat;
         ddv.sampleRate = headerP3.sampleRate;
         ddv.maxAudioFrameSize = headerP3.maxAudioFrameSize;
-        ddv.fieldE = headerP3.mSingleAudioFrameSize;
+        ddv.mSingleAudioFrameSize = headerP3.mSingleAudioFrameSize;
         ddv.framesInterleave = headerP3.framesInterleave;
     }
 
@@ -205,6 +205,9 @@ static void PlayDDV(const char* fileName)
 
 int main(int, char**)
 {
+    init_Snd_tbl();
+
+
     StartSDL();
 
     // All public DDVs known to man

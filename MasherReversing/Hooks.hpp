@@ -7,6 +7,7 @@ int StartSDL();
 void SetSurfaceSize(int w, int h);
 void FlipSDL();
 void StopSDL();
+void init_Snd_tbl();
 
 #pragma pack(1)
 #pragma pack(push)
