@@ -38,7 +38,7 @@ struct DDVHeaderPart3
     uint32_t audioFormat;
     uint32_t sampleRate;
     uint32_t maxAudioFrameSize;
-    uint32_t fieldE; // size of 1 audio channel?
+    uint32_t mSingleAudioFrameSize; // sampleRate / fps, i.e 44100/15=2940
 
     uint32_t framesInterleave;
 };
@@ -82,7 +82,7 @@ static void PlayDDV(const char* fileName)
         ddv.audioFormat = headerP3.audioFormat;
         ddv.sampleRate = headerP3.sampleRate;
         ddv.maxAudioFrameSize = headerP3.maxAudioFrameSize;
-        ddv.fieldE = headerP3.fieldE;
+        ddv.fieldE = headerP3.mSingleAudioFrameSize;
         ddv.framesInterleave = headerP3.framesInterleave;
     }
 

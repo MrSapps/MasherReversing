@@ -26,7 +26,7 @@ struct ddv_class
     DWORD audioFormat;
     DWORD sampleRate;
     DWORD maxAudioFrameSize;
-    DWORD fieldE;
+    DWORD mSingleAudioFrameSize;
     DWORD framesInterleave;
     WORD* mRawFrameBitStreamData;
     WORD* mDecodedBitStream;
