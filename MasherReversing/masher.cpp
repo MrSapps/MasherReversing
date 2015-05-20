@@ -8,7 +8,7 @@
 #include <SDL.h>
 #include "Hooks.hpp"
 
-struct DDVHeaderPart1
+struct DDVHeader
 {
     uint32_t ddvTag;
 
@@ -21,7 +21,7 @@ struct DDVHeaderPart1
     uint32_t numberOfFrames;
 };
 
-struct DDVHeaderPart2
+struct VideoHeader
 {
     uint32_t field5; // Probably a reserved field, it has no effect and isn't read by masher lib
     uint32_t width;
@@ -33,7 +33,7 @@ struct DDVHeaderPart2
     uint32_t keyFrameRate;
 };
 
-struct DDVHeaderPart3
+struct AudioHeader
 {
     uint32_t audioFormat;
     uint32_t sampleRate;
@@ -49,14 +49,14 @@ static void PlayDDV(const char* fileName)
 {
     FILE* fp = fopen(fileName, "rb");
 
-    DDVHeaderPart1 headerP1 = {};
+    DDVHeader headerP1 = {};
     fread(&headerP1, sizeof(headerP1), 1, fp);
 
-    DDVHeaderPart2 headerP2 = {};
+    VideoHeader headerP2 = {};
     fread(&headerP2, sizeof(headerP2), 1, fp);
 
     // Only read audio section if audio is present in the file
-    DDVHeaderPart3 headerP3 = {};
+    AudioHeader headerP3 = {};
     const bool bHasAudio = (headerP1.contains & 0x2) == 0x2;
     const bool bHasVideo = (headerP1.contains & 0x1) == 0x1;
     if (bHasAudio)
@@ -82,7 +82,7 @@ static void PlayDDV(const char* fileName)
         ddv.audioFormat = headerP3.audioFormat;
         ddv.sampleRate = headerP3.sampleRate;
         ddv.maxAudioFrameSize = headerP3.maxAudioFrameSize;
-        ddv.mSingleAudioFrameSize = headerP3.mSingleAudioFrameSize;
+		ddv.mSingleAudioFrameSize = headerP3.mSingleAudioFrameSize;
         ddv.framesInterleave = headerP3.framesInterleave;
     }
 
@@ -206,7 +206,6 @@ static void PlayDDV(const char* fileName)
 int main(int, char**)
 {
     init_Snd_tbl();
-
 
     StartSDL();
 

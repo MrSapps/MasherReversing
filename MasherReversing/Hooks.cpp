@@ -474,6 +474,22 @@ WORD* __cdecl ddv_func7_DecodeMacroBlock_impl(WORD* bitstreamPtr, int * blockPtr
     return dataPtr;
 }
 
+unsigned char byte_62EEB0[256] = {};
+
+void init_Snd_tbl()
+{
+    int index = 0;
+    do
+    {
+        int tableValue = 0;
+        for (int i = index; i > 0; ++tableValue)
+        {
+            i >>= 1;
+        }
+        byte_62EEB0[index++] = tableValue;
+    } while (index < 256);
+}
+
 /*
 // One of these breaks prophcy DDV
 typedef int(__cdecl *ddv_func7_DecodeMacroBlock)(void* params);
