@@ -92,6 +92,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;DDRAW_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)\SDL2-2.0.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -113,6 +114,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;DDRAW_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)\SDL2-2.0.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -136,6 +138,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;DDRAW_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)\SDL2-2.0.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -161,6 +164,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;DDRAW_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)\SDL2-2.0.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
