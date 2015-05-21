@@ -48,7 +48,7 @@ int StartSDL()
 }
 
 static int w = 0;
-std::vector<Uint16> pixels;
+std::vector<Uint32> pixels;
 
 void SetSurfaceSize(int w, int h)
 {
@@ -61,7 +61,7 @@ void SetSurfaceSize(int w, int h)
     }
 
     sdlTexture = SDL_CreateTexture(ren,
-        SDL_PIXELFORMAT_RGB565,
+        SDL_PIXELFORMAT_RGBA8888,
         SDL_TEXTUREACCESS_STREAMING,
         w, h);
 
@@ -71,7 +71,7 @@ void SetSurfaceSize(int w, int h)
 
 void FlipSDL()
 {
-    SDL_UpdateTexture(sdlTexture, NULL, pixels.data(), w * sizeof(Uint16));
+    SDL_UpdateTexture(sdlTexture, NULL, pixels.data(), w * sizeof(Uint32));
 
     SDL_RenderClear(ren);
     SDL_RenderCopy(ren, sdlTexture, NULL, NULL);
@@ -110,7 +110,7 @@ void SetElement(int x, int y, unsigned short int* ptr, unsigned short int value)
 // This can probably be made more generic still, but probably no point.
 // We base stuff off of this:
 template <int r_bits, int g_bits, int b_bits>
-inline unsigned short RGB(unsigned char r, unsigned char g, unsigned char b) {
+inline unsigned int RGB(unsigned char r, unsigned char g, unsigned char b) {
     return ((((r >> (8 - r_bits)) << g_bits) |
         (g >> (8 - g_bits))) << b_bits) |
         (b >> (8 - b_bits));
@@ -126,6 +126,11 @@ inline unsigned short BGR(unsigned char r, unsigned char g, unsigned char b) {
 inline unsigned short RGB565(unsigned char r, unsigned char g, unsigned char b) {
     return RGB<5, 6, 5>(r, g, b);
 }
+
+inline unsigned int RGB888(unsigned char r, unsigned char g, unsigned char b) {
+    return RGB<8, 8, 8>(r, g, b);
+}
+
 unsigned char Clamp(float v)
 {
     if (v < 0.0f) v = 0.0f;
@@ -499,6 +504,8 @@ typedef signed int(__cdecl* after_block_decode_no_effect_q)(int a1);
 static after_block_decode_no_effect_q after_block_decode_no_effect_q_ptr = (after_block_decode_no_effect_q)0x0040E360;
 */
 
+#include "PSXMDECDecoder.h"
+
 char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
     //StartSDL();
@@ -539,6 +546,7 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
     {
         return 0;
     }
+
 
     WORD* bitstreamCurPos = thisPtr->mDecodedBitStream;
     
@@ -591,7 +599,7 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
     return 0;
 }
 
-void SetElement2(int x, int y, unsigned short int* ptr, unsigned short int value)
+void SetElement2(int x, int y, unsigned int* ptr, unsigned int value)
 {
     int kWidth = ::w;
     ptr[(kWidth * y) + x] = value;
@@ -666,12 +674,13 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
                 SetSurfaceSize(320, 240);  // Guess when running as a hook;
             }
 
+            
             SetElement2(x + xoff, y + yoff, pixels.data(),
-                RGB565(
+                RGB888(
                 Macroblock_RGB[x][y].Red,
                 Macroblock_RGB[x][y].Green,
                 Macroblock_RGB[x][y].Blue));
-
+                
 
         }
     }

@@ -8,6 +8,8 @@
 #include <SDL.h>
 #include "Hooks.hpp"
 
+#include "PSXMDECDecoder.h"
+
 struct DDVHeader
 {
     uint32_t ddvTag;
@@ -43,7 +45,7 @@ struct AudioHeader
     uint32_t framesInterleave;
 };
 
-extern std::vector<Uint16> pixels;
+extern std::vector<Uint32> pixels;
 
 static void PlayDDV(const char* fileName)
 {
@@ -152,7 +154,8 @@ static void PlayDDV(const char* fileName)
                 }
             }
 
-      
+
+
             unsigned int frameSize = pVideoFrameSizes[frame] + 4; // Always +4 if audio
             ppVideoFrames[frame].resize(frameSize);
             fread(ppVideoFrames[frame].data(), frameSize, 1, fp);
@@ -200,6 +203,13 @@ static void PlayDDV(const char* fileName)
 
     free((void*)ddv.mDecodedBitStream);
     free((void*)ddv.mMacroBlockBuffer_q);
+
+}
+
+static void PlayStrOrOldDDV()
+{
+    // gtddlogo.ddv
+
 
 }
 
@@ -383,9 +393,11 @@ int main(int, char**)
 
     for (auto& file : ddvs)
     {
-        std::cout << "Playing: " << file.c_str() << std::endl;
+        //std::cout << "Playing: " << file.c_str() << std::endl;
         PlayDDV((abesExoddusDir + file).c_str());
     }
+
+   // PlayStrOrOldDDV();
 
     StopSDL();
 

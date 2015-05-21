@@ -175,6 +175,8 @@
     <ClCompile Include="Hooks.cpp" />
     <ClCompile Include="masher.cpp" />
     <ClCompile Include="memoryprotection.cpp" />
+    <ClCompile Include="PSXADPCMDecoder.cpp" />
+    <ClCompile Include="PSXMDECDecoder.cpp" />
     <ClCompile Include="str.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -182,6 +184,8 @@
     <ClInclude Include="Hooks.hpp" />
     <ClInclude Include="jmphookedfunction.hpp" />
     <ClInclude Include="memoryprotection.hpp" />
+    <ClInclude Include="PSXADPCMDecoder.h" />
+    <ClInclude Include="PSXMDECDecoder.h" />
     <ClInclude Include="str.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
