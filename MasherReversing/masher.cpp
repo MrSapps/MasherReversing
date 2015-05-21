@@ -206,10 +206,119 @@ static void PlayDDV(const char* fileName)
 
 }
 
+#include "str.h"
+
+std::vector<unsigned short> ReadFrame(FILE* fp)
+{
+    std::vector<unsigned short> ret;
+
+    std::vector<unsigned short> r;
+
+    unsigned int numSectorsToRead = 0;
+    unsigned int sectorNumber = 0;
+    do
+    {
+    
+        r.resize(kSectorSize / 2);
+        if (fread(r.data(), 2, r.size(), fp) != r.size())
+        {
+            r.clear();
+            return r;
+        }
+
+        MasherVideoHeaderWrapper* hdr = (MasherVideoHeaderWrapper*)r.data();
+
+
+
+        if (hdr->mSectorType != 0x52494f4d) // MOIR
+        {
+            // Must be VALE
+            continue;
+        }
+        else
+        {
+            std::cout << "sector: " << hdr->mSectorNumber << std::endl;
+            std::cout << "data len: " << hdr->mStrHeader.mFrameDataLen << std::endl;
+            std::cout << "frame number: " << hdr->mStrHeader.mFrameNum << std::endl;
+            std::cout << "num sectors in frame: " << hdr->mStrHeader.mNumSectorsInFrame << std::endl;
+            std::cout << "frame sector number: " << hdr->mStrHeader.mSectorNumberInFrame << std::endl;
+
+
+            numSectorsToRead = hdr->mStrHeader.mNumSectorsInFrame;
+            sectorNumber = hdr->mStrHeader.mSectorNumberInFrame;
+        }
+
+        size_t headerSizeBytes = sizeof(MasherVideoHeaderWrapper);
+
+        size_t sizeWords = headerSizeBytes / 2;
+        if (ret.empty() == false)
+        {
+            // Chop off the video header too
+            sizeWords += sizeof(PsxVideoFrameHeader) / 2;
+        }
+
+        r.erase(r.begin(), r.begin() + sizeWords);
+        r.resize(r.size() * 2);
+
+        for (auto& v : r)
+        {
+            ret.emplace_back(v);
+        }
+
+    } while (sectorNumber < numSectorsToRead-1);
+
+    return ret;
+}
+
 static void PlayStrOrOldDDV()
 {
-    // gtddlogo.ddv
 
+    SetSurfaceSize(320, 240);
+
+    PSXMDECDecoder mdec;
+
+    FILE* fp = fopen("gtddlogo.ddv", "rb");
+    unsigned int sec = 0;
+    SDL_Event event = {};
+    for (;;)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_WINDOWEVENT:
+                switch (event.window.event)
+                {
+                case SDL_WINDOWEVENT_ENTER:
+                    break;
+
+                case SDL_WINDOWEVENT_LEAVE:
+                    break;
+                }
+                break;
+
+            case SDL_KEYDOWN:
+                break;
+            }
+        }
+
+
+        std::vector<unsigned short> frameData = ReadFrame(fp);
+        if (frameData.empty())
+        {
+            break;
+        }
+
+
+        sec++;
+        std::cout << "render video frame num: " << sec << std::endl;
+        mdec.DecodeFrameToRGBA32((uint16_t*)pixels.data(), frameData.data(), 320, 240, false);
+
+        FlipSDL();
+    }
+
+
+    fclose(fp);
 
 }
 
@@ -394,10 +503,10 @@ int main(int, char**)
     for (auto& file : ddvs)
     {
         //std::cout << "Playing: " << file.c_str() << std::endl;
-        PlayDDV((abesExoddusDir + file).c_str());
+     //   PlayDDV((abesExoddusDir + file).c_str());
     }
 
-   // PlayStrOrOldDDV();
+    PlayStrOrOldDDV();
 
     StopSDL();
 
