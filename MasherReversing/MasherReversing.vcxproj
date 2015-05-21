@@ -167,12 +167,14 @@
     <ClCompile Include="Hooks.cpp" />
     <ClCompile Include="masher.cpp" />
     <ClCompile Include="memoryprotection.cpp" />
+    <ClCompile Include="str.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioBuffer.h" />
     <ClInclude Include="Hooks.hpp" />
     <ClInclude Include="jmphookedfunction.hpp" />
     <ClInclude Include="memoryprotection.hpp" />
+    <ClInclude Include="str.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
