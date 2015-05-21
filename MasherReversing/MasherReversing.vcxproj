@@ -163,11 +163,13 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AudioBuffer.cpp" />
     <ClCompile Include="Hooks.cpp" />
     <ClCompile Include="masher.cpp" />
     <ClCompile Include="memoryprotection.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AudioBuffer.h" />
     <ClInclude Include="Hooks.hpp" />
     <ClInclude Include="jmphookedfunction.hpp" />
     <ClInclude Include="memoryprotection.hpp" />
