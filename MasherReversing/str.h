@@ -1,5 +1,7 @@
 #pragma once
 
+#include <windows.h>
+
 const int kSectorSize = 2336;
 const int kNumSectorsPerSecond = 150;
 // FPS is 15

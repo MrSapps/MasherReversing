@@ -70,18 +70,22 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)\..\</OutDir>
     <TargetName>A</TargetName>
+    <IntDir>$(Configuration)\Hook\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>A</TargetName>
     <LinkIncremental>true</LinkIncremental>
+    <IntDir>$(Configuration)\Hook\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>A</TargetName>
+    <IntDir>$(Configuration)\Hook\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>A</TargetName>
+    <IntDir>$(Configuration)\Hook\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
