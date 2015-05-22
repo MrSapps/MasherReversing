@@ -214,6 +214,7 @@ std::vector<unsigned char> ReadFrame(FILE* fp, bool& end)
 
     unsigned int numSectorsToRead = 0;
     unsigned int sectorNumber = 0;
+    const int kDataSize = 2016;
     for (;;)
     {
 
@@ -237,15 +238,15 @@ std::vector<unsigned char> ReadFrame(FILE* fp, bool& end)
             std::cout << "num sectors in frame: " << w.mNumSectorsInFrame << std::endl;
             std::cout << "frame sector number: " << w.mSectorNumberInFrame << std::endl;
 
-            uint32_t bytes_to_copy = w.mFrameDataLen - w.mSectorNumberInFrame * sizeof(w.frame);
+            uint32_t bytes_to_copy = w.mFrameDataLen - w.mSectorNumberInFrame *kDataSize;
 
             if (bytes_to_copy > 0)
             {
-                if (bytes_to_copy > sizeof(w.frame))
-                    bytes_to_copy = sizeof(w.frame);
+                if (bytes_to_copy > kDataSize)
+                    bytes_to_copy = kDataSize;
 
                 memcpy(r.data() + w.mSectorNumberInFrame *
-                    sizeof(w.frame), w.frame, bytes_to_copy);
+                    kDataSize, w.frame, bytes_to_copy);
             }
 
             if (w.mSectorNumberInFrame == w.mNumSectorsInFrame - 1)
@@ -301,7 +302,7 @@ static void PlayStrOrOldDDV()
 
         sec++;
         std::cout << "render video frame num: " << sec << std::endl;
-        mdec.DecodeFrameToBGR24((uint16_t*)pixels.data(), (uint16_t*)frameData.data(), 320, 240, false);
+        mdec.DecodeFrameToRGBA32((uint16_t*)pixels.data(), (uint16_t*)frameData.data(), 320, 240, false);
 
         FlipSDL();
     }
