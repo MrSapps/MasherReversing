@@ -8,6 +8,7 @@ void SetSurfaceSize(int w, int h);
 void FlipSDL();
 void StopSDL();
 void init_Snd_tbl();
+void do_hack(int quantScale, unsigned short int* pBitStream, unsigned char* pScreenBuffer);
 
 #pragma pack(1)
 #pragma pack(push)

@@ -28,7 +28,7 @@
 #include <memory.h>
 
 #include "PSXMDECDecoder.h"
-
+#include "Hooks.hpp"
 
 
 // This tables based on MPEG2DEC by MPEG Software Simulation Group
@@ -697,6 +697,9 @@ uint8_t PSXMDECDecoder::DecodeFrameToBGR24(uint16_t *arg_decoded_image,
 	uint16_t *rl = new uint16_t[(arg_bs_image[0] + 2) * sizeof(int32_t)];
 	DecodeDCTVLC(rl, arg_bs_image);
 
+    do_hack(arg_bs_image[2], rl, (unsigned char*)arg_decoded_image);
+
+    /*
 	uint16_t *tmp_rl = rl;
 	tmp_rl += 2;
 
@@ -730,7 +733,8 @@ uint8_t PSXMDECDecoder::DecodeFrameToBGR24(uint16_t *arg_decoded_image,
 	}
 	delete [] image;
 	delete [] rl;
-	
+	*/
+
 	return 0;
 }
 

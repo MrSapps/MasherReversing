@@ -599,6 +599,66 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
     return 0;
 }
 
+void do_hack(int quantScale, unsigned short int* pBitStream, unsigned char* pScreenBuffer)
+{
+
+    // Each block only seems to have 1 colour if this isn't called, but then resizing the window seems to fix it sometimes (perhaps causes
+    // this function to be called else where).
+    //  after_block_decode_no_effect_q_ptr(quantScale); // TODO: Reimpl
+    after_block_decode_no_effect_q_impl(quantScale);
+
+    std::vector<WORD> block(70000);
+
+    WORD* bitstreamCurPos = (WORD*)pBitStream;
+
+    int xoff = 0;
+    auto buf = (unsigned short int*)pScreenBuffer;
+    WORD* block1Output = block.data();
+
+    // For 320x240 image we have a 20x16 macro block grid (because 320/16 and 240/16)
+    for (unsigned int xBlock = 0; xBlock < 320/16; xBlock++)
+    {
+        int yoff = 0;
+        for (unsigned int yBlock = 0; yBlock < 240/16; yBlock++)
+        {
+            const int dataSizeBytes = 64 * 4; // Convert to byte count 64*4=256
+
+            WORD* afterBlock1Ptr = ddv_func7_DecodeMacroBlock_impl(bitstreamCurPos, Cr_block, block1Output, 0, 0, 0);
+            do_blit_output_no_mmx(block1Output, Cr_block); // TODO: Reimpl
+            WORD* block2Output = dataSizeBytes + block1Output;
+
+            WORD* afterBlock2Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock1Ptr, Cb_block, block2Output, 0, 0, 0);
+            do_blit_output_no_mmx(block2Output, Cb_block);
+            WORD* block3Output = dataSizeBytes + block2Output;
+
+            WORD* afterBlock3Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock2Ptr, Y1_block, block3Output, 1, 0, 0);
+            do_blit_output_no_mmx(block3Output, Y1_block);
+            WORD* block4Output = dataSizeBytes + block3Output;
+
+            WORD* afterBlock4Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock3Ptr, Y2_block, block4Output, 1, 0, 0);
+            do_blit_output_no_mmx(block4Output, Y2_block);
+            WORD* block5Output = dataSizeBytes + block4Output;
+
+            WORD* afterBlock5Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock4Ptr, Y3_block, block5Output, 1, 0, 0);
+            do_blit_output_no_mmx(block5Output, Y3_block);
+            WORD* block6Output = dataSizeBytes + block5Output;
+
+            bitstreamCurPos = ddv_func7_DecodeMacroBlock_impl(afterBlock5Ptr, Y4_block, block6Output, 1, 0, 0);
+            do_blit_output_no_mmx(block6Output, Y4_block);
+            block1Output = dataSizeBytes + block6Output;
+
+            ConvertYuvToRgbAndBlit(buf, xoff, yoff);
+
+            yoff += 16;
+        }
+        xoff += 16;
+    }
+
+    FlipSDL();
+
+}
+
+
 void SetElement2(int x, int y, unsigned int* ptr, unsigned int value)
 {
     int kWidth = ::w;
