@@ -171,7 +171,7 @@ static void PlayDDV(const char* fileName)
                 uint8_t* pAudio = &ppVideoFrames[frame][4 + audioOffset];
 
                 const size_t audioSize = ppVideoFrames[frame].size() - audioOffset;
-                std::cout << "Frame size is " << audioSize <<  " first byte: " << (int)(*(pAudio+0)) << std::endl;
+                //std::cout << "Frame size is " << audioSize <<  " first byte: " << (int)(*(pAudio+0)) << std::endl;
             }
 
             decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels.data());
@@ -609,8 +609,8 @@ int main(int, char**)
 
     for (auto& file : ddvs)
     {
-        //std::cout << "Playing: " << file.c_str() << std::endl;
-     //   PlayDDV((abesExoddusDir + file).c_str());
+        std::cout << "Playing: " << file.c_str() << std::endl;
+        PlayDDV((abesExoddusDir + file).c_str());
     }
 
     for (auto& file : aoDdvs)

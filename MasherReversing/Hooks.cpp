@@ -34,7 +34,7 @@ int StartSDL()
         return 1;
     }
 
-    ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED );
     if (ren == nullptr)
     {
         SDL_DestroyWindow(win);
@@ -110,7 +110,7 @@ void SetElement(int x, int y, unsigned short int* ptr, unsigned short int value)
 // This can probably be made more generic still, but probably no point.
 // We base stuff off of this:
 template <int r_bits, int g_bits, int b_bits>
-inline unsigned short int RGB(unsigned char r, unsigned char g, unsigned char b) {
+inline unsigned int RGB(unsigned char r, unsigned char g, unsigned char b) {
     return ((((r >> (8 - r_bits)) << g_bits) |
         (g >> (8 - g_bits))) << b_bits) |
         (b >> (8 - b_bits));
@@ -737,9 +737,9 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
             
             SetElement2(x + xoff, y + yoff, pixels.data(),
                 RGB888(
-                Macroblock_RGB[x][y].Red,
+                Macroblock_RGB[x][y].Blue,
                 Macroblock_RGB[x][y].Green,
-                Macroblock_RGB[x][y].Blue));
+                Macroblock_RGB[x][y].Red));
                 
 
         }
