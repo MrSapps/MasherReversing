@@ -208,13 +208,15 @@ static void PlayDDV(const char* fileName)
 
 #include "str.h"
 
-std::vector<unsigned char> ReadFrame(FILE* fp, bool& end)
+std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, bool firstFrame)
 {
     std::vector<unsigned char> r(32768);
 
     unsigned int numSectorsToRead = 0;
     unsigned int sectorNumber = 0;
     const int kDataSize = 2016;
+    int width = 0;
+    int h = 0;
     for (;;)
     {
 
@@ -232,21 +234,26 @@ std::vector<unsigned char> ReadFrame(FILE* fp, bool& end)
         }
         else
         {
-            std::cout << "sector: " << w.mSectorNumber << std::endl;
-            std::cout << "data len: " << w.mFrameDataLen << std::endl;
-            std::cout << "frame number: " << w.mFrameNum << std::endl;
-            std::cout << "num sectors in frame: " << w.mNumSectorsInFrame << std::endl;
-            std::cout << "frame sector number: " << w.mSectorNumberInFrame << std::endl;
+            //std::cout << "sector: " << w.mSectorNumber << std::endl;
+            //std::cout << "data len: " << w.mFrameDataLen << std::endl;
+            //std::cout << "frame number: " << w.mFrameNum << std::endl;
+            //std::cout << "num sectors in frame: " << w.mNumSectorsInFrame << std::endl;
+            //std::cout << "frame sector number: " << w.mSectorNumberInFrame << std::endl;
+            SetSurfaceSize(w.mWidth, w.mHeight);
+
 
             uint32_t bytes_to_copy = w.mFrameDataLen - w.mSectorNumberInFrame *kDataSize;
+            width = w.mWidth;
+            h = w.mHeight;
 
             if (bytes_to_copy > 0)
             {
                 if (bytes_to_copy > kDataSize)
+                {
                     bytes_to_copy = kDataSize;
+                }
 
-                memcpy(r.data() + w.mSectorNumberInFrame *
-                    kDataSize, w.frame, bytes_to_copy);
+                memcpy(r.data() + w.mSectorNumberInFrame * kDataSize, w.frame, bytes_to_copy);
             }
 
             if (w.mSectorNumberInFrame == w.mNumSectorsInFrame - 1)
@@ -254,20 +261,25 @@ std::vector<unsigned char> ReadFrame(FILE* fp, bool& end)
                 break;
             }
         }
-
     }
+
+    if (firstFrame)
+    {
+        SetSurfaceSize(width, h);
+    }
+    mdec.DecodeFrameToABGR32((uint16_t*)pixels.data(), (uint16_t*)r.data(), width, h, false);
+    FlipSDL();
+    //SDL_Delay(16 * 2);
     return r;
 }
 
-static void PlayStrOrOldDDV()
+static void PlayStrOrOldDDV(const char* fileName)
 {
-
-    SetSurfaceSize(320, 240);
-
     PSXMDECDecoder mdec;
 
-    FILE* fp = fopen("gtddlogo.ddv", "rb");
-    unsigned int sec = 0;
+    FILE* fp = fopen(fileName, "rb");
+
+    bool firstFrame = true;
     SDL_Event event = {};
     for (;;)
     {
@@ -293,18 +305,12 @@ static void PlayStrOrOldDDV()
 
 
         bool end = false;
-        std::vector<unsigned char> frameData = ReadFrame(fp, end);
+        std::vector<unsigned char> frameData = ReadFrame(fp, end, mdec, firstFrame);
+        firstFrame = false;
         if (end)
         {
             break;
         }
-
-
-        sec++;
-        std::cout << "render video frame num: " << sec << std::endl;
-		mdec.DecodeFrameToABGR32((uint16_t*)pixels.data(), (uint16_t*)frameData.data(), 320, 240, false);
-
-        FlipSDL();
     }
 
 
@@ -462,11 +468,6 @@ int main(int, char**)
         "vision.ddv"
     };
 
-    std::vector<std::string> debugs =
-    {
-        "MIP01C03.DDV"
-    };
-
     std::vector<std::string> msg1Cd1Movies =
     {
         "GENBAKU.DDV",
@@ -485,8 +486,124 @@ int main(int, char**)
     };
 
 
+    std::vector<std::string> aoDdvs  =
+    {
+        "ABEMORPH.ddv",
+        "Badend.ddv",
+        "Barrels.ddv",
+        "Begin.ddv",
+        "d1p1p2.ddv",
+        "D1P2P1.ddv",
+        "d1p3p4.ddv",
+        "D1P4P3.ddv",
+        "d1p6p7.ddv",
+        "D1P7P6.ddv",
+        "d1p9d2.ddv",
+        "d2p10d7.ddv",
+        "d2p10p2.ddv",
+        "d2p10p3.ddv",
+        "d2p10p4.ddv",
+        "d2p10p5.ddv",
+        "d2p10p6.ddv",
+        "d2p10p7.ddv",
+        "d2p10p8.ddv",
+        "d2p10p9.ddv",
+        "d2p1p10.ddv",
+        "d2p2p10.ddv",
+        "d2p2p10b.ddv",
+        "d2p3p10.ddv",
+        "d2p3p10b.ddv",
+        "d2p4p10.ddv",
+        "d2p4p10b.ddv",
+        "d2p5p10.ddv",
+        "d2p5p10b.ddv",
+        "d2p6p10.ddv",
+        "d2p6p10b.ddv",
+        "d2p7p10.ddv",
+        "d2p7p10b.ddv",
+        "d2p8p10.ddv",
+        "d2p8p10b.ddv",
+        "d2p9p10.ddv",
+        "d2p9p10b.ddv",
+        "d7c11c12.ddv",
+        "d7c12c11.ddv",
+        "Drag.ddv",
+        "E1P4C8.ddv",
+        "E2P2R2.ddv",
+        "F1p1p2.ddv",
+        "F1P2P1.ddv",
+        "F1P2P5.ddv",
+        "F1P5P2.ddv",
+        "F1P5P6.ddv",
+        "F1P6P5.ddv",
+        "F1P8P9.ddv",
+        "F1p9f2.ddv",
+        "F1P9P8.ddv",
+        "F2P1P8.ddv",
+        "F2P2P8.ddv",
+        "F2P2P8B.ddv",
+        "F2p3p8.ddv",
+        "F2p3p8b.ddv",
+        "F2P4P8.ddv",
+        "F2P4P8B.ddv",
+        "F2P5P8.ddv",
+        "F2P5P8B.ddv",
+        "F2P6P8.ddv",
+        "F2P6P8B.ddv",
+        "F2P7P8.ddv",
+        "F2P7P8B.ddv",
+        "F2P8F4.ddv",
+        "F2P8P2.ddv",
+        "f2p8p3.ddv",
+        "F2P8P4.ddv",
+        "F2P8P5.ddv",
+        "F2P8P6.ddv",
+        "F2P8P7.ddv",
+        "F4C11C13.ddv",
+        "F4C13C11.ddv",
+        "GAMEBGN.ddv",
+        "Goodend.ddv",
+        "gtddlogo.ddv",
+        "Halts.ddv",
+        "L1P1C14.ddv",
+        "L1P1P2.ddv",
+        "L1P2P1.ddv",
+        "L1P2P3.ddv",
+        "L1P3P2.ddv",
+        "L1P5C4.ddv",
+        "L1P5P6.ddv",
+        "L1P6E2.ddv",
+        "L1P6P5.ddv",
+        "li1p6e2.ddv",
+        "logoint.ddv",
+        "LP1C15C3.ddv",
+        "LP1C16C3.ddv",
+        "LP1C3C15.ddv",
+        "LP1C3C16.ddv",
+        "LP5C3C4.ddv",
+        "LP5C4C3.ddv",
+        "Mollock.ddv",
+        "moon.ddv",
+        "PARAMITE.ddv",
+        "PARSCAR.ddv",
+        "R1P11P6.ddv",
+        "R1p13p1.ddv",
+        "r1p13p14.ddv",
+        "r1p14p13.ddv",
+        "R1p18p1.ddv",
+        "R1P18P19.ddv",
+        "R1P19P18.ddv",
+        "R1P1P13.ddv",
+        "R1p1p18.ddv",
+        "R1P6P11.ddv",
+        "Scrab.ddv",
+        "ScrScar.ddv",
+        "xaosopen.ddv"
+    };
+
     // TODO: gtilogo.ddv and prophecy.ddv do not render correctly
     std::string abesExoddusDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Exoddus\\";
+    std::string abesOddyseeDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Oddysee\\";
     std::string msg1CdDir = "W:\\MOVIE\\";
     std::string msg1Cd2Dir = "X:\\MOVIE\\";
 
@@ -496,7 +613,11 @@ int main(int, char**)
      //   PlayDDV((abesExoddusDir + file).c_str());
     }
 
-    PlayStrOrOldDDV();
+    for (auto& file : aoDdvs)
+    {
+        std::cout << "Playing: " << file.c_str() << std::endl;
+        PlayStrOrOldDDV((abesOddyseeDir + file).c_str());
+    }
 
     StopSDL();
 
