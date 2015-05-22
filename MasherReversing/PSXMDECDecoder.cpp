@@ -602,90 +602,80 @@ void PSXMDECDecoder::YUV2BGR24(int16_t *arg_blk,
 }
 
 
-void PSXMDECDecoder::YUV2RGBA32(int16_t *arg_blk,
-							   uint8_t arg_image[][4],
-							   bool arg_no_color)
+// An overly used bit of code in the YUV2BGRA32 function. Instead of huge code repeats, this will
+// make things much more nicer.
+void PSXMDECDecoder::YUVfunction1(uint8_t arg_image[][4], int index, int r0, int g0, int b0, int y)
 {
+	const int red = 2;
+	const int green = 1;
+	const int blue = 0;
+	const int alpha = 3;
+
+	arg_image[index][red] = BSRoundTable[r0 + y + 256];
+	arg_image[index][green] = BSRoundTable[g0 + y + 256];
+	arg_image[index][blue] = BSRoundTable[b0 + y + 256];
+	arg_image[index][alpha] = 0xFF;
+}
+
+// Old code was a mess. New code should be much better.
+// Could be cleaned up even more, but theres no need at the moment.
+void PSXMDECDecoder::YUV2BGRA32(int16_t *arg_blk,
+	uint8_t arg_image[][4],
+	bool arg_no_color)
+{
+	double rConstant = 1.402;
+	double gConstant = 0.3437;
+	double g2Constant = 0.7143;
+	double bConstant = 1.772;
+
 	int16_t *yblk = arg_blk + DCT_BLOCK_SIZE * 2;
-	for(uint8_t yy = 0; yy < 16; yy += 2, arg_blk += 4, yblk += 8,
+	for (uint8_t yy = 0; yy < 16; yy += 2, arg_blk += 4, yblk += 8,
 		arg_image += 24)
 	{
-		if(yy == 8)
+		if (yy == 8)
 			yblk += DCT_BLOCK_SIZE;
-		for(uint8_t x = 0; x < 4; x++, arg_blk++, yblk += 2, arg_image += 2)
+		for (uint8_t x = 0; x < 4; x++, arg_blk++, yblk += 2, arg_image += 2)
 		{
 			int16_t r0, g0, b0;
-			if(arg_no_color)
-				r0 = g0 = b0 = 0;
-			else
-			{
-				r0 = ((arg_blk[DCT_BLOCK_SIZE] * (uint16_t)(1.402 * (1 << 12)))
-					>> 12);
-				g0 = ((arg_blk[0] * (uint16_t)(-0.3437 * (1 << 12))) >> 12) +
-					((arg_blk[DCT_BLOCK_SIZE] * (uint16_t)(-0.7143 * (1 << 12)))
-					>> 12);
-				b0 = ((arg_blk[0] * (uint16_t)(1.772 * (1 << 12))) >> 12);
-			}
+
+			// Set up YUV stuff
+			r0 = arg_blk[DCT_BLOCK_SIZE] * rConstant;
+			g0 = (arg_blk[0] * gConstant) + (arg_blk[DCT_BLOCK_SIZE] * g2Constant);
+			b0 = arg_blk[0] * bConstant;
+
 			int16_t y = yblk[0] + 128;
-			arg_image[0][2] = BSRoundTable[r0 + y + 256];
-			arg_image[0][1] = BSRoundTable[g0 + y + 256];
-			arg_image[0][0] = BSRoundTable[b0 + y + 256];
-			arg_image[0][3] = 0xFF;
+			YUVfunction1(arg_image, 0, r0, g0, b0, y);
 
 			y = yblk[1] + 128;
-			arg_image[1][2] = BSRoundTable[r0 + y + 256];
-			arg_image[1][1] = BSRoundTable[g0 + y + 256];
-			arg_image[1][0] = BSRoundTable[b0 + y + 256];
-			arg_image[1][3] = 0xFF;
+			YUVfunction1(arg_image, 1, r0, g0, b0, y);
 
 			y = yblk[8] + 128;
-			arg_image[16][2] = BSRoundTable[r0 + y + 256];
-			arg_image[16][1] = BSRoundTable[g0 + y + 256];
-			arg_image[16][0] = BSRoundTable[b0 + y + 256];
-			arg_image[16][3] = 0xFF;
+			YUVfunction1(arg_image, 16, r0, g0, b0, y);
 
 			y = yblk[9] + 128;
-			arg_image[17][2] = BSRoundTable[r0 + y + 256];
-			arg_image[17][1] = BSRoundTable[g0 + y + 256];
-			arg_image[17][0] = BSRoundTable[b0 + y + 256];
-			arg_image[17][3] = 0xFF;
-			if(arg_no_color)
-				r0 = g0 = b0 = 0;
-			else
-			{
-				r0 = ((arg_blk[4 + DCT_BLOCK_SIZE] * (uint16_t)(1.402 * (1 <<
-					12))) >> 12);
-				g0 = ((arg_blk[4] * (uint16_t)(-0.3437 * (1 << 12))) >> 12) +
-				((arg_blk[4 + DCT_BLOCK_SIZE] * (uint16_t)(-0.7143 * (1 <<
-					12))) >> 12);
-				b0 = ((arg_blk[4] * (uint16_t)(1.772 * (1 << 12))) >> 12);
-			}
+			YUVfunction1(arg_image, 17, r0, g0, b0, y);
+
+
+			// Set up YUV stuff again
+			r0 = arg_blk[4 + DCT_BLOCK_SIZE] * rConstant;
+			g0 = (arg_blk[4] * gConstant) + (arg_blk[4 + DCT_BLOCK_SIZE] * g2Constant);
+			b0 = arg_blk[4] * bConstant;
+
 			y = yblk[DCT_BLOCK_SIZE + 0] + 128;
-			arg_image[8 + 0][2] = BSRoundTable[r0 + y + 256];
-			arg_image[8 + 0][1] = BSRoundTable[g0 + y + 256];
-			arg_image[8 + 0][0] = BSRoundTable[b0 + y + 256];
-			arg_image[8 + 0][3] = 0xFF;
+			YUVfunction1(arg_image, 8, r0, g0, b0, y);
 
 			y = yblk[DCT_BLOCK_SIZE + 1] + 128;
-			arg_image[8 + 1][2] = BSRoundTable[r0 + y + 256];
-			arg_image[8 + 1][1] = BSRoundTable[g0 + y + 256];
-			arg_image[8 + 1][0] = BSRoundTable[b0 + y + 256];
-			arg_image[8 + 1][3] = 0xFF;
+			YUVfunction1(arg_image, 9, r0, g0, b0, y);
 
 			y = yblk[DCT_BLOCK_SIZE + 8] + 128;
-			arg_image[8 + 16][2] = BSRoundTable[r0 + y + 256];
-			arg_image[8 + 16][1] = BSRoundTable[g0 + y + 256];
-			arg_image[8 + 16][0] = BSRoundTable[b0 + y + 256];
-			arg_image[8 + 16][3] = 0xFF;
+			YUVfunction1(arg_image, 24, r0, g0, b0, y);
 
 			y = yblk[DCT_BLOCK_SIZE + 9] + 128;
-			arg_image[8 + 17][2] = BSRoundTable[r0 + y + 256];
-			arg_image[8 + 17][1] = BSRoundTable[g0 + y + 256];
-			arg_image[8 + 17][0] = BSRoundTable[b0 + y + 256];
-			arg_image[8 + 17][3] = 0xFF;
+			YUVfunction1(arg_image, 25, r0, g0, b0, y);
 		}
 	}
 }
+
 
 
 uint8_t PSXMDECDecoder::DecodeFrameToBGR24(uint16_t *arg_decoded_image,
@@ -739,7 +729,7 @@ uint8_t PSXMDECDecoder::DecodeFrameToBGR24(uint16_t *arg_decoded_image,
 }
 
 
-uint8_t PSXMDECDecoder::DecodeFrameToRGBA32(uint16_t *arg_decoded_image,
+uint8_t PSXMDECDecoder::DecodeFrameToABGR32(uint16_t *arg_decoded_image,
 											uint16_t *arg_bs_image,
 											uint16_t arg_width,
 											uint16_t arg_height,
@@ -766,7 +756,7 @@ uint8_t PSXMDECDecoder::DecodeFrameToRGBA32(uint16_t *arg_decoded_image,
 		for(;arg_size > 0; arg_size -= blocksize / 2, arg_image += blocksize)
 		{
 			tmp_rl = RL2BLK(tmp_rl, blk);
-			YUV2RGBA32(blk, (uint8_t (*)[4])arg_image, arg_no_color);
+			YUV2BGRA32(blk, (uint8_t (*)[4])arg_image, arg_no_color);
 		}
 
 
