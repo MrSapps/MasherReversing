@@ -623,10 +623,10 @@ void PSXMDECDecoder::YUV2BGRA32(int16_t *arg_blk,
 	uint8_t arg_image[][4],
 	bool arg_no_color)
 {
-	double rConstant = 1.402;
-	double gConstant = 0.3437;
-	double g2Constant = 0.7143;
-	double bConstant = 1.772;
+    double rConstant = 1.402;
+    double gConstant = -0.3437;
+    double g2Constant = -0.7143;
+    double bConstant = 1.772;
 
 	int16_t *yblk = arg_blk + DCT_BLOCK_SIZE * 2;
 	for (uint8_t yy = 0; yy < 16; yy += 2, arg_blk += 4, yblk += 8,
