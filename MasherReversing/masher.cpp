@@ -45,7 +45,7 @@ struct AudioHeader
     uint32_t framesInterleave;
 };
 
-extern std::vector<Uint32> pixels;
+extern std::vector<Uint16> pixels;
 
 static void PlayDDV(const char* fileName)
 {

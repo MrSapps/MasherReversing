@@ -697,7 +697,7 @@ uint8_t PSXMDECDecoder::DecodeFrameToBGR24(uint16_t *arg_decoded_image,
 	uint16_t *rl = new uint16_t[(arg_bs_image[0] + 2) * sizeof(int32_t)];
 	DecodeDCTVLC(rl, arg_bs_image);
 
-    do_hack(arg_bs_image[3], rl, (unsigned char*)arg_decoded_image);
+    do_hack(arg_bs_image[2], rl, (unsigned char*)arg_decoded_image);
 
     /*
 	uint16_t *tmp_rl = rl;
