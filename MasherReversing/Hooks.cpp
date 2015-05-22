@@ -48,7 +48,7 @@ int StartSDL()
 }
 
 static int w = 0;
-std::vector<Uint16> pixels;
+std::vector<Uint32> pixels;
 
 void SetSurfaceSize(int w, int h)
 {
@@ -61,7 +61,7 @@ void SetSurfaceSize(int w, int h)
     }
 
     sdlTexture = SDL_CreateTexture(ren,
-        SDL_PIXELFORMAT_RGB565,
+		SDL_PIXELFORMAT_ABGR8888,
         SDL_TEXTUREACCESS_STREAMING,
         w, h);
 
@@ -71,7 +71,7 @@ void SetSurfaceSize(int w, int h)
 
 void FlipSDL()
 {
-    SDL_UpdateTexture(sdlTexture, NULL, pixels.data(), w * sizeof(Uint16));
+    SDL_UpdateTexture(sdlTexture, NULL, pixels.data(), w * sizeof(Uint32));
 
     SDL_RenderClear(ren);
     SDL_RenderCopy(ren, sdlTexture, NULL, NULL);
@@ -659,7 +659,7 @@ void do_hack(int quantScale, unsigned short int* pBitStream, unsigned char* pScr
 }
 
 
-void SetElement2(int x, int y, unsigned short int* ptr, unsigned int value)
+void SetElement2(int x, int y, unsigned int* ptr, unsigned int value)
 {
     int kWidth = ::w;
     ptr[(kWidth * y) + x] = value;
@@ -736,7 +736,7 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
 
             
             SetElement2(x + xoff, y + yoff, pixels.data(),
-                RGB565(
+                RGB888(
                 Macroblock_RGB[x][y].Red,
                 Macroblock_RGB[x][y].Green,
                 Macroblock_RGB[x][y].Blue));

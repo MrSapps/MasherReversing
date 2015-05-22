@@ -45,7 +45,7 @@ struct AudioHeader
     uint32_t framesInterleave;
 };
 
-extern std::vector<Uint16> pixels;
+extern std::vector<Uint32> pixels;
 
 static void PlayDDV(const char* fileName)
 {
@@ -302,7 +302,7 @@ static void PlayStrOrOldDDV()
 
         sec++;
         std::cout << "render video frame num: " << sec << std::endl;
-        mdec.DecodeFrameToBGR24((uint16_t*)pixels.data(), (uint16_t*)frameData.data(), 320, 240, false);
+		mdec.DecodeFrameToABGR32((uint16_t*)pixels.data(), (uint16_t*)frameData.data(), 320, 240, false);
 
         FlipSDL();
     }
