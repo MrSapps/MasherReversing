@@ -251,14 +251,7 @@ std::vector<unsigned short> ReadFrame(FILE* fp)
         size_t headerSizeBytes = sizeof(MasherVideoHeaderWrapper);
 
         size_t sizeWords = headerSizeBytes / 2;
-        if (ret.empty() == false)
-        {
-            // Chop off the video header too
-            sizeWords += sizeof(PsxVideoFrameHeader) / 2;
-        }
-
         r.erase(r.begin(), r.begin() + sizeWords);
-        r.resize(r.size() * 2);
 
         for (auto& v : r)
         {
@@ -312,7 +305,7 @@ static void PlayStrOrOldDDV()
 
         sec++;
         std::cout << "render video frame num: " << sec << std::endl;
-        mdec.DecodeFrameToRGBA32((uint16_t*)pixels.data(), frameData.data(), 320, 240, false);
+        mdec.DecodeFrameToBGR24((uint16_t*)pixels.data(), frameData.data(), 320, 240, false);
 
         FlipSDL();
     }
