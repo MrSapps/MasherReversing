@@ -607,7 +607,7 @@ void do_hack(int quantScale, unsigned short int* pBitStream, unsigned char* pScr
     //  after_block_decode_no_effect_q_ptr(quantScale); // TODO: Reimpl
     after_block_decode_no_effect_q_impl(quantScale);
 
-    std::vector<WORD> block(70000);
+    std::vector<WORD> block(7000000);
 
     WORD* bitstreamCurPos = (WORD*)pBitStream;
 

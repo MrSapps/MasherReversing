@@ -302,7 +302,7 @@ static void PlayStrOrOldDDV()
 
         sec++;
         std::cout << "render video frame num: " << sec << std::endl;
-        mdec.DecodeFrameToRGBA32((uint16_t*)pixels.data(), (uint16_t*)frameData.data(), 320, 240, false);
+        mdec.DecodeFrameToBGR24((uint16_t*)pixels.data(), (uint16_t*)frameData.data(), 320, 240, false);
 
         FlipSDL();
     }
