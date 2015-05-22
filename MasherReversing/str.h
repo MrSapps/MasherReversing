@@ -21,11 +21,16 @@ struct PsxVideoFrameHeader
     unsigned short int mVersion;
 };
 
-struct PsxStrVideoHeader
+
+
+struct MasherVideoHeaderWrapper
 {
+    DWORD mSectorType; // AKIK
+    unsigned int mSectorNumber;
+
     // The 4 "unknown" / 0x80010160 in psx data is replaced by "AKIK" in PC data
     unsigned int mAkikMagic;
-    
+
     unsigned short int mSectorNumberInFrame;
     unsigned short int mNumSectorsInFrame;
     unsigned int mFrameNum;
@@ -35,14 +40,17 @@ struct PsxStrVideoHeader
 
     PsxVideoFrameHeader mVideoFrameHeader;
     unsigned int mNulls;
-   // PsxVideoFrameHeader mVideoFrameHeader2;
+
+    unsigned char frame[2016+240+4+4+4+2+2+4+4+2+2+2+2+2+2+4];
+
+    // PsxVideoFrameHeader mVideoFrameHeader2;
 
     /*
     0000  char   {4}     "AKIK"
 
     // This is standard STR format data here
-   
-    
+
+
     0004  uint16 {2}     Sector number within frame (zero-based)
     0006  uint16 {2}     Number of sectors in frame
     0008  uint32 {4}     Frame number within file (one-based)
@@ -59,13 +67,6 @@ struct PsxStrVideoHeader
 
     //demultiplexing is joining all of the frame data into one buffer without the headers
 
-};
-
-struct MasherVideoHeaderWrapper
-{
-    DWORD mSectorType; // AKIK
-    unsigned int mSectorNumber;
-    PsxStrVideoHeader mStrHeader;
 };
 
 

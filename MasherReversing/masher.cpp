@@ -208,59 +208,54 @@ static void PlayDDV(const char* fileName)
 
 #include "str.h"
 
-std::vector<unsigned short> ReadFrame(FILE* fp)
+std::vector<unsigned char> ReadFrame(FILE* fp, bool& end)
 {
-    std::vector<unsigned short> ret;
-
-    std::vector<unsigned short> r;
+    std::vector<unsigned char> r(32768);
 
     unsigned int numSectorsToRead = 0;
     unsigned int sectorNumber = 0;
-    do
+    for (;;)
     {
-    
-        r.resize(kSectorSize / 2);
-        if (fread(r.data(), 2, r.size(), fp) != r.size())
+
+        MasherVideoHeaderWrapper w;
+        if (fread(&w, 1, sizeof(w), fp) != sizeof(w))
         {
-            r.clear();
+            end = true;
             return r;
         }
 
-        MasherVideoHeaderWrapper* hdr = (MasherVideoHeaderWrapper*)r.data();
-
-
-
-        if (hdr->mSectorType != 0x52494f4d) // MOIR
+        if (w.mSectorType != 0x52494f4d) // MOIR
         {
             // Must be VALE
             continue;
         }
         else
         {
-            std::cout << "sector: " << hdr->mSectorNumber << std::endl;
-            std::cout << "data len: " << hdr->mStrHeader.mFrameDataLen << std::endl;
-            std::cout << "frame number: " << hdr->mStrHeader.mFrameNum << std::endl;
-            std::cout << "num sectors in frame: " << hdr->mStrHeader.mNumSectorsInFrame << std::endl;
-            std::cout << "frame sector number: " << hdr->mStrHeader.mSectorNumberInFrame << std::endl;
+            std::cout << "sector: " << w.mSectorNumber << std::endl;
+            std::cout << "data len: " << w.mFrameDataLen << std::endl;
+            std::cout << "frame number: " << w.mFrameNum << std::endl;
+            std::cout << "num sectors in frame: " << w.mNumSectorsInFrame << std::endl;
+            std::cout << "frame sector number: " << w.mSectorNumberInFrame << std::endl;
 
+            uint32_t bytes_to_copy = w.mFrameDataLen - w.mSectorNumberInFrame * sizeof(w.frame);
 
-            numSectorsToRead = hdr->mStrHeader.mNumSectorsInFrame;
-            sectorNumber = hdr->mStrHeader.mSectorNumberInFrame;
+            if (bytes_to_copy > 0)
+            {
+                if (bytes_to_copy > sizeof(w.frame))
+                    bytes_to_copy = sizeof(w.frame);
+
+                memcpy(r.data() + w.mSectorNumberInFrame *
+                    sizeof(w.frame), w.frame, bytes_to_copy);
+            }
+
+            if (w.mSectorNumberInFrame == w.mNumSectorsInFrame - 1)
+            {
+                break;
+            }
         }
 
-        size_t headerSizeBytes = sizeof(MasherVideoHeaderWrapper);
-
-        size_t sizeWords = headerSizeBytes / 2;
-        r.erase(r.begin(), r.begin() + sizeWords);
-
-        for (auto& v : r)
-        {
-            ret.emplace_back(v);
-        }
-
-    } while (sectorNumber < numSectorsToRead-1);
-
-    return ret;
+    }
+    return r;
 }
 
 static void PlayStrOrOldDDV()
@@ -296,8 +291,9 @@ static void PlayStrOrOldDDV()
         }
 
 
-        std::vector<unsigned short> frameData = ReadFrame(fp);
-        if (frameData.empty())
+        bool end = false;
+        std::vector<unsigned char> frameData = ReadFrame(fp, end);
+        if (end)
         {
             break;
         }
@@ -305,7 +301,7 @@ static void PlayStrOrOldDDV()
 
         sec++;
         std::cout << "render video frame num: " << sec << std::endl;
-        mdec.DecodeFrameToBGR24((uint16_t*)pixels.data(), frameData.data(), 320, 240, false);
+        mdec.DecodeFrameToBGR24((uint16_t*)pixels.data(), (uint16_t*)frameData.data(), 320, 240, false);
 
         FlipSDL();
     }
