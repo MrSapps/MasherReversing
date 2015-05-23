@@ -207,10 +207,38 @@ static void PlayDDV(const char* fileName)
 }
 
 #include "str.h"
+#include "PSXADPCMDecoder.h"
 
-std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, bool firstFrame)
+struct CDXASector
 {
+    uint8_t sync[12];
+    uint8_t header[4];
+
+    struct CDXASubHeader
+    {
+        uint8_t file_number;
+        uint8_t channel;
+        uint8_t submode;
+        uint8_t coding_info;
+        uint8_t file_number_copy;
+        uint8_t channel_number_copy;
+        uint8_t submode_copy;
+        uint8_t coding_info_copy;
+    } subheader;
+    uint8_t data[2328];
+};
+
+static const uint8_t m_CDXA_STEREO = 3;
+
+#include "AudioBuffer.h"
+
+std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, bool firstFrame, AudioBuffer& audio)
+{
+    PSXADPCMDecoder adpcm;
+
+
     std::vector<unsigned char> r(32768);
+    std::vector<unsigned char> outPtr(32678);
 
     unsigned int numSectorsToRead = 0;
     unsigned int sectorNumber = 0;
@@ -227,8 +255,16 @@ std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, 
             return r;
         }
 
-        if (w.mSectorType != 0x52494f4d) // MOIR
+        if (w.mSectorType != 0x52494f4d)
         {
+            // There is probably no way this is correct
+            CDXASector::CDXASubHeader* xa = (CDXASector::CDXASubHeader*)&w.mWidth;
+
+            
+            auto numBytes = adpcm.DecodeFrameToPCM((int8_t *)outPtr.data(), (uint8_t *)&w.mFrameDataLen, true);
+
+            audio.SendSamples((char*)outPtr.data(), numBytes);
+            
             // Must be VALE
             continue;
         }
@@ -269,13 +305,15 @@ std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, 
     }
     mdec.DecodeFrameToABGR32((uint16_t*)pixels.data(), (uint16_t*)r.data(), width, h, false);
     FlipSDL();
-    //SDL_Delay(16 * 2);
+    SDL_Delay(16 * 2);
     return r;
 }
 
 static void PlayStrOrOldDDV(const char* fileName)
 {
     PSXMDECDecoder mdec;
+    AudioBuffer audio;
+    audio.Init();
 
     FILE* fp = fopen(fileName, "rb");
 
@@ -305,7 +343,7 @@ static void PlayStrOrOldDDV(const char* fileName)
 
 
         bool end = false;
-        std::vector<unsigned char> frameData = ReadFrame(fp, end, mdec, firstFrame);
+        std::vector<unsigned char> frameData = ReadFrame(fp, end, mdec, firstFrame, audio);
         firstFrame = false;
         if (end)
         {
@@ -607,11 +645,13 @@ int main(int, char**)
     std::string msg1CdDir = "W:\\MOVIE\\";
     std::string msg1Cd2Dir = "X:\\MOVIE\\";
 
+    /*
     for (auto& file : ddvs)
     {
         std::cout << "Playing: " << file.c_str() << std::endl;
         PlayDDV((abesExoddusDir + file).c_str());
     }
+    */
 
     for (auto& file : aoDdvs)
     {
