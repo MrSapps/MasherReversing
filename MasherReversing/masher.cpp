@@ -258,10 +258,10 @@ std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, 
         if (w.mSectorType != 0x52494f4d)
         {
             // There is probably no way this is correct
-            CDXASector::CDXASubHeader* xa = (CDXASector::CDXASubHeader*)&w.mWidth;
+            CDXASector* xa = (CDXASector*)&w;
 
             
-            auto numBytes = adpcm.DecodeFrameToPCM((int8_t *)outPtr.data(), (uint8_t *)&w.mFrameDataLen, true);
+            auto numBytes = adpcm.DecodeFrameToPCM((int8_t *)outPtr.data(),xa->header, true);
 
             audio.SendSamples((char*)outPtr.data(), numBytes);
             
