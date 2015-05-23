@@ -305,7 +305,7 @@ std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, 
     }
     mdec.DecodeFrameToABGR32((uint16_t*)pixels.data(), (uint16_t*)r.data(), width, h, false);
     FlipSDL();
-    SDL_Delay(16 * 2);
+    SDL_Delay(50);
     return r;
 }
 
@@ -313,7 +313,13 @@ static void PlayStrOrOldDDV(const char* fileName)
 {
     PSXMDECDecoder mdec;
     AudioBuffer audio;
-    audio.Init();
+
+    static bool init = false;
+    if (!init)
+    {
+        init = true; // hack
+        audio.Init();
+    }
 
     FILE* fp = fopen(fileName, "rb");
 
@@ -526,10 +532,10 @@ int main(int, char**)
 
     std::vector<std::string> aoDdvs  =
     {
+        "Begin.ddv",
         "ABEMORPH.ddv",
         "Badend.ddv",
         "Barrels.ddv",
-        "Begin.ddv",
         "d1p1p2.ddv",
         "D1P2P1.ddv",
         "d1p3p4.ddv",
