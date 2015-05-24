@@ -651,13 +651,13 @@ int main(int, char**)
     std::string msg1CdDir = "W:\\MOVIE\\";
     std::string msg1Cd2Dir = "X:\\MOVIE\\";
 
-    /*
+    
     for (auto& file : ddvs)
     {
         std::cout << "Playing: " << file.c_str() << std::endl;
         PlayDDV((abesExoddusDir + file).c_str());
     }
-    */
+    
 
     for (auto& file : aoDdvs)
     {

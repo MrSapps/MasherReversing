@@ -12,6 +12,431 @@
 #undef max
 #undef RGB
 
+static void SetLoWord(DWORD& v, WORD lo)
+{
+    WORD hiWord = HIWORD(v);
+    v = MAKELPARAM(lo, hiWord);
+}
+static void SetLoInt(int& v, WORD lo)
+{
+    WORD hiWord = HIWORD(v);
+    v = MAKELPARAM(lo, hiWord);
+}
+
+
+
+DWORD& init_32_dword_62EEA8 = *(DWORD*)0x62EEA8;
+DWORD& gFirstAudioFrameDWORD_dword_62EFB4 = *(DWORD*)0x62EFB4;
+int& gAudioFrameSizeBytes = *(int*)0x0062EFC4;
+WORD* gAudioFrameDataPtr = (WORD*)0x0062EFB0;
+
+//WORD* gSndTbl_byte_62EEB0;
+unsigned char gSndTbl_byte_62EEB0[256] = {};
+
+void init_Snd_tbl()
+{
+    int index = 0;
+    do
+    {
+        int tableValue = 0;
+        for (int i = index; i > 0; ++tableValue)
+        {
+            i >>= 1;
+        }
+        gSndTbl_byte_62EEB0[index++] = tableValue;
+    } while (index < 256);
+}
+
+int __cdecl GetSoundTableValue(__int16 tblIndex)
+{
+    int result; // eax@1
+    signed __int16 positiveTblIdx; // ax@1
+
+    positiveTblIdx = abs(tblIndex);
+    result = (unsigned __int16)((signed __int16)gSndTbl_byte_62EEB0[positiveTblIdx >> 7] << 7) | (unsigned __int16)(positiveTblIdx >> gSndTbl_byte_62EEB0[positiveTblIdx >> 7]);
+    if (tblIndex < 0)
+        result = -result;
+    return result;
+}
+
+int __cdecl sub_408F50(__int16 a1)
+{
+    int result; // eax@1
+    __int16 v2; // ax@1
+
+    v2 = abs(a1);
+    result = (unsigned __int16)((v2 & 0x7F) << (v2 >> 7)) | (unsigned __int16)(1 << ((v2 >> 7) - 2));
+    if (a1 < 0)
+        result = -result;
+    return result;
+}
+
+WORD *__cdecl SetupAudioDecodePtrs(WORD *rawFrameBuffer)
+{
+    WORD *result; // eax@1
+
+    gAudioFrameDataPtr = rawFrameBuffer;
+    result = rawFrameBuffer + 2;
+    gFirstAudioFrameDWORD_dword_62EFB4 = *(DWORD *)rawFrameBuffer;
+    gAudioFrameDataPtr = rawFrameBuffer + 2;
+    init_32_dword_62EEA8 = 32;
+    return result;
+}
+
+int __cdecl SndRelated_sub_409650()
+{
+    int result; // eax@1
+    int v1; // ecx@1
+    unsigned __int8 v2; // zf@1
+    char v3; // sf@1
+    unsigned __int8 v4; // of@1
+    int v5; // ecx@2
+    unsigned int v6; // ecx@2
+
+    v1 = init_32_dword_62EEA8 & 7;
+    result = init_32_dword_62EEA8 - v1;
+    v4 = init_32_dword_62EEA8 - v1; //SET0 16
+    v2 = init_32_dword_62EEA8 - v1 == 16;
+    v3 = init_32_dword_62EEA8 - v1 - 16 < 0;
+    init_32_dword_62EEA8 -= v1;
+    gFirstAudioFrameDWORD_dword_62EFB4 >>= v1;
+    if ((unsigned __int8)(v3 ^ v4) | v2)
+    {
+        v5 = *gAudioFrameDataPtr;
+        ++gAudioFrameDataPtr;
+        v6 = (v5 << result) | gFirstAudioFrameDWORD_dword_62EFB4;
+        result += 16;
+        gFirstAudioFrameDWORD_dword_62EFB4 = v6;
+        init_32_dword_62EEA8 = result;
+    }
+    return result;
+}
+
+int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
+{
+    int c1; // eax@1
+    unsigned int v3; // edx@1
+    __int16 v4; // di@1
+    WORD *srcPtr; // esi@2
+    int srcVal1; // ecx@2
+    int c2; // eax@4
+    unsigned int v8; // edx@4
+    int v9; // ecx@4
+    __int16 v10; // di@4
+    int srcVal2; // ecx@5
+    int c3; // eax@6
+    unsigned int v13; // edx@6
+    int v14; // ecx@6
+    __int16 v15; // di@6
+    int srcVal3; // ecx@7
+    int c4; // eax@8
+    unsigned int v18; // edx@8
+    int v19; // ebx@8
+    __int16 v20; // di@8
+    int srcVal4; // ecx@9
+    int c5; // eax@10
+    unsigned int v23; // edx@10
+    int v24; // ebp@10
+    __int16 v25; // di@10
+    int srcVal5; // ecx@11
+    WORD *v27; // eax@12
+    __int16 v28; // dx@12
+    int v29; // ecx@12
+    unsigned __int8 v30; // zf@12
+    char v31; // sf@12
+    unsigned __int8 v32; // of@12
+    int v33; // edi@13
+    WORD *v34; // eax@14
+    __int16 v35; // dx@14
+    int v36; // ecx@14
+    unsigned __int8 v37; // zf@14
+    char v38; // sf@14
+    unsigned __int8 v39; // of@14
+    int v40; // edi@15
+    int v41; // ebx@16
+    int v42; // ecx@17
+    int v43; // eax@19
+    unsigned int v44; // edx@19
+    int v45; // esi@19
+    unsigned __int8 v46; // zf@19
+    char v47; // sf@19
+    unsigned __int8 v48; // of@19
+    WORD *srcPtr2; // edi@20
+    int srcVal6; // ecx@20
+    signed int v51; // ecx@22
+    int c6; // eax@23
+    unsigned int v53; // edx@23
+    int srcVal7; // ecx@24
+    int c7; // eax@26
+    unsigned int v56; // edx@26
+    int srcVal8; // ecx@27
+    int v58; // eax@34
+    int v59; // edi@34
+    int v60; // eax@34
+    __int16 v61; // ax@35
+    char v62; // zf@37
+    int v64; // [sp+10h] [bp-28h]@6
+    int v65; // [sp+14h] [bp-24h]@8
+    int v66; // [sp+18h] [bp-20h]@10
+    int v67; // [sp+1Ch] [bp-1Ch]@12
+    int v68; // [sp+20h] [bp-18h]@14
+    int v69; // [sp+24h] [bp-14h]@17
+    signed int v70; // [sp+28h] [bp-10h]@10
+    signed int v71; // [sp+2Ch] [bp-Ch]@10
+    signed int v72; // [sp+30h] [bp-8h]@10
+    int v73; // [sp+34h] [bp-4h]@4
+    WORD *v74; // [sp+3Ch] [bp+4h]@16
+    int v75; // [sp+40h] [bp+8h]@17
+
+    c1 = init_32_dword_62EEA8 - 16;
+    init_32_dword_62EEA8 = c1;
+    v4 = gFirstAudioFrameDWORD_dword_62EFB4;
+    v3 = gFirstAudioFrameDWORD_dword_62EFB4 >> 16;
+    gFirstAudioFrameDWORD_dword_62EFB4 >>= 16;
+    if (c1 > 16)
+    {
+        srcPtr = gAudioFrameDataPtr;
+    }
+    else
+    {
+        srcVal1 = *gAudioFrameDataPtr;
+        srcPtr = gAudioFrameDataPtr + 1;
+        ++gAudioFrameDataPtr;
+        v3 |= srcVal1 << c1;
+        c1 += 16;
+    }
+    v9 = v4;
+    v10 = v3;
+    c2 = c1 - 16;
+    v8 = v3 >> 16;
+    v73 = v9;
+    gFirstAudioFrameDWORD_dword_62EFB4 = v8;
+    init_32_dword_62EEA8 = c2;
+    if (c2 <= 16)
+    {
+        srcVal2 = *srcPtr;
+        ++srcPtr;
+        gAudioFrameDataPtr = srcPtr;
+        v8 |= srcVal2 << c2;
+        c2 += 16;
+    }
+    v14 = v10;
+    v15 = v8;
+    c3 = c2 - 16;
+    v13 = v8 >> 16;
+    v64 = v14;
+    gFirstAudioFrameDWORD_dword_62EFB4 = v13;
+    init_32_dword_62EEA8 = c3;
+    if (c3 <= 16)
+    {
+        srcVal3 = *srcPtr;
+        ++srcPtr;
+        gAudioFrameDataPtr = srcPtr;
+        v13 |= srcVal3 << c3;
+        c3 += 16;
+    }
+    v19 = v15;
+    v20 = v13;
+    c4 = c3 - 16;
+    v18 = v13 >> 16;
+    v65 = v19;
+    gFirstAudioFrameDWORD_dword_62EFB4 = v18;
+    init_32_dword_62EEA8 = c4;
+    if (c4 <= 16)
+    {
+        srcVal4 = *srcPtr;
+        ++srcPtr;
+        gAudioFrameDataPtr = srcPtr;
+        v18 |= srcVal4 << c4;
+        c4 += 16;
+    }
+    c5 = c4 - 16;
+    v24 = v20;
+    v66 = v20;
+    init_32_dword_62EEA8 = c5;
+    v70 = 1 << (v64 - 1);
+    v71 = 1 << (v19 - 1);
+    v72 = 1 << (v20 - 1);
+    v25 = v18;
+    v23 = v18 >> 16;
+    gFirstAudioFrameDWORD_dword_62EFB4 = v23;
+    if (c5 <= 16)
+    {
+        srcVal5 = *srcPtr;
+        gAudioFrameDataPtr = srcPtr + 1;
+        gFirstAudioFrameDWORD_dword_62EFB4 = (srcVal5 << c5) | v23;
+        init_32_dword_62EEA8 = c5 + 16;
+    }
+    *outPtr = v25;
+    v67 = v25;
+    v27 = &outPtr[gAudioFrameSizeBytes];
+    v28 = gFirstAudioFrameDWORD_dword_62EFB4;
+    gFirstAudioFrameDWORD_dword_62EFB4 >>= 16;
+    v29 = init_32_dword_62EEA8 - 16;
+    v32 = init_32_dword_62EEA8 - 16; // SETO 16
+    v30 = init_32_dword_62EEA8 == 32;
+    v31 = init_32_dword_62EEA8 - 32 < 0;
+    init_32_dword_62EEA8 -= 16;
+    if ((unsigned __int8)(v31 ^ v32) | v30)
+    {
+        v33 = *gAudioFrameDataPtr;
+        ++gAudioFrameDataPtr;
+        gFirstAudioFrameDWORD_dword_62EFB4 |= v33 << v29;
+        init_32_dword_62EEA8 = v29 + 16;
+    }
+    v68 = v28;
+    *v27 = v28;
+    v34 = &v27[gAudioFrameSizeBytes];
+    v35 = gFirstAudioFrameDWORD_dword_62EFB4;
+    gFirstAudioFrameDWORD_dword_62EFB4 >>= 16;
+    v36 = init_32_dword_62EEA8 - 16;
+    v39 = init_32_dword_62EEA8 - 16; // SETO 16
+    v37 = init_32_dword_62EEA8 == 32;
+    v38 = init_32_dword_62EEA8 - 32 < 0;
+    init_32_dword_62EEA8 -= 16;
+    if ((unsigned __int8)(v38 ^ v39) | v37)
+    {
+        v40 = *gAudioFrameDataPtr;
+        ++gAudioFrameDataPtr;
+        gFirstAudioFrameDWORD_dword_62EFB4 |= v40 << v36;
+        init_32_dword_62EEA8 = v36 + 16;
+    }
+    v41 = v35;
+    *v34 = v35;
+    v74 = &v34[gAudioFrameSizeBytes];
+    if (numSamplesPerFrame > 3)
+    {
+        v42 = v64;
+        v69 = (1 << v64) - 1;
+        v75 = numSamplesPerFrame - 3;
+        while (1)
+        {
+            SetLoInt(v45, gFirstAudioFrameDWORD_dword_62EFB4 & v69);
+            v44 = gFirstAudioFrameDWORD_dword_62EFB4 >> v42;
+            v43 = init_32_dword_62EEA8 - v42;
+            v48 = init_32_dword_62EEA8 - v42; // SETO 16
+            v46 = init_32_dword_62EEA8 - v42 == 16;
+            v47 = init_32_dword_62EEA8 - v42 - 16 < 0;
+            init_32_dword_62EEA8 -= v42;
+            gFirstAudioFrameDWORD_dword_62EFB4 >>= v42;
+            if ((unsigned __int8)(v47 ^ v48) | v46)
+            {
+                srcVal6 = *gAudioFrameDataPtr;
+                srcPtr2 = gAudioFrameDataPtr + 1;
+                ++gAudioFrameDataPtr;
+                v44 |= srcVal6 << v43;
+                v24 = v66;
+                v43 += 16;
+                gFirstAudioFrameDWORD_dword_62EFB4 = v44;
+                init_32_dword_62EEA8 = v43;
+            }
+            else
+            {
+                srcPtr2 = gAudioFrameDataPtr;
+            }
+            v51 = 1 << (v64 - 1);
+            v45 = (signed __int16)v45;
+            if ((signed __int16)v45 != v70)
+                break;
+            c6 = v43 - v65;
+            init_32_dword_62EEA8 = c6;
+            v45 = v44 & ((1 << v65) - 1);
+            v53 = v44 >> v65;
+            gFirstAudioFrameDWORD_dword_62EFB4 = v53;
+            if (c6 <= 16)
+            {
+                srcVal7 = *srcPtr2;
+                ++srcPtr2;
+                gAudioFrameDataPtr = srcPtr2;
+                v53 |= srcVal7 << c6;
+                v24 = v66;
+                c6 += 16;
+                gFirstAudioFrameDWORD_dword_62EFB4 = v53;
+                init_32_dword_62EEA8 = c6;
+            }
+            v51 = v71;
+            v45 = (signed __int16)v45;
+            if ((signed __int16)v45 != v71)
+            {
+                if (!(v45 & v71))
+                    goto LABEL_34;
+            LABEL_33:
+                v45 = -(v45 & ~v51);
+                goto LABEL_34;
+            }
+            c7 = c6 - v24;
+            init_32_dword_62EEA8 = c7;
+            v45 = v53 & ((1 << v24) - 1);
+            v56 = v53 >> v24;
+            gFirstAudioFrameDWORD_dword_62EFB4 = v56;
+            if (c7 <= 16)
+            {
+                srcVal8 = *srcPtr2;
+                gAudioFrameDataPtr = srcPtr2 + 1;
+                v24 = v66;
+                gFirstAudioFrameDWORD_dword_62EFB4 = (srcVal8 << c7) | v56;
+                init_32_dword_62EEA8 = c7 + 16;
+            }
+            v45 = (signed __int16)v45;
+            if ((signed __int16)v45 & v72)
+                v45 = -(v45 & ~v72);
+        LABEL_34:
+            v59 = v67;
+            v67 = v68;
+            v60 = 5 * v41 - 4 * v68;
+            v68 = v41;
+            v58 = (v59 + v60) >> 1;
+            if (v73)
+            {
+                v61 = GetSoundTableValue(v58);
+                v41 = (signed __int16)sub_408F50(v45 + v61);
+            }
+            else
+            {
+                v41 = (signed __int16)(v58 + (WORD)v45);
+            }
+            *v74 = v41;
+            v62 = v75 == 1;
+            v74 += gAudioFrameSizeBytes;
+            --v75;
+            if (v62)
+                return SndRelated_sub_409650();
+            v42 = v64;
+        }
+        if (!(v45 & v70))
+            goto LABEL_34;
+        goto LABEL_33;
+    }
+    return SndRelated_sub_409650();
+}
+
+int __cdecl decode_audio_frame(WORD *rawFrameBuffer, WORD *outPtr, signed int numSamplesPerFrame)
+{
+    int result; // eax@2
+
+    SetupAudioDecodePtrs(rawFrameBuffer);
+    if (false /*gAudioFrameSizeBits == 8*/)               // if mono
+    {
+        /*
+        Sound8BitRelated_sub_409200(outPtr, numSamplesPerFrame);
+        result = gAudioFrameSizeBytes;
+        if (gAudioFrameSizeBytes == 2)
+        result = Sound8BitRelated_sub_409200((_BYTE *)outPtr + 1, numSamplesPerFrame);
+        */
+    }
+    else
+    {
+        sound16bitRelated_sub_4096B0(outPtr, numSamplesPerFrame);
+        result = gAudioFrameSizeBytes;
+        if (gAudioFrameSizeBytes == 2)
+        {
+            result = sound16bitRelated_sub_4096B0(outPtr + 1, numSamplesPerFrame);
+        }
+    }
+    return result;
+}
+
+
 static SDL_Window *win = nullptr;
 static SDL_Renderer *ren = nullptr;
 static SDL_Texture *sdlTexture = nullptr;
@@ -316,11 +741,6 @@ static void after_block_decode_no_effect_q_impl(int quantScale)
 
 }
 
-static void SetLoWord(DWORD& v, WORD lo)
-{
-    WORD hiWord = HIWORD(v);
-    v = MAKELPARAM(lo, hiWord);
-}
 
 static void SetHiWord(DWORD& v, WORD hi)
 {
@@ -479,22 +899,6 @@ WORD* __cdecl ddv_func7_DecodeMacroBlock_impl(WORD* bitstreamPtr, int * blockPtr
     return dataPtr;
 }
 
-unsigned char byte_62EEB0[256] = {};
-
-void init_Snd_tbl()
-{
-    int index = 0;
-    do
-    {
-        int tableValue = 0;
-        for (int i = index; i > 0; ++tableValue)
-        {
-            i >>= 1;
-        }
-        byte_62EEB0[index++] = tableValue;
-    } while (index < 256);
-}
-
 /*
 // One of these breaks prophcy DDV
 typedef int(__cdecl *ddv_func7_DecodeMacroBlock)(void* params);
@@ -506,9 +910,12 @@ static after_block_decode_no_effect_q after_block_decode_no_effect_q_ptr = (afte
 
 #include "PSXMDECDecoder.h"
 
+
 char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
     //StartSDL();
+
+   // decode_audio_frame(thisPtr->mAudioFramePtr, thisPtr->mDecodedAudioFramePtr, thisPtr->mSingleAudioFrameSize);
 
     if (!thisPtr->mHasVideo)
     {
