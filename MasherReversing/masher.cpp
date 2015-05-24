@@ -232,9 +232,8 @@ static const uint8_t m_CDXA_STEREO = 3;
 
 #include "AudioBuffer.h"
 
-std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, bool firstFrame, AudioBuffer& audio)
+std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, PSXADPCMDecoder& adpcm, bool firstFrame, AudioBuffer& audio)
 {
-    PSXADPCMDecoder adpcm;
 
 
     std::vector<unsigned char> r(32768);
@@ -312,6 +311,7 @@ std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, 
 static void PlayStrOrOldDDV(const char* fileName)
 {
     PSXMDECDecoder mdec;
+    PSXADPCMDecoder adpcm;
     AudioBuffer audio;
 
     static bool init = false;
@@ -349,7 +349,7 @@ static void PlayStrOrOldDDV(const char* fileName)
 
 
         bool end = false;
-        std::vector<unsigned char> frameData = ReadFrame(fp, end, mdec, firstFrame, audio);
+        std::vector<unsigned char> frameData = ReadFrame(fp, end, mdec, adpcm, firstFrame, audio);
         firstFrame = false;
         if (end)
         {
@@ -654,8 +654,8 @@ int main(int, char**)
     
     for (auto& file : ddvs)
     {
-        std::cout << "Playing: " << file.c_str() << std::endl;
-        PlayDDV((abesExoddusDir + file).c_str());
+        //std::cout << "Playing: " << file.c_str() << std::endl;
+       // PlayDDV((abesExoddusDir + file).c_str());
     }
     
 
