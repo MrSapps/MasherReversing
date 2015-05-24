@@ -532,9 +532,9 @@ int main(int, char**)
 
     std::vector<std::string> aoDdvs  =
     {
+        "Badend.ddv",
         "Begin.ddv",
         "ABEMORPH.ddv",
-        "Badend.ddv",
         "Barrels.ddv",
         "d1p1p2.ddv",
         "D1P2P1.ddv",
