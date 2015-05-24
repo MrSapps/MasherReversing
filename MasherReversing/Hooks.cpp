@@ -417,6 +417,7 @@ int __cdecl decode_audio_frame(WORD *rawFrameBuffer, WORD *outPtr, signed int nu
     SetupAudioDecodePtrs(rawFrameBuffer);
     if (false /*gAudioFrameSizeBits == 8*/)               // if mono
     {
+        abort();
         /*
         Sound8BitRelated_sub_409200(outPtr, numSamplesPerFrame);
         result = gAudioFrameSizeBytes;
@@ -511,11 +512,21 @@ void StopSDL()
 }
 
 // We can't compile the hook stubs as __thiscall, so __fastcall is used as a workaround/hack
+
+// Video hook
 char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* screenBuffer);
 typedef decltype(&decode_ddv_frame) ddv__func5_block_decoder_q_type;
 
 static ddv__func5_block_decoder_q_type real_ddv__func5_block_decoder_q = (ddv__func5_block_decoder_q_type)0x00409FE0;
 static JmpHookedFunction<ddv__func5_block_decoder_q_type>* ddv_func6_decodes_block_q_hook;
+
+// Sound hook
+BYTE *__cdecl do_decode_audio_frame(ddv_class *thisPtr);
+typedef decltype(&do_decode_audio_frame) do_decode_audio_frame_type;
+
+static do_decode_audio_frame_type real_do_decode_audio_frame_type = (do_decode_audio_frame_type)0x0040DFE0;
+static JmpHookedFunction<do_decode_audio_frame_type>* do_decode_audio_frame_type_hook;
+
 
 void idct(int16_t* pSource, int32_t* pDestination);
 
@@ -910,12 +921,43 @@ static after_block_decode_no_effect_q after_block_decode_no_effect_q_ptr = (afte
 
 #include "PSXMDECDecoder.h"
 
+int __cdecl SetAudioFrameSizeBytesAndBits(int audioFrameSizeBytes, int audioFrameSizeBits)
+{
+    int result; // eax@1
+
+    result = audioFrameSizeBytes;
+    gAudioFrameSizeBytes = audioFrameSizeBytes;
+   // gAudioFrameSizeBits = audioFrameSizeBits;
+    return result;
+}
+
+
+// 0040DBB0
+BYTE *__cdecl do_decode_audio_frame(ddv_class *thisPtr)
+{
+    BYTE *result; // eax@3
+
+    if (thisPtr->mHasAudio && thisPtr->mAudioFrameNumber < thisPtr->mNumberOfFrames)
+    {
+        SetAudioFrameSizeBytesAndBits(thisPtr->mAudioFrameSizeBytesQ, thisPtr->mAudioFrameSizeBitsQ);
+        decode_audio_frame(thisPtr->mAudioFrameBuffer, (WORD *)thisPtr->mDecodedSoundBuffer, thisPtr->mSingleAudioFrameSize);
+        ++thisPtr->mAudioFrameNumber;
+        result = (BYTE*)thisPtr->mDecodedSoundBuffer;
+    }
+    else
+    {
+        ++thisPtr->mAudioFrameNumber;
+        result = 0;
+    }
+    return result;
+
+}
 
 char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
     //StartSDL();
 
-   // decode_audio_frame(thisPtr->mAudioFramePtr, thisPtr->mDecodedAudioFramePtr, thisPtr->mSingleAudioFrameSize);
+    return 0;
 
     if (!thisPtr->mHasVideo)
     {
@@ -1364,4 +1406,6 @@ void SetElement(int x, int y, unsigned short int* ptr, unsigned short int value)
 void InstallHooks()
 {
     ddv_func6_decodes_block_q_hook = new JmpHookedFunction<ddv__func5_block_decoder_q_type>(real_ddv__func5_block_decoder_q, &decode_ddv_frame);
+    do_decode_audio_frame_type_hook = new JmpHookedFunction<do_decode_audio_frame_type>(real_do_decode_audio_frame_type, &do_decode_audio_frame);
+
 }

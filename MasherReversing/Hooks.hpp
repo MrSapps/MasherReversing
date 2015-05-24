@@ -32,8 +32,8 @@ struct ddv_class
     DWORD framesInterleave;
     WORD* mRawFrameBitStreamData;
     WORD* mDecodedBitStream;
-    WORD* mAudioFramePtr;
-    WORD* mDecodedAudioFramePtr;
+    WORD* mAudioFrameBuffer;
+    WORD* mDecodedSoundBuffer;
     DWORD mAudioFrameSizeBytesQ;
     DWORD mAudioFrameSizeBitsQ;
     DWORD nNumMacroblocksX;
@@ -42,8 +42,8 @@ struct ddv_class
     BYTE mHasVideo;
     BYTE field_62;      // Padding?
     BYTE field_63;      // Padding?
-    DWORD mCurrentFrameNumber;
-    DWORD mCurrentFrameNumber2;
+    DWORD mAudioFrameNumber;
+    DWORD mAudioFrameNumberQ;
     DWORD field_6C; // Some sort of counter
     DWORD mVideoFrameSizesArray;        // After the audio/number of interleave frames
     DWORD mCurrentVideoFrameSizePtr;

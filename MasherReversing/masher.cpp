@@ -176,7 +176,7 @@ static void PlayDDV(const char* fileName)
 
             decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels.data());
             //SDL_Delay(16*2);
-
+            SDL_Delay(10);
 
 
         }
@@ -655,7 +655,7 @@ int main(int, char**)
     for (auto& file : ddvs)
     {
         //std::cout << "Playing: " << file.c_str() << std::endl;
-       // PlayDDV((abesExoddusDir + file).c_str());
+        PlayDDV((abesExoddusDir + file).c_str());
     }
     
 
