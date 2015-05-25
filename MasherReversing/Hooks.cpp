@@ -278,7 +278,7 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     v30 = init_32_dword_62EEA8 == 32;
     v31 = init_32_dword_62EEA8 - 32 < 0;
     init_32_dword_62EEA8 -= 16;
-    if ((unsigned __int8)(v31 ^ v32) | v30)
+    if ((unsigned __int8)(v31 /*^ v32*/) | v30)
     {
         v33 = **gAudioFrameDataPtr;
         ++*gAudioFrameDataPtr;
@@ -295,7 +295,7 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     v37 = init_32_dword_62EEA8 == 32;
     v38 = init_32_dword_62EEA8 - 32 < 0;
     init_32_dword_62EEA8 -= 16;
-    if ((unsigned __int8)(v38 ^ v39) | v37)
+    if ((unsigned __int8)(v38 /*^ v39*/) | v37)
     {
         v40 = **gAudioFrameDataPtr;
         ++*gAudioFrameDataPtr;
@@ -320,7 +320,7 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
             v47 = init_32_dword_62EEA8 - v42 - 16 < 0;
             init_32_dword_62EEA8 -= v42;
             gFirstAudioFrameDWORD_dword_62EFB4 >>= v42;
-            if ((unsigned __int8)(v47 ^ v48) | v46)
+            if ((unsigned __int8)(v47 /*^ v48*/) | v46)
             {
                 srcVal6 = **gAudioFrameDataPtr;
                 srcPtr2 = *gAudioFrameDataPtr + 1;
@@ -338,7 +338,9 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
             v51 = 1 << (v64 - 1);
             v45 = (signed __int16)v45;
             if ((signed __int16)v45 != v70)
+            {
                 break;
+            }
             c6 = v43 - v65;
             init_32_dword_62EEA8 = c6;
             v45 = v44 & ((1 << v65) - 1);
@@ -431,14 +433,36 @@ int __cdecl decode_audio_frame(WORD *rawFrameBuffer, WORD *outPtr, signed int nu
     }
     else
     {
-       // sound16bitRelated_sub_4096B0(outPtr, numSamplesPerFrame);
-        sound16bitRelated_sub_4096B0_ptr(outPtr, numSamplesPerFrame);
+        memset(outPtr, 0, numSamplesPerFrame * 4);
+
+        sound16bitRelated_sub_4096B0(outPtr, numSamplesPerFrame);
+
+        /*
+        0x024960A0  fc ff 00 00 f2 ff 00 00 fe ff 00 00 09 00 00 00  üÿ..òÿ..þÿ......
+        0x024960B0  0a 00 00 00 09 00 00 00 07 00 00 00 07 00 00 00  ................
+        0x024960C0  06 00 00 00 03 00 00 00 05 00 00 00 05 00 00 00  ................
+        0x024960D0  04 00 00 00 03 00 00 00 02 00 00 00 02 00 00 00  ................
+        0x024960E0  01 00 00 00 fe ff 00 00 fe ff 00 00 ff ff 00 00  ....þÿ..þÿ..ÿÿ..
+        0x024960F0  fc ff 00 00 fc ff 00 00 fb ff 00 00 fd ff 00 00  üÿ..üÿ..ûÿ..ýÿ..
+        0x02496100  fb ff 00 00 fb ff 00 00 fa ff 00 00 f8 ff 00 00  ûÿ..ûÿ..úÿ..øÿ..
+        0x02496110  f6 ff 00 00 f7 ff 00 00 f7 ff 00 00 f5 ff 00 00  öÿ..÷ÿ..÷ÿ..õÿ..
+        0x02496120  f3 ff 00 00 f3 ff 00 00 f5 ff 00 00 f2 ff 00 00  óÿ..óÿ..õÿ..òÿ..
+        0x02496130  f2 ff 00 00 f1 ff 00 00 ef ff 00 00 ef ff 00 00  òÿ..ñÿ..ïÿ..ïÿ..
+
+        0x002A8E60  5b 00 00 00 38 00 00 00 fc ff 00 00 a4 ff 00 00  [...8...üÿ..¤ÿ..
+        0x002A8E70  48 ff 00 00 e3 fe 00 00 8b fe 00 00 47 fe 00 00  Hÿ..ãþ...þ..Gþ..
+        0x002A8E80  37 fe 00 00 4b fe 00 00 7b fe 00 00 b7 fe 00 00  7þ..Kþ..{þ..·þ..
+        0x002A8E90  e4 8c 94 7f 12 1f 00 00 c4 00 2a 00 78 5f ff 04  äŒ”.....Ä.*.x_ÿ.
+        0x002A8EA0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+        */
+
+       // sound16bitRelated_sub_4096B0_ptr(outPtr, numSamplesPerFrame);
 
         result = gAudioFrameSizeBytes;
         if (gAudioFrameSizeBytes == 2)
         {
-            //result = sound16bitRelated_sub_4096B0(outPtr + 1, numSamplesPerFrame);
-            result = sound16bitRelated_sub_4096B0_ptr(outPtr + 1, numSamplesPerFrame);
+        //    result = sound16bitRelated_sub_4096B0(outPtr + 1, numSamplesPerFrame);
+         //   result = sound16bitRelated_sub_4096B0_ptr(outPtr + 1, numSamplesPerFrame);
         }
     }
     return result;
