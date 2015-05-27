@@ -362,6 +362,11 @@ static void PlayStrOrOldDDV(const char* fileName)
 
 }
 
+DWORD WINAPI ThreadProc(LPVOID)
+{
+    return 0;
+}
+
 int main(int, char**)
 {
     init_Snd_tbl();
