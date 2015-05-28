@@ -119,26 +119,26 @@ int __cdecl SndRelated_sub_409650()
 
 int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
 {
-    int c1; // eax@1
+    //int c1; // eax@1
     unsigned int v3; // edx@1
     __int16 firstTwoWords; // di@1
-    int srcVal1; // ecx@2
-    int c2; // eax@4
+
+    //int c2; // eax@4
     unsigned int v8; // edx@4
     int veryFirstWord; // ecx@4
     __int16 v10; // di@4
-    int srcVal2; // ecx@5
-    int c3; // eax@6
+    //int srcVal2; // ecx@5
+    //int c3; // eax@6
     unsigned int v13; // edx@6
     int v14; // ecx@6
     __int16 v15; // di@6
-    int srcVal3; // ecx@7
-    int c4; // eax@8
+    //int srcVal3; // ecx@7
+    //int c4; // eax@8
     unsigned int fourthWordOfData; // edx@8
     int secondWordOfData; // ebx@8
     __int16 thirdWordOfData; // di@8
-    int srcVal4; // ecx@9
-    int c5; // eax@10
+    //int srcVal4; // ecx@9
+   // int c5; // eax@10
     unsigned int v23; // edx@10
     int v24; // ebp@10
     __int16 v25; // di@10
@@ -149,14 +149,14 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     unsigned __int8 v30; // zf@12
     int /*char*/ v31; // sf@12
     int /*unsigned __int8*/ v32; // of@12
-    int v33; // edi@13
+    //int v33; // edi@13
     WORD *v34; // eax@14
     __int16 outputWord1; // dx@14
     int v36; // ecx@14
     unsigned __int8 v37; // zf@14
     int /*char*/ v38; // sf@14
     int /*unsigned __int8*/ v39; // of@14
-    int v40; // edi@15
+    //int v40; // edi@15
     int outputWord; // ebx@16
     int v42; // ecx@17
     int v43; // eax@19
@@ -165,14 +165,14 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     unsigned __int8 v46; // zf@19
     int /*char*/ v47; // sf@19
     int /*unsigned __int8*/ v48; // of@19
-    int srcVal6; // ecx@20
+    //int srcVal6; // ecx@20
     signed int v51; // ecx@22
-    int c6; // eax@23
+   // int c6; // eax@23
     unsigned int v53; // edx@23
-    int srcVal7; // ecx@24
-    int c7; // eax@26
+   // int srcVal7; // ecx@24
+   // int c7; // eax@26
     unsigned int v56; // edx@26
-    int srcVal8; // ecx@27
+    //int srcVal8; // ecx@27
     int tblIndexer; // eax@34
     int v59; // edi@34
     int v60; // eax@34
@@ -184,84 +184,81 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     int v67; // [sp+1Ch] [bp-1Ch]@12
     int v68; // [sp+20h] [bp-18h]@14
     int v69; // [sp+24h] [bp-14h]@17
-    signed int v70; // [sp+28h] [bp-10h]@10
-    signed int v71; // [sp+2Ch] [bp-Ch]@10
-    signed int v72; // [sp+30h] [bp-8h]@10
+    signed int word1Mask; // [sp+28h] [bp-10h]@10
+    signed int word2Mask; // [sp+2Ch] [bp-Ch]@10
+    signed int word3Mask; // [sp+30h] [bp-8h]@10
     //int bUseTbl; // [sp+34h] [bp-4h]@4
     WORD *outputPtr; // [sp+3Ch] [bp+4h]@16
     int remaining_cnt; // [sp+40h] [bp+8h]@17
 
-    c1 = init_32_dword_62EEA8 - 16;
-    init_32_dword_62EEA8 = c1;
+    init_32_dword_62EEA8 -= 16;
     firstTwoWords = gFirstAudioFrameDWORD_dword_62EFB4;
     v3 = gFirstAudioFrameDWORD_dword_62EFB4 >> 16;
     gFirstAudioFrameDWORD_dword_62EFB4 >>= 16;
-    if (c1 < 16)
+    if (init_32_dword_62EEA8 < 16)
     {
-        srcVal1 = **gAudioFrameDataPtr;
+        const int srcVal1 = **gAudioFrameDataPtr;
         ++*gAudioFrameDataPtr;
-        v3 |= srcVal1 << c1; // 0x00040002
-        c1 += 16;
+        v3 |= srcVal1 << init_32_dword_62EEA8; // 0x00040002
+        init_32_dword_62EEA8 += 16;
     }
 
     veryFirstWord = firstTwoWords;
     v10 = v3; // 0x0002 truncate to word
-    c2 = c1 - 16;
+    init_32_dword_62EEA8 -= 16;
     v8 = v3 >> 16;
     const int bUseTbl = veryFirstWord;
     gFirstAudioFrameDWORD_dword_62EFB4 = v8;
-    init_32_dword_62EEA8 = c2;
-    if (c2 <= 16)
+    if (init_32_dword_62EEA8 <= 16)
     {
-        srcVal2 = **gAudioFrameDataPtr;
+        const int srcVal2 = **gAudioFrameDataPtr;
         ++*gAudioFrameDataPtr;
-        v8 |= srcVal2 << c2;
-        c2 += 16;
+        v8 |= srcVal2 << init_32_dword_62EEA8;
+        init_32_dword_62EEA8 += 16;
     }
     v14 = v10;
     v15 = v8;
-    c3 = c2 - 16;
+    init_32_dword_62EEA8 -= 16;
     v13 = v8 >> 16;
     firstWordOfData = v14; // 0x00000002
     gFirstAudioFrameDWORD_dword_62EFB4 = v13;
-    init_32_dword_62EEA8 = c3;
-    if (c3 <= 16)
+    if (init_32_dword_62EEA8 <= 16)
     {
-        srcVal3 = **gAudioFrameDataPtr;
+        const int srcVal3 = **gAudioFrameDataPtr;
         ++*gAudioFrameDataPtr;
-        v13 |= srcVal3 << c3;
-        c3 += 16;
+        v13 |= srcVal3 << init_32_dword_62EEA8;
+        init_32_dword_62EEA8 += 16;
     }
     secondWordOfData = v15; // 0x00000004, 2nd word
     thirdWordOfData = v13; // 0x0008, 3rd word
-    c4 = c3 - 16;
+    init_32_dword_62EEA8 -= 16;
     fourthWordOfData = v13 >> 16; // 0x0000fffc, 4th word
     v65 = secondWordOfData;
     gFirstAudioFrameDWORD_dword_62EFB4 = fourthWordOfData;
-    init_32_dword_62EEA8 = c4;
-    if (c4 <= 16)
+
+    if (init_32_dword_62EEA8 <= 16)
     {
-        srcVal4 = **gAudioFrameDataPtr;
+        const int srcVal4 = **gAudioFrameDataPtr;
         ++*gAudioFrameDataPtr;
-        fourthWordOfData |= srcVal4 << c4;
-        c4 += 16;
+        fourthWordOfData |= srcVal4 << init_32_dword_62EEA8;
+        init_32_dword_62EEA8 += 16;
     }
-    c5 = c4 - 16;
+    init_32_dword_62EEA8 -= 16;
     v24 = thirdWordOfData;
     v66 = thirdWordOfData;
-    init_32_dword_62EEA8 = c5;
-    v70 = 1 << (firstWordOfData - 1); // word 1 (2)
-    v71 = 1 << (secondWordOfData - 1); // word 2 (4)
-    v72 = 1 << (thirdWordOfData - 1); // word 3 (8)
+
+    word1Mask = 1 << (firstWordOfData - 1); // word 1 (2)
+    word2Mask = 1 << (secondWordOfData - 1); // word 2 (4)
+    word3Mask = 1 << (thirdWordOfData - 1); // word 3 (8)
     v25 = fourthWordOfData; // word4 and 5, 0xfff2 fffc
     v23 = fourthWordOfData >> 16;
     gFirstAudioFrameDWORD_dword_62EFB4 = v23;
-    if (c5 <= 16)
+    if (init_32_dword_62EEA8 <= 16)
     {
-        srcVal5 = **gAudioFrameDataPtr;
+        const int srcVal5 = **gAudioFrameDataPtr;
         *gAudioFrameDataPtr++;
-        gFirstAudioFrameDWORD_dword_62EFB4 = (srcVal5 << c5) | v23;
-        init_32_dword_62EEA8 = c5 + 16;
+        gFirstAudioFrameDWORD_dword_62EFB4 = (srcVal5 << init_32_dword_62EEA8) | v23;
+        init_32_dword_62EEA8 += 16;
     }
     *outPtr = v25;
     v67 = v25;
@@ -275,13 +272,13 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     init_32_dword_62EEA8 -= 16;
     if ((unsigned __int8)(v31 /*^ v32*/) | v30)
     {
-        v33 = **gAudioFrameDataPtr; // a322 - first "control" word?
+        const int v33 = **gAudioFrameDataPtr; // a322 - first "control" word?
         ++*gAudioFrameDataPtr;
         gFirstAudioFrameDWORD_dword_62EFB4 |= v33 << v29;
         init_32_dword_62EEA8 = v29 + 16;
     }
     v68 = v28;
-    *v27 = v28;
+    *v27 = v28; // Mark end?
     v34 = &v27[gAudioFrameSizeBytes];
     outputWord1 = gFirstAudioFrameDWORD_dword_62EFB4;
     gFirstAudioFrameDWORD_dword_62EFB4 >>= 16;
@@ -292,14 +289,14 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     init_32_dword_62EEA8 -= 16;
     if ((unsigned __int8)(v38 /*^ v39*/) | v37)
     {
-        v40 = **gAudioFrameDataPtr;
+        const int v40 = **gAudioFrameDataPtr;
         ++*gAudioFrameDataPtr;
         gFirstAudioFrameDWORD_dword_62EFB4 |= v40 << v36;
         init_32_dword_62EEA8 = v36 + 16;
     }
     outputWord = outputWord1;
-    *v34 = outputWord1;
-    outputPtr = &v34[gAudioFrameSizeBytes];
+    *v34 = outputWord1; 
+    outputPtr = &v34[gAudioFrameSizeBytes]; // to next word?
     if (numSamplesPerFrame > 3)
     {
         v42 = firstWordOfData; // 0x00000002 first word of the src data  0200 0400 0800 fcff etc
@@ -317,7 +314,7 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
             gFirstAudioFrameDWORD_dword_62EFB4 >>= v42;
             if ((unsigned __int8)(v47 ^ v48) | v46)
             {
-                srcVal6 = **gAudioFrameDataPtr;
+                const int srcVal6 = **gAudioFrameDataPtr;
                 ++*gAudioFrameDataPtr;
                 v44 |= srcVal6 << v43;
                 v24 = v66;
@@ -328,30 +325,28 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
 
             v51 = 1 << (firstWordOfData - 1);
             v45 = (signed __int16)v45;
-            if ((signed __int16)v45 != v70)
+            if ((signed __int16)v45 != word1Mask)
             {
                 break;
             }
-            c6 = v43 - v65;
-            init_32_dword_62EEA8 = c6;
+            init_32_dword_62EEA8 = v43 - v65;
             v45 = v44 & ((1 << v65) - 1);
             v53 = v44 >> v65;
             gFirstAudioFrameDWORD_dword_62EFB4 = v53;
-            if (c6 <= 16)
+            if (init_32_dword_62EEA8 <= 16)
             {
-                srcVal7 = **gAudioFrameDataPtr;
+                const int srcVal7 = **gAudioFrameDataPtr;
                 ++*gAudioFrameDataPtr;
-                v53 |= srcVal7 << c6;
+                v53 |= srcVal7 << init_32_dword_62EEA8;
                 v24 = v66;
-                c6 += 16;
                 gFirstAudioFrameDWORD_dword_62EFB4 = v53;
-                init_32_dword_62EEA8 = c6;
+                init_32_dword_62EEA8 += 16;
             }
-            v51 = v71;
+            v51 = word2Mask;
             v45 = (signed __int16)v45;
-            if ((signed __int16)v45 != v71)
+            if ((signed __int16)v45 != word2Mask)
             {
-                if (!(v45 & v71))
+                if (!(v45 & word2Mask))
                 {
                     goto LABEL_34;
                 }
@@ -359,26 +354,25 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
                 v45 = -(v45 & ~v51);
                 goto LABEL_34;
             }
-            c7 = c6 - v24;
-            init_32_dword_62EEA8 = c7;
+            init_32_dword_62EEA8 -= v24;
             v45 = v53 & ((1 << v24) - 1);
             v56 = v53 >> v24;
             gFirstAudioFrameDWORD_dword_62EFB4 = v56;
             
-            if (c7 <= 16)
+            if (init_32_dword_62EEA8 <= 16)
             {
-                srcVal8 = **gAudioFrameDataPtr;
+                const int srcVal8 = **gAudioFrameDataPtr;
                 *gAudioFrameDataPtr++;
                 v24 = v66;
-                gFirstAudioFrameDWORD_dword_62EFB4 = (srcVal8 << c7) | v56;
-                init_32_dword_62EEA8 = c7 + 16;
+                gFirstAudioFrameDWORD_dword_62EFB4 = (srcVal8 << init_32_dword_62EEA8) | v56;
+                init_32_dword_62EEA8 += 16;
             }
             
             v45 = (signed __int16)v45;
             
-            if ((signed __int16)v45 & v72)
+            if ((signed __int16)v45 & word3Mask)
             {
-                v45 = -(v45 & ~v72);
+                v45 = -(v45 & ~word3Mask);
             }
 
         LABEL_34:
@@ -405,8 +399,8 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
                 return SndRelated_sub_409650();
             }
             v42 = firstWordOfData;
-        }
-        if (!(v45 & v70))
+        } // End while(1)
+        if (!(v45 & word1Mask))
         {
             goto LABEL_34;
         }
@@ -442,8 +436,8 @@ int __cdecl decode_audio_frame(WORD *rawFrameBuffer, WORD *outPtr, signed int nu
 
         SetupAudioDecodePtrs(rawFrameBuffer);
         memset(outPtr, 0, numSamplesPerFrame * 4);
-        //sound16bitRelated_sub_4096B0(outPtr, numSamplesPerFrame);
-        sound16bitRelated_sub_4096B0_ptr(outPtr, numSamplesPerFrame);
+        sound16bitRelated_sub_4096B0(outPtr, numSamplesPerFrame);
+       // sound16bitRelated_sub_4096B0_ptr(outPtr, numSamplesPerFrame);
 
 
         /*
