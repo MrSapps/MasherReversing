@@ -122,7 +122,6 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     int c1; // eax@1
     unsigned int v3; // edx@1
     __int16 firstTwoWords; // di@1
-    WORD *srcPtr; // esi@2
     int srcVal1; // ecx@2
     int c2; // eax@4
     unsigned int v8; // edx@4
@@ -166,7 +165,6 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     unsigned __int8 v46; // zf@19
     int /*char*/ v47; // sf@19
     int /*unsigned __int8*/ v48; // of@19
-    WORD *srcPtr2; // edi@20
     int srcVal6; // ecx@20
     signed int v51; // ecx@22
     int c6; // eax@23
@@ -198,18 +196,14 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     firstTwoWords = gFirstAudioFrameDWORD_dword_62EFB4;
     v3 = gFirstAudioFrameDWORD_dword_62EFB4 >> 16;
     gFirstAudioFrameDWORD_dword_62EFB4 >>= 16;
-    if (c1 > 16)
-    {
-        srcPtr = *gAudioFrameDataPtr;
-    }
-    else
+    if (c1 < 16)
     {
         srcVal1 = **gAudioFrameDataPtr;
-        srcPtr = *gAudioFrameDataPtr + 1;
         ++*gAudioFrameDataPtr;
         v3 |= srcVal1 << c1; // 0x00040002
         c1 += 16;
     }
+
     veryFirstWord = firstTwoWords;
     v10 = v3; // 0x0002 truncate to word
     c2 = c1 - 16;
@@ -219,9 +213,8 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     init_32_dword_62EEA8 = c2;
     if (c2 <= 16)
     {
-        srcVal2 = *srcPtr;
-        ++srcPtr;
-        *gAudioFrameDataPtr = srcPtr;
+        srcVal2 = **gAudioFrameDataPtr;
+        ++*gAudioFrameDataPtr;
         v8 |= srcVal2 << c2;
         c2 += 16;
     }
@@ -234,9 +227,8 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     init_32_dword_62EEA8 = c3;
     if (c3 <= 16)
     {
-        srcVal3 = *srcPtr;
-        ++srcPtr;
-        *gAudioFrameDataPtr = srcPtr;
+        srcVal3 = **gAudioFrameDataPtr;
+        ++*gAudioFrameDataPtr;
         v13 |= srcVal3 << c3;
         c3 += 16;
     }
@@ -249,9 +241,8 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     init_32_dword_62EEA8 = c4;
     if (c4 <= 16)
     {
-        srcVal4 = *srcPtr;
-        ++srcPtr;
-        *gAudioFrameDataPtr = srcPtr;
+        srcVal4 = **gAudioFrameDataPtr;
+        ++*gAudioFrameDataPtr;
         fourthWordOfData |= srcVal4 << c4;
         c4 += 16;
     }
@@ -267,8 +258,8 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     gFirstAudioFrameDWORD_dword_62EFB4 = v23;
     if (c5 <= 16)
     {
-        srcVal5 = *srcPtr;
-        *gAudioFrameDataPtr = srcPtr + 1;
+        srcVal5 = **gAudioFrameDataPtr;
+        *gAudioFrameDataPtr++;
         gFirstAudioFrameDWORD_dword_62EFB4 = (srcVal5 << c5) | v23;
         init_32_dword_62EEA8 = c5 + 16;
     }
@@ -327,7 +318,6 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
             if ((unsigned __int8)(v47 ^ v48) | v46)
             {
                 srcVal6 = **gAudioFrameDataPtr;
-                srcPtr2 = *gAudioFrameDataPtr + 1;
                 ++*gAudioFrameDataPtr;
                 v44 |= srcVal6 << v43;
                 v24 = v66;
@@ -335,10 +325,7 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
                 gFirstAudioFrameDWORD_dword_62EFB4 = v44;
                 init_32_dword_62EEA8 = v43;
             }
-            else
-            {
-                srcPtr2 = *gAudioFrameDataPtr;
-            }
+
             v51 = 1 << (firstWordOfData - 1);
             v45 = (signed __int16)v45;
             if ((signed __int16)v45 != v70)
@@ -352,9 +339,8 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
             gFirstAudioFrameDWORD_dword_62EFB4 = v53;
             if (c6 <= 16)
             {
-                srcVal7 = *srcPtr2;
-                ++srcPtr2;
-                *gAudioFrameDataPtr = srcPtr2;
+                srcVal7 = **gAudioFrameDataPtr;
+                ++*gAudioFrameDataPtr;
                 v53 |= srcVal7 << c6;
                 v24 = v66;
                 c6 += 16;
@@ -381,8 +367,8 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
             
             if (c7 <= 16)
             {
-                srcVal8 = *srcPtr2;
-                *gAudioFrameDataPtr = srcPtr2 + 1;
+                srcVal8 = **gAudioFrameDataPtr;
+                *gAudioFrameDataPtr++;
                 v24 = v66;
                 gFirstAudioFrameDWORD_dword_62EFB4 = (srcVal8 << c7) | v56;
                 init_32_dword_62EEA8 = c7 + 16;
