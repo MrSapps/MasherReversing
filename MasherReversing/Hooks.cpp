@@ -256,7 +256,7 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     if (init_32_dword_62EEA8 <= 16)
     {
         const int srcVal5 = **gAudioFrameDataPtr;
-        *gAudioFrameDataPtr++;
+        ++*gAudioFrameDataPtr;
         gFirstAudioFrameDWORD_dword_62EFB4 = (srcVal5 << init_32_dword_62EEA8) | v23;
         init_32_dword_62EEA8 += 16;
     }
@@ -362,7 +362,7 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
             if (init_32_dword_62EEA8 <= 16)
             {
                 const int srcVal8 = **gAudioFrameDataPtr;
-                *gAudioFrameDataPtr++;
+                ++*gAudioFrameDataPtr;
                 v24 = v66;
                 gFirstAudioFrameDWORD_dword_62EFB4 = (srcVal8 << init_32_dword_62EEA8) | v56;
                 init_32_dword_62EEA8 += 16;
