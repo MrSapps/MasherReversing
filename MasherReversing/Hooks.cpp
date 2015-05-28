@@ -98,31 +98,23 @@ WORD *__cdecl SetupAudioDecodePtrs(WORD *rawFrameBuffer)
 
 int __cdecl SndRelated_sub_409650()
 {
-    int result; // eax@1
-    int v1; // ecx@1
-    unsigned __int8 v2; // zf@1
-    char v3; // sf@1
-    unsigned __int8 v4; // of@1
-    int v5; // ecx@2
-    unsigned int v6; // ecx@2
-
-    v1 = init_32_dword_62EEA8 & 7;
-    result = init_32_dword_62EEA8 - v1;
-    v4 = init_32_dword_62EEA8 - v1; //SET0 16
-    v2 = init_32_dword_62EEA8 - v1 == 16;
-    v3 = init_32_dword_62EEA8 - v1 - 16 < 0;
+    const int v1 = init_32_dword_62EEA8 & 7;
+    int numBits = init_32_dword_62EEA8 - v1;
+    const unsigned __int8 updatedBitCount = init_32_dword_62EEA8 - v1; //SET0 16
+    const unsigned __int8 remainingBitCountIs16 = init_32_dword_62EEA8 - v1 == 16;
+    const int bitCountIsOverflown = init_32_dword_62EEA8 - v1 - 16 < 0;
     init_32_dword_62EEA8 -= v1;
     gFirstAudioFrameDWORD_dword_62EFB4 >>= v1;
-    if ((unsigned __int8)(v3 ^ v4) | v2)
+    if ((unsigned __int8)(bitCountIsOverflown ^ updatedBitCount) | remainingBitCountIs16)
     {
-        v5 = **gAudioFrameDataPtr;
+        const int frameWord = **gAudioFrameDataPtr;
         ++*gAudioFrameDataPtr;
-        v6 = (v5 << result) | gFirstAudioFrameDWORD_dword_62EFB4;
-        result += 16;
+        const unsigned int v6 = (frameWord << numBits) | gFirstAudioFrameDWORD_dword_62EFB4;
+        numBits += 16;
         gFirstAudioFrameDWORD_dword_62EFB4 = v6;
-        init_32_dword_62EEA8 = result;
+        init_32_dword_62EEA8 = numBits;
     }
-    return result;
+    return numBits;
 }
 
 int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
@@ -156,15 +148,15 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     __int16 v28; // dx@12
     int v29; // ecx@12
     unsigned __int8 v30; // zf@12
-    char v31; // sf@12
-    unsigned __int8 v32; // of@12
+    int /*char*/ v31; // sf@12
+    int /*unsigned __int8*/ v32; // of@12
     int v33; // edi@13
     WORD *v34; // eax@14
     __int16 outputWord1; // dx@14
     int v36; // ecx@14
     unsigned __int8 v37; // zf@14
-    char v38; // sf@14
-    unsigned __int8 v39; // of@14
+    int /*char*/ v38; // sf@14
+    int /*unsigned __int8*/ v39; // of@14
     int v40; // edi@15
     int outputWord; // ebx@16
     int v42; // ecx@17
@@ -172,8 +164,8 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     unsigned int v44; // edx@19
     int v45; // esi@19
     unsigned __int8 v46; // zf@19
-    char v47; // sf@19
-    unsigned __int8 v48; // of@19
+    int /*char*/ v47; // sf@19
+    int /*unsigned __int8*/ v48; // of@19
     WORD *srcPtr2; // edi@20
     int srcVal6; // ecx@20
     signed int v51; // ecx@22
