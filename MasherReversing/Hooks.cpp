@@ -7,6 +7,7 @@
 #include <SDL.h>
 #include <iostream>
 #include <vector>
+#include <fstream>
 
 #undef min
 #undef max
@@ -30,8 +31,8 @@ int __cdecl GetSoundTableValue(__int16 tblIndex)
     }
 
     char buf[512] = {};
-    sprintf(buf, "%d %d\n", tblIndex, result);
-    OutputDebugStringA(buf);
+//    sprintf(buf, "%d %d\n", tblIndex, result);
+    //OutputDebugStringA(buf);
 
     return result;
 }
@@ -96,11 +97,30 @@ WORD *__cdecl SetupAudioDecodePtrs(WORD *rawFrameBuffer)
     return result;
 }
 
+
+// sign flag
+__int8 __SETS__(int x)
+{
+    if (sizeof(int) == 1)
+        return __int8(x) < 0;
+    if (sizeof(int) == 2)
+        return __int16(x) < 0;
+    if (sizeof(int) == 4)
+        return __int32(x) < 0;
+    return __int64(x) < 0;
+}
+__int8 __SETO__(int x, int y)
+{
+    int y2 = y;
+    __int8 sx = __SETS__(x);
+    return (sx ^ __SETS__(y2)) & (sx ^ __SETS__(x - y2));
+}
+
 int __cdecl SndRelated_sub_409650()
 {
     const int v1 = gBitCounter_62EEA8 & 7;
     int numBits = gBitCounter_62EEA8 - v1;
-    const unsigned __int8 updatedBitCount = gBitCounter_62EEA8 - v1; //SET0 16
+    const unsigned __int8 updatedBitCount = __SETO__(gBitCounter_62EEA8 - v1, 16);
     const unsigned __int8 remainingBitCountIs16 = gBitCounter_62EEA8 - v1 == 16;
     const int bitCountIsOverflown = gBitCounter_62EEA8 - v1 - 16 < 0;
     gBitCounter_62EEA8 -= v1;
@@ -115,18 +135,6 @@ int __cdecl SndRelated_sub_409650()
         gBitCounter_62EEA8 = numBits;
     }
     return numBits;
-}
-
-__int8 __SETO__(DWORD v, DWORD sub)
-{
-    if (v - sub < 0)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
 }
 
 int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
@@ -454,15 +462,21 @@ int __cdecl decode_audio_frame(WORD *rawFrameBuffer, WORD *outPtr, signed int nu
         SetupAudioDecodePtrs(rawFrameBuffer);
         memset(outPtr, 0, numSamplesPerFrame * 4);
         sound16bitRelated_sub_4096B0_ptr(outPtr, numSamplesPerFrame);
+        std::ofstream r("real.dat", std::ios::binary);
+        r.write((char*)outPtr, numSamplesPerFrame * 4);
+        r.close();
 
+        // Call hook
         SetupAudioDecodePtrs(rawFrameBuffer);
         memset(outPtr, 0, numSamplesPerFrame * 4);
         sound16bitRelated_sub_4096B0(outPtr, numSamplesPerFrame);
+        std::ofstream h("hook.dat", std::ios::binary);
+        h.write((char*)outPtr, numSamplesPerFrame * 4);
+        h.close();
 
-       // sound16bitRelated_sub_4096B0_ptr(outPtr, numSamplesPerFrame);
+       
 
-
-        /*
+        
         std::vector<BYTE> expected(numSamplesPerFrame * 4);
         std::vector<BYTE> actual(numSamplesPerFrame * 4);
 
@@ -480,13 +494,14 @@ int __cdecl decode_audio_frame(WORD *rawFrameBuffer, WORD *outPtr, signed int nu
         {
             BYTE* a = actual.data();
             BYTE* e = expected.data();
-            abort();
+         //   abort();
         }
 
+        /*
         SetupAudioDecodePtrs(rawFrameBuffer);
         memset(outPtr, 0, numSamplesPerFrame * 4);
         sound16bitRelated_sub_4096B0_ptr(outPtr, numSamplesPerFrame);
-      */
+*/      
 
         /*
         0x024960A0  fc ff 00 00 f2 ff 00 00 fe ff 00 00 09 00 00 00  üÿ..òÿ..þÿ......
