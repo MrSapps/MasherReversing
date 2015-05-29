@@ -19,7 +19,8 @@ unsigned char* gSndTbl_byte_62EEB0 = (unsigned char*)0x62EEB0;
 
 int __cdecl GetSoundTableValue(__int16 tblIndex)
 {
-        
+    __int16 oldIdx = tblIndex;
+
     int result; // eax@1
     signed __int16 positiveTblIdx; // ax@1
 
@@ -31,8 +32,8 @@ int __cdecl GetSoundTableValue(__int16 tblIndex)
     }
 
     char buf[512] = {};
-//    sprintf(buf, "%d %d\n", tblIndex, result);
-    //OutputDebugStringA(buf);
+    sprintf(buf, "%d %d\n", oldIdx, result);
+    OutputDebugStringA(buf);
 
     return result;
 }
@@ -75,13 +76,12 @@ void init_Snd_tbl()
 
 int __cdecl sub_408F50(__int16 a1)
 {
-    int result; // eax@1
-    __int16 v2; // ax@1
-
-    v2 = abs(a1);
-    result = (unsigned __int16)((v2 & 0x7F) << (v2 >> 7)) | (unsigned __int16)(1 << ((v2 >> 7) - 2));
+    __int16 v2 = abs(a1);
+    int result = (unsigned __int16)((v2 & 0x7F) << (v2 >> 7)) | (unsigned __int16)(1 << ((v2 >> 7) - 2));
     if (a1 < 0)
+    {
         result = -result;
+    }
     return result;
 }
 
@@ -120,12 +120,12 @@ int __cdecl SndRelated_sub_409650()
 {
     const int v1 = gBitCounter_62EEA8 & 7;
     int numBits = gBitCounter_62EEA8 - v1;
-    const unsigned __int8 updatedBitCount = __SETO__(gBitCounter_62EEA8 - v1, 16);
-    const unsigned __int8 remainingBitCountIs16 = gBitCounter_62EEA8 - v1 == 16;
-    const int bitCountIsOverflown = gBitCounter_62EEA8 - v1 - 16 < 0;
+   // const unsigned __int8 updatedBitCount = __SETO__(gBitCounter_62EEA8 - v1, 16);
+   // const unsigned __int8 remainingBitCountIs16 = gBitCounter_62EEA8 - v1 == 16;
+   // const int bitCountIsOverflown = gBitCounter_62EEA8 - v1 - 16 < 0;
     gBitCounter_62EEA8 -= v1;
     gFirstAudioFrameDWORD_dword_62EFB4 >>= v1;
-    if ((unsigned __int8)(bitCountIsOverflown ^ updatedBitCount) | remainingBitCountIs16)
+    if (gBitCounter_62EEA8 <= 16)
     {
         const int frameWord = **gAudioFrameDataPtr;
         ++*gAudioFrameDataPtr;
@@ -178,7 +178,7 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     char bBitCountLessThan32_1; // sf@14
     unsigned __int8 overflow1; // of@14
     int srcVal10; // edi@15
-    int outputTmp1Copy; // ebx@16
+    int loopOutput; // ebx@16
     int secondWordCopyCopyCopyCopy; // ecx@17
     int tmpBitCounter; // eax@19
     unsigned int v44; // edx@19
@@ -195,10 +195,10 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     int c7; // eax@26
     unsigned int v56; // edx@26
     int srcVal8; // ecx@27
-    int v58; // eax@34
-    int v59; // edi@34
-    int v60; // eax@34
-    __int16 v61; // ax@35
+   // int v58; // eax@34
+   // int v59; // edi@34
+   // int v60; // eax@34
+    //__int16 v61; // ax@35
     char bCountIsOne; // zf@37
     int secondWordCopyCopyCopy; // [sp+10h] [bp-28h]@6
     int thirdWordCopyCopyCopy; // [sp+14h] [bp-24h]@8
@@ -298,11 +298,11 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     outputTmp = gFirstAudioFrameDWORD_dword_62EFB4;
     gFirstAudioFrameDWORD_dword_62EFB4 >>= 16;
     bitCount6 = gBitCounter_62EEA8 - 16;
-    overflow = __SETO__(gBitCounter_62EEA8 - 16, 16);
-    bBitCountIs32 = gBitCounter_62EEA8 == 32;
-    bBitCountLessThan32 = gBitCounter_62EEA8 - 32 < 0;
+    //overflow = __SETO__(gBitCounter_62EEA8 - 16, 16);
+    //bBitCountIs32 = gBitCounter_62EEA8 == 32;
+    //bBitCountLessThan32 = gBitCounter_62EEA8 - 32 < 0;
     gBitCounter_62EEA8 -= 16;
-    if ((unsigned __int8)(bBitCountLessThan32 ^ overflow) | bBitCountIs32)
+    if (gBitCounter_62EEA8 <= 16)
     {
         srcVal9 = *(*gAudioFrameDataPtr);
         ++(*gAudioFrameDataPtr);
@@ -315,18 +315,18 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
     outputTmp1 = gFirstAudioFrameDWORD_dword_62EFB4;
     gFirstAudioFrameDWORD_dword_62EFB4 >>= 16;
     bitCount7 = gBitCounter_62EEA8 - 16;
-    overflow1 = __SETO__(gBitCounter_62EEA8 - 16, 16);
-    bBitCountIs32_1 = gBitCounter_62EEA8 == 32;
-    bBitCountLessThan32_1 = gBitCounter_62EEA8 - 32 < 0;
+   // overflow1 = __SETO__(gBitCounter_62EEA8 - 16, 16);
+   // bBitCountIs32_1 = gBitCounter_62EEA8 == 32;
+   // bBitCountLessThan32_1 = gBitCounter_62EEA8 - 32 < 0;
     gBitCounter_62EEA8 -= 16;
-    if ((unsigned __int8)(bBitCountLessThan32_1 ^ overflow1) | bBitCountIs32_1)
+    if (gBitCounter_62EEA8 <= 16)
     {
         srcVal10 = *(*gAudioFrameDataPtr);
         ++(*gAudioFrameDataPtr);
         gFirstAudioFrameDWORD_dword_62EFB4 |= srcVal10 << bitCount7;
         gBitCounter_62EEA8 = bitCount7 + 16;
     }
-    outputTmp1Copy = (signed __int16)outputTmp1;
+    loopOutput = (signed __int16)outputTmp1;
     *outPtr3 = outputTmp1;
     outPtr4 = &outPtr3[gAudioFrameSizeBytes];
     if (numSamplesPerFrame > 3)
@@ -341,12 +341,13 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
 
             v44 = gFirstAudioFrameDWORD_dword_62EFB4 >> secondWordCopyCopyCopyCopy;
             tmpBitCounter = gBitCounter_62EEA8 - secondWordCopyCopyCopyCopy;
-            overflow2 = __SETO__(gBitCounter_62EEA8 - secondWordCopyCopyCopyCopy, 16);
-            bBitCountIs32_2 = gBitCounter_62EEA8 - secondWordCopyCopyCopyCopy == 16;
-            bBitCountLessThan32_2 = gBitCounter_62EEA8 - secondWordCopyCopyCopyCopy - 16 < 0;
+           // overflow2 = __SETO__(gBitCounter_62EEA8 - secondWordCopyCopyCopyCopy, 16);
+            //bBitCountIs32_2 = gBitCounter_62EEA8 - secondWordCopyCopyCopyCopy == 16;
+            //bBitCountLessThan32_2 = gBitCounter_62EEA8 - secondWordCopyCopyCopyCopy - 16 < 0;
             gBitCounter_62EEA8 -= secondWordCopyCopyCopyCopy;
             gFirstAudioFrameDWORD_dword_62EFB4 >>= secondWordCopyCopyCopyCopy;
-            if ((unsigned __int8)(bBitCountLessThan32_2 ^ overflow2) | bBitCountIs32_2)
+
+            if (gBitCounter_62EEA8 <= 16)
             {
                 srcVal6 = *(*gAudioFrameDataPtr);
                 srcPtr2 = (*gAudioFrameDataPtr) + 1;
@@ -406,32 +407,40 @@ int __cdecl sound16bitRelated_sub_4096B0(WORD *outPtr, int numSamplesPerFrame)
             }
             v45 = (signed __int16)v45;
             if ((signed __int16)v45 & forthWordMask)
+            {
                 v45 = -(v45 & ~forthWordMask);
+            }
         LABEL_34:
-            v59 = fithWordCopyCopy;
-            fithWordCopyCopy = outputTmpCopy;
-            v60 = 5 * outputTmp1Copy - 4 * outputTmpCopy;
-            outputTmpCopy = outputTmp1Copy;
-            v58 = (v59 + v60) >> 1;
+            const int v59 = fithWordCopyCopy;
+            fithWordCopyCopy = outputTmpCopy; // outputTmpCopy and fithWordCopyCopy is constant within the loop
+            const int v60 = 5 * loopOutput - 4 * outputTmpCopy;
+            outputTmpCopy = loopOutput;
+            const int v58 = (v59 + v60) >> 1;
             if (firstWordCopyCopy)
             {
-                v61 = GetSoundTableValue(v58);
-                outputTmp1Copy = (signed __int16)sub_408F50(v45 + v61);
+                const __int16 v61 = GetSoundTableValue(v58);
+                loopOutput = (signed __int16)sub_408F50(v45 + v61); // get positive bit7 mask? 2 bit mask or 1 bit RLE flag?
             }
             else
             {
-                outputTmp1Copy = (signed __int16)(v58 + (WORD)v45);
+                loopOutput = (signed __int16)(v58 + (WORD)v45);
             }
-            *outPtr4 = outputTmp1Copy;
+            *outPtr4 = loopOutput;
             bCountIsOne = counter == 1;
             outPtr4 += gAudioFrameSizeBytes;
             --counter;
             if (bCountIsOne)
+            {
                 return SndRelated_sub_409650();
+            }
             secondWordCopyCopyCopyCopy = secondWordCopyCopyCopy;
-        }
+        } // End loop
+
         if (!(v45 & secondWordMask))
+        {
             goto LABEL_34;
+        }
+
         goto LABEL_33;
     }
     return SndRelated_sub_409650();
@@ -459,20 +468,34 @@ int __cdecl decode_audio_frame(WORD *rawFrameBuffer, WORD *outPtr, signed int nu
     else
     {
         // Call real
+        /*
         SetupAudioDecodePtrs(rawFrameBuffer);
         memset(outPtr, 0, numSamplesPerFrame * 4);
         sound16bitRelated_sub_4096B0_ptr(outPtr, numSamplesPerFrame);
         std::ofstream r("real.dat", std::ios::binary);
         r.write((char*)outPtr, numSamplesPerFrame * 4);
         r.close();
+        */
+
+        /* reward.ddv
+        00 00 00 00 00 00 00 00   00 00 00 00   FF FF 00 00
+        00 00 00 00 FF FF 00 00   00 00 00 00   FF FF 00 00
+        FE FF 00 00 FF FF 00 00   FE FF 00 00   FE FF 00 00
+
+        Actual:
+        00 00 00 00 00 00 00 00   00 00 00 00   ff ff 00 00
+        00 00 00 00 ff ff 00 00   00 00 00 00   ff ff 00 00
+        fe ff 00 00 ff ff 00 00  [01 00 00 00] [03 00 00 00]
+
+        */
 
         // Call hook
         SetupAudioDecodePtrs(rawFrameBuffer);
         memset(outPtr, 0, numSamplesPerFrame * 4);
         sound16bitRelated_sub_4096B0(outPtr, numSamplesPerFrame);
-        std::ofstream h("hook.dat", std::ios::binary);
-        h.write((char*)outPtr, numSamplesPerFrame * 4);
-        h.close();
+       // std::ofstream h("hook.dat", std::ios::binary);
+       // h.write((char*)outPtr, numSamplesPerFrame * 4);
+       // h.close();
 
        
 
@@ -494,7 +517,7 @@ int __cdecl decode_audio_frame(WORD *rawFrameBuffer, WORD *outPtr, signed int nu
         {
             BYTE* a = actual.data();
             BYTE* e = expected.data();
-         //   abort();
+            abort();
         }
 
         /*
@@ -504,22 +527,7 @@ int __cdecl decode_audio_frame(WORD *rawFrameBuffer, WORD *outPtr, signed int nu
 */      
 
         /*
-        0x024960A0  fc ff 00 00 f2 ff 00 00 fe ff 00 00 09 00 00 00  üÿ..òÿ..þÿ......
-        0x024960B0  0a 00 00 00 09 00 00 00 07 00 00 00 07 00 00 00  ................
-        0x024960C0  06 00 00 00 03 00 00 00 05 00 00 00 05 00 00 00  ................
-        0x024960D0  04 00 00 00 03 00 00 00 02 00 00 00 02 00 00 00  ................
-        0x024960E0  01 00 00 00 fe ff 00 00 fe ff 00 00 ff ff 00 00  ....þÿ..þÿ..ÿÿ..
-        0x024960F0  fc ff 00 00 fc ff 00 00 fb ff 00 00 fd ff 00 00  üÿ..üÿ..ûÿ..ýÿ..
-        0x02496100  fb ff 00 00 fb ff 00 00 fa ff 00 00 f8 ff 00 00  ûÿ..ûÿ..úÿ..øÿ..
-        0x02496110  f6 ff 00 00 f7 ff 00 00 f7 ff 00 00 f5 ff 00 00  öÿ..÷ÿ..÷ÿ..õÿ..
-        0x02496120  f3 ff 00 00 f3 ff 00 00 f5 ff 00 00 f2 ff 00 00  óÿ..óÿ..õÿ..òÿ..
-        0x02496130  f2 ff 00 00 f1 ff 00 00 ef ff 00 00 ef ff 00 00  òÿ..ñÿ..ïÿ..ïÿ..
 
-        0x002A8E60  5b 00 00 00 38 00 00 00 fc ff 00 00 a4 ff 00 00  [...8...üÿ..¤ÿ..
-        0x002A8E70  48 ff 00 00 e3 fe 00 00 8b fe 00 00 47 fe 00 00  Hÿ..ãþ...þ..Gþ..
-        0x002A8E80  37 fe 00 00 4b fe 00 00 7b fe 00 00 b7 fe 00 00  7þ..Kþ..{þ..·þ..
-        0x002A8E90  e4 8c 94 7f 12 1f 00 00 c4 00 2a 00 78 5f ff 04  äŒ”.....Ä.*.x_ÿ.
-        0x002A8EA0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
         */
 
        // sound16bitRelated_sub_4096B0_ptr(outPtr, numSamplesPerFrame);
@@ -527,7 +535,7 @@ int __cdecl decode_audio_frame(WORD *rawFrameBuffer, WORD *outPtr, signed int nu
         result = gAudioFrameSizeBytes;
         if (gAudioFrameSizeBytes == 2)
         {
-        //    result = sound16bitRelated_sub_4096B0(outPtr + 1, numSamplesPerFrame);
+          result = sound16bitRelated_sub_4096B0(outPtr + 1, numSamplesPerFrame);
           //  result = sound16bitRelated_sub_4096B0_ptr(outPtr + 1, numSamplesPerFrame);
         }
     }
