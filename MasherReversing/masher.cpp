@@ -7,8 +7,8 @@
 #include <vector>
 #include <SDL.h>
 #include "Hooks.hpp"
-
 #include "PSXMDECDecoder.h"
+#include "AudioBuffer.h"
 
 struct DDVHeader
 {
@@ -49,6 +49,15 @@ extern std::vector<Uint32> pixels;
 
 static void PlayDDV(const char* fileName)
 {
+    AudioBuffer audio;
+
+    static bool init = false;
+    if (!init)
+    {
+        init = true; // hack
+        audio.Init();
+    }
+
     FILE* fp = fopen(fileName, "rb");
 
     DDVHeader headerP1 = {};
@@ -88,6 +97,11 @@ static void PlayDDV(const char* fileName)
         ddv.framesInterleave = headerP3.framesInterleave;
     }
 
+    std::vector<WORD> decodedFrame(ddv.mSingleAudioFrameSize * 2);
+    ddv.mDecodedSoundBuffer = decodedFrame.data();
+    // TODO: Set correctly
+    ddv.mAudioFrameSizeBytesQ = 2;
+    ddv.mAudioFrameSizeBitsQ = 16;
 
     ddv.mHasAudio = bHasAudio;
     ddv.mHasVideo = bHasVideo;
@@ -171,13 +185,21 @@ static void PlayDDV(const char* fileName)
                 uint8_t* pAudio = &ppVideoFrames[frame][4 + audioOffset];
 
                 const size_t audioSize = ppVideoFrames[frame].size() - audioOffset;
+
+                ddv.mAudioFrameBuffer = (WORD *)pAudio;
+
                 //std::cout << "Frame size is " << audioSize <<  " first byte: " << (int)(*(pAudio+0)) << std::endl;
             }
 
             decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels.data());
-            //SDL_Delay(16*2);
-            SDL_Delay(10);
 
+            do_decode_audio_frame(&ddv);
+
+            audio.SendSamples((char*)decodedFrame.data(), decodedFrame.size()*2);
+
+            SDL_Delay(16*2);
+           // SDL_Delay(10);
+            FlipSDL();
 
         }
     }
@@ -229,8 +251,6 @@ struct CDXASector
 };
 
 static const uint8_t m_CDXA_STEREO = 3;
-
-#include "AudioBuffer.h"
 
 std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, PSXADPCMDecoder& adpcm, bool firstFrame, AudioBuffer& audio)
 {
@@ -659,7 +679,7 @@ int main(int, char**)
     
     for (auto& file : ddvs)
     {
-        //std::cout << "Playing: " << file.c_str() << std::endl;
+        std::cout << "Playing: " << file.c_str() << std::endl;
         PlayDDV((abesExoddusDir + file).c_str());
     }
     

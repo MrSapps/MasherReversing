@@ -8,7 +8,7 @@ void SetSurfaceSize(int w, int h);
 void FlipSDL();
 void StopSDL();
 void init_Snd_tbl();
-void do_hack(int quantScale, unsigned short int* pBitStream, unsigned char* pScreenBuffer);
+BYTE *__cdecl do_decode_audio_frame(struct ddv_class *thisPtr);
 
 #pragma pack(1)
 #pragma pack(push)
