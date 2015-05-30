@@ -1,48 +1,52 @@
 #include "AudioBuffer.h"
 
-#define SDL_BUFFER_SIZE 1024
+int gAudioBufferSize = 512;
+#define AUDIO_BUFFER_CHANNELS 2
+#define AUDIO_BUFFER_FORMAT AUDIO_S16
+#define AUDIO_BUFFER_FORMAT_SIZE (SDL_AUDIO_BITSIZE(AUDIO_BUFFER_FORMAT) / 8)
+#define AUDIO_BUFFER_SAMPLE_SIZE (AUDIO_BUFFER_FORMAT_SIZE * AUDIO_BUFFER_CHANNELS)
 
-AudioBuffer::AudioBuffer()
+unsigned __int64 AudioBuffer::mPlayedSamples = 0;
+std::vector<char> AudioBuffer::mBuffer;
+std::mutex AudioBuffer::mBufferMutex;
+
+void AudioBuffer::AudioCallback(void *udata, Uint8 *stream, int len)
 {
-}
-
-
-AudioBuffer::~AudioBuffer()
-{
-}
-
-void AudioCallback(void *udata, Uint8 *stream, int len)
-{
-	AudioBuffer * buffer = (AudioBuffer*)udata;
-	StereoStream * stereoStream = (StereoStream *)stream;
-	int stereoStreamCount = len / sizeof(StereoStream);
-
 	memset(stream, 0, len);
 
-	buffer->audioBufferMutex.lock();
+	mBufferMutex.lock();
 
-	int currentBufferSampleSize = buffer->audioBuffer.size() / 4;
+	int currentBufferSampleSize = mBuffer.size() / AUDIO_BUFFER_SAMPLE_SIZE;
 
-	if (currentBufferSampleSize >= SDL_BUFFER_SIZE)
+	if (currentBufferSampleSize >= gAudioBufferSize)
 	{
-		memcpy(stream, buffer->audioBuffer.data(), SDL_BUFFER_SIZE * 4);
-		buffer->audioBuffer.erase(buffer->audioBuffer.begin(), buffer->audioBuffer.begin() + (SDL_BUFFER_SIZE * 4));
+		memcpy(stream, mBuffer.data(), gAudioBufferSize * AUDIO_BUFFER_SAMPLE_SIZE);
+		mBuffer.erase(mBuffer.begin(), mBuffer.begin() + (gAudioBufferSize * AUDIO_BUFFER_SAMPLE_SIZE));
+		mPlayedSamples += currentBufferSampleSize;
 	}
 
-	buffer->audioBufferMutex.unlock();
+	mBufferMutex.unlock();
 }
 
-void AudioBuffer::Init()
+void AudioBuffer::ChangeAudioSpec(int frameSize, int freq)
 {
+	Close();
+	mPlayedSamples = 0;
+	Open(frameSize, freq);
+}
+
+void AudioBuffer::Open(int frameSize, int freq)
+{
+	gAudioBufferSize = frameSize;
+
 	SDL_Init(SDL_INIT_AUDIO);
 
 	SDL_AudioSpec audioSpec;
 	audioSpec.callback = AudioCallback;
-	audioSpec.userdata = this;
-	audioSpec.channels = 2;
-    audioSpec.freq = 44100;
-	audioSpec.samples = SDL_BUFFER_SIZE;
-	audioSpec.format = AUDIO_S16;
+	audioSpec.channels = AUDIO_BUFFER_CHANNELS;
+	audioSpec.freq = freq;
+	audioSpec.samples = gAudioBufferSize;
+	audioSpec.format = AUDIO_BUFFER_FORMAT;
 
 	/* Open the audio device */
 	if (SDL_OpenAudio(&audioSpec, NULL) < 0){
@@ -53,13 +57,21 @@ void AudioBuffer::Init()
 	SDL_PauseAudio(0);
 }
 
+void AudioBuffer::Close()
+{
+	mBufferMutex.lock();
+	mBuffer.clear();
+	SDL_CloseAudio();
+	mBufferMutex.unlock();
+}
+
 void AudioBuffer::SendSamples(char * sampleData, int size)
 {
-	audioBufferMutex.lock();
+	mBufferMutex.lock();
 
-	int lastSize = audioBuffer.size();
-	audioBuffer.resize(lastSize + size);
-	memcpy(audioBuffer.data() + lastSize, sampleData, size);
+	int lastSize = mBuffer.size();
+	mBuffer.resize(lastSize + size);
+	memcpy(mBuffer.data() + lastSize, sampleData, size);
 
-	audioBufferMutex.unlock();
+	mBufferMutex.unlock();
 }

@@ -49,15 +49,6 @@ extern std::vector<Uint32> pixels;
 
 static void PlayDDV(const char* fileName)
 {
-    AudioBuffer audio;
-
-    static bool init = false;
-    if (!init)
-    {
-        init = true; // hack
-        audio.Init();
-    }
-
     FILE* fp = fopen(fileName, "rb");
 
     DDVHeader headerP1 = {};
@@ -144,6 +135,9 @@ static void PlayDDV(const char* fileName)
     }
     SDL_Event event = {};
 
+	int audioFrameIndex = 0;
+	AudioBuffer::ChangeAudioSpec(11760 / 4, 44100);
+
     if (bHasAudio)
     {
         for (uint32_t frame = 0; frame < headerP1.numberOfFrames; frame++)
@@ -168,8 +162,6 @@ static void PlayDDV(const char* fileName)
                 }
             }
 
-
-
             unsigned int frameSize = pVideoFrameSizes[frame] + 4; // Always +4 if audio
             ppVideoFrames[frame].resize(frameSize);
             fread(ppVideoFrames[frame].data(), frameSize, 1, fp);
@@ -193,15 +185,16 @@ static void PlayDDV(const char* fileName)
 
             decode_ddv_frame(nullptr, &ddv, (unsigned char *)pixels.data());
 
+			FlipSDL();
+
             do_decode_audio_frame(&ddv);
 
-            audio.SendSamples((char*)decodedFrame.data(), decodedFrame.size()*2);
+            AudioBuffer::SendSamples((char*)decodedFrame.data(), decodedFrame.size()*2);
+			audioFrameIndex++;
 
-            SDL_Delay(40);
-           // SDL_Delay(1000 / ddv.frameRate);
-           // SDL_Delay(10);
-            FlipSDL();
-
+			while (AudioBuffer::mPlayedSamples < audioFrameIndex * (11760 / 4))
+			{
+			}
         }
     }
     else
@@ -253,10 +246,8 @@ struct CDXASector
 
 static const uint8_t m_CDXA_STEREO = 3;
 
-std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, PSXADPCMDecoder& adpcm, bool firstFrame, AudioBuffer& audio)
+std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, PSXADPCMDecoder& adpcm, bool firstFrame)
 {
-
-
     std::vector<unsigned char> r(32768);
     std::vector<unsigned char> outPtr(32678);
 
@@ -283,7 +274,7 @@ std::vector<unsigned char> ReadFrame(FILE* fp, bool& end, PSXMDECDecoder& mdec, 
             
             auto numBytes = adpcm.DecodeFrameToPCM((int8_t *)outPtr.data(),xa->header, true);
 
-            audio.SendSamples((char*)outPtr.data(), numBytes);
+            AudioBuffer::SendSamples((char*)outPtr.data(), numBytes);
             
             // Must be VALE
             continue;
@@ -333,14 +324,6 @@ static void PlayStrOrOldDDV(const char* fileName)
 {
     PSXMDECDecoder mdec;
     PSXADPCMDecoder adpcm;
-    AudioBuffer audio;
-
-    static bool init = false;
-    if (!init)
-    {
-        init = true; // hack
-        audio.Init();
-    }
 
     FILE* fp = fopen(fileName, "rb");
 
@@ -370,7 +353,7 @@ static void PlayStrOrOldDDV(const char* fileName)
 
 
         bool end = false;
-        std::vector<unsigned char> frameData = ReadFrame(fp, end, mdec, adpcm, firstFrame, audio);
+        std::vector<unsigned char> frameData = ReadFrame(fp, end, mdec, adpcm, firstFrame);
         firstFrame = false;
         if (end)
         {
@@ -394,303 +377,306 @@ int main(int, char**)
 
     StartSDL();
 
-    // All public DDVs known to man
-    std::vector<std::string> ddvs = 
-    {
-        "ASLIKEXP.DDV",
-        "ASLIKINF.DDV",
-        "BA1114.DDV",
-        "BACKSTRY.DDV",
-        "BDENDING.DDV",
-        "BREW.DDV",
-        "BREWCAMT.DDV",
-        "BRP01C01.DDV",
-        "BRP01C02.DDV",
-        "BRP01C03.DDV",
-        "BRP01C04.DDV",
-        "BRP01C05.DDV",
-        "BRP01C06.DDV",
-        "BRP01C1R.DDV",
-        "BRP01C2R.DDV",
-        "BRP01C3R.DDV",
-        "BRP01C4R.DDV",
-        "BRP01C5R.DDV",
-        "BRP01C6R.DDV",
-        "BWP3P4.DDV",
-        "BWP3P4R.DDV",
-        "CONFRNCE.DDV",
-        "Ddlogo.ddv",
-        "DRIPEXP.DDV",
-        "DRIPINF.DDV",
-        "ESCAPE.DDV",
-        "FEECO.DDV",
-        "GDENDING.DDV",
-        "gtilogo.ddv",
-        "INFBOOTH.DDV",
-        "INGRDNT.DDV",
-        "INTRO.DDV",
-        "logo.ddv",
-        "M1018310.DDV",
-        "M1018517.DDV",
-        "M5171018.DDV",
-        "MI122711.DDV",
-        "MI218227.DDV",
-        "MI221222.DDV",
-        "MI221227.DDV",
-        "MI222221.DDV",
-        "MI227218.DDV",
-        "MI227221.DDV",
-        "MI313401.DDV",
-        "Mi404430.ddv",
-        "MI410313.DDV",
-        "MI419431.DDV",
-        "MI420432.DDV",
-        "MI422423.DDV",
-        "MI422437.DDV",
-        "MI426427.DDV",
-        "Mi430044.ddv",
-        "MI431419.DDV",
-        "Mi437422.ddv",
-        "MI711122.DDV",
-        "MIP01C03.DDV",
-        "MP1C1C2.DDV",
-        "MP1C2C1.DDV",
-        "NE140601.DDV",
-        "NE140604.DDV",
-        "NE310033.DDV",
-        "NE330309.DDV",
-        "NE410404.DDV",
-        "NE440401.DDV",
-        "NE610104.DDV",
-        "NE610602.DDV",
-        "NE620603.DDV",
-        "NE630604.DDV",
-        "NE640401.DDV",
-        "NE640601.DDV",
-        "NEBLK201.DDV",
-        "NEP01C08.DDV",
-        "NEP01C09.DDV",
-        "NEP01C10.DDV",
-        "NEP01C8R.DDV",
-        "NEP02C01.DDV",
-        "NEP02C02.DDV",
-        "NEP1C10R.DDV",
-        "option.ddv",
-        "P1391314.DDV",
-        "PHLEGEXP.DDV",
-        "PHLEGINF.DDV",
-        "prophecy.ddv",
-        "PV107071.DDV",
-        "PV114081.DDV",
-        "PV12181R.DDV",
-        "PV131452.DDV",
-        "PV370801.DDV",
-        "PV410801.DDV",
-        "PV430402.DDV",
-        "PV470801.DDV",
-        "PV550801.DDV",
-        "PV712101.DDV",
-        "Pv801901.ddv",
-        "PV810301.DDV",
-        "PV810401.DDV",
-        "PV810501.DDV",
-        "PV810901.DDV",
-        "PV811101.DDV",
-        "PV811201.DDV",
-        "Pv821301.ddv",
-        "PV910801.DDV",
-        "PVP01C5R.DDV",
-        "REWARD.DDV",
-        "S1102N58.DDV",
-        "SBP01C01.DDV",
-        "SBP01C1R.DDV",
-        "SSINFO.DDV",
-        "Sv101112.ddv",
-        "SV110703.DDV",
-        "SV140106.DDV",
-        "SV160703.ddv",
-        "SV22073L.DDV",
-        "SV36073R.DDV",
-        "SV420405.DDV",
-        "SV430703.DDV",
-        "SV520504.DDV",
-        "SV550507.DDV",
-        "SV590703.DDV",
-        "SV616618.DDV",
-        "SV619622.DDV",
-        "SV624063.DDV",
-        "SV630609.DDV",
-        "SV690613.DDV",
-        "SV730101.DDV",
-        "SV730202.DDV",
-        "SV730306.DDV",
-        "SV730401.DDV",
-        "SV730502.DDV",
-        "SV730801.DDV",
-        "SV740904.DDV",
-        "SV830703.DDV",
-        "SV940704.DDV",
-        "SVP01C05.DDV",
-        "TRAIN1.DDV",
-        "TRAIN2.DDV",
-        "train3.ddv",
-        "v1a4s01.ddv",
-        "vision.ddv"
-    };
+	AudioBuffer::Open(512, 44100);
 
-    std::vector<std::string> msg1Cd1Movies =
-    {
-        "GENBAKU.DDV",
-        "KAITAI.DDV",
-        "KASOU.DDV",
-        "POLICE.DDV"
-    };
+	// All public DDVs known to man
+	std::vector<std::string> ddvs =
+	{
+		"ASLIKEXP.DDV",
+		"ASLIKINF.DDV",
+		"BA1114.DDV",
+		"BACKSTRY.DDV",
+		"BDENDING.DDV",
+		"BREW.DDV",
+		"BREWCAMT.DDV",
+		"BRP01C01.DDV",
+		"BRP01C02.DDV",
+		"BRP01C03.DDV",
+		"BRP01C04.DDV",
+		"BRP01C05.DDV",
+		"BRP01C06.DDV",
+		"BRP01C1R.DDV",
+		"BRP01C2R.DDV",
+		"BRP01C3R.DDV",
+		"BRP01C4R.DDV",
+		"BRP01C5R.DDV",
+		"BRP01C6R.DDV",
+		"BWP3P4.DDV",
+		"BWP3P4R.DDV",
+		"CONFRNCE.DDV",
+		"Ddlogo.ddv",
+		"DRIPEXP.DDV",
+		"DRIPINF.DDV",
+		"ESCAPE.DDV",
+		"FEECO.DDV",
+		"GDENDING.DDV",
+		"gtilogo.ddv",
+		"INFBOOTH.DDV",
+		"INGRDNT.DDV",
+		"INTRO.DDV",
+		"logo.ddv",
+		"M1018310.DDV",
+		"M1018517.DDV",
+		"M5171018.DDV",
+		"MI122711.DDV",
+		"MI218227.DDV",
+		"MI221222.DDV",
+		"MI221227.DDV",
+		"MI222221.DDV",
+		"MI227218.DDV",
+		"MI227221.DDV",
+		"MI313401.DDV",
+		"Mi404430.ddv",
+		"MI410313.DDV",
+		"MI419431.DDV",
+		"MI420432.DDV",
+		"MI422423.DDV",
+		"MI422437.DDV",
+		"MI426427.DDV",
+		"Mi430044.ddv",
+		"MI431419.DDV",
+		"Mi437422.ddv",
+		"MI711122.DDV",
+		"MIP01C03.DDV",
+		"MP1C1C2.DDV",
+		"MP1C2C1.DDV",
+		"NE140601.DDV",
+		"NE140604.DDV",
+		"NE310033.DDV",
+		"NE330309.DDV",
+		"NE410404.DDV",
+		"NE440401.DDV",
+		"NE610104.DDV",
+		"NE610602.DDV",
+		"NE620603.DDV",
+		"NE630604.DDV",
+		"NE640401.DDV",
+		"NE640601.DDV",
+		"NEBLK201.DDV",
+		"NEP01C08.DDV",
+		"NEP01C09.DDV",
+		"NEP01C10.DDV",
+		"NEP01C8R.DDV",
+		"NEP02C01.DDV",
+		"NEP02C02.DDV",
+		"NEP1C10R.DDV",
+		"option.ddv",
+		"P1391314.DDV",
+		"PHLEGEXP.DDV",
+		"PHLEGINF.DDV",
+		"prophecy.ddv",
+		"PV107071.DDV",
+		"PV114081.DDV",
+		"PV12181R.DDV",
+		"PV131452.DDV",
+		"PV370801.DDV",
+		"PV410801.DDV",
+		"PV430402.DDV",
+		"PV470801.DDV",
+		"PV550801.DDV",
+		"PV712101.DDV",
+		"Pv801901.ddv",
+		"PV810301.DDV",
+		"PV810401.DDV",
+		"PV810501.DDV",
+		"PV810901.DDV",
+		"PV811101.DDV",
+		"PV811201.DDV",
+		"Pv821301.ddv",
+		"PV910801.DDV",
+		"PVP01C5R.DDV",
+		"REWARD.DDV",
+		"S1102N58.DDV",
+		"SBP01C01.DDV",
+		"SBP01C1R.DDV",
+		"SSINFO.DDV",
+		"Sv101112.ddv",
+		"SV110703.DDV",
+		"SV140106.DDV",
+		"SV160703.ddv",
+		"SV22073L.DDV",
+		"SV36073R.DDV",
+		"SV420405.DDV",
+		"SV430703.DDV",
+		"SV520504.DDV",
+		"SV550507.DDV",
+		"SV590703.DDV",
+		"SV616618.DDV",
+		"SV619622.DDV",
+		"SV624063.DDV",
+		"SV630609.DDV",
+		"SV690613.DDV",
+		"SV730101.DDV",
+		"SV730202.DDV",
+		"SV730306.DDV",
+		"SV730401.DDV",
+		"SV730502.DDV",
+		"SV730801.DDV",
+		"SV740904.DDV",
+		"SV830703.DDV",
+		"SV940704.DDV",
+		"SVP01C05.DDV",
+		"TRAIN1.DDV",
+		"TRAIN2.DDV",
+		"train3.ddv",
+		"v1a4s01.ddv",
+		"vision.ddv"
+	};
 
-    std::vector<std::string> msg1Cd2Movies =
-    {
-        "ALASKA.DDV",
-        "E399.DDV",
-        "IDENSHI.DDV",
-        "INUZORI.DDV",
-        "WANGAN.DDV"
-    };
+	std::vector<std::string> msg1Cd1Movies =
+	{
+		"GENBAKU.DDV",
+		"KAITAI.DDV",
+		"KASOU.DDV",
+		"POLICE.DDV"
+	};
+
+	std::vector<std::string> msg1Cd2Movies =
+	{
+		"ALASKA.DDV",
+		"E399.DDV",
+		"IDENSHI.DDV",
+		"INUZORI.DDV",
+		"WANGAN.DDV"
+	};
 
 
-    std::vector<std::string> aoDdvs  =
-    {
-        "Badend.ddv",
-        "Begin.ddv",
-        "ABEMORPH.ddv",
-        "Barrels.ddv",
-        "d1p1p2.ddv",
-        "D1P2P1.ddv",
-        "d1p3p4.ddv",
-        "D1P4P3.ddv",
-        "d1p6p7.ddv",
-        "D1P7P6.ddv",
-        "d1p9d2.ddv",
-        "d2p10d7.ddv",
-        "d2p10p2.ddv",
-        "d2p10p3.ddv",
-        "d2p10p4.ddv",
-        "d2p10p5.ddv",
-        "d2p10p6.ddv",
-        "d2p10p7.ddv",
-        "d2p10p8.ddv",
-        "d2p10p9.ddv",
-        "d2p1p10.ddv",
-        "d2p2p10.ddv",
-        "d2p2p10b.ddv",
-        "d2p3p10.ddv",
-        "d2p3p10b.ddv",
-        "d2p4p10.ddv",
-        "d2p4p10b.ddv",
-        "d2p5p10.ddv",
-        "d2p5p10b.ddv",
-        "d2p6p10.ddv",
-        "d2p6p10b.ddv",
-        "d2p7p10.ddv",
-        "d2p7p10b.ddv",
-        "d2p8p10.ddv",
-        "d2p8p10b.ddv",
-        "d2p9p10.ddv",
-        "d2p9p10b.ddv",
-        "d7c11c12.ddv",
-        "d7c12c11.ddv",
-        "Drag.ddv",
-        "E1P4C8.ddv",
-        "E2P2R2.ddv",
-        "F1p1p2.ddv",
-        "F1P2P1.ddv",
-        "F1P2P5.ddv",
-        "F1P5P2.ddv",
-        "F1P5P6.ddv",
-        "F1P6P5.ddv",
-        "F1P8P9.ddv",
-        "F1p9f2.ddv",
-        "F1P9P8.ddv",
-        "F2P1P8.ddv",
-        "F2P2P8.ddv",
-        "F2P2P8B.ddv",
-        "F2p3p8.ddv",
-        "F2p3p8b.ddv",
-        "F2P4P8.ddv",
-        "F2P4P8B.ddv",
-        "F2P5P8.ddv",
-        "F2P5P8B.ddv",
-        "F2P6P8.ddv",
-        "F2P6P8B.ddv",
-        "F2P7P8.ddv",
-        "F2P7P8B.ddv",
-        "F2P8F4.ddv",
-        "F2P8P2.ddv",
-        "f2p8p3.ddv",
-        "F2P8P4.ddv",
-        "F2P8P5.ddv",
-        "F2P8P6.ddv",
-        "F2P8P7.ddv",
-        "F4C11C13.ddv",
-        "F4C13C11.ddv",
-        "GAMEBGN.ddv",
-        "Goodend.ddv",
-        "gtddlogo.ddv",
-        "Halts.ddv",
-        "L1P1C14.ddv",
-        "L1P1P2.ddv",
-        "L1P2P1.ddv",
-        "L1P2P3.ddv",
-        "L1P3P2.ddv",
-        "L1P5C4.ddv",
-        "L1P5P6.ddv",
-        "L1P6E2.ddv",
-        "L1P6P5.ddv",
-        "li1p6e2.ddv",
-        "logoint.ddv",
-        "LP1C15C3.ddv",
-        "LP1C16C3.ddv",
-        "LP1C3C15.ddv",
-        "LP1C3C16.ddv",
-        "LP5C3C4.ddv",
-        "LP5C4C3.ddv",
-        "Mollock.ddv",
-        "moon.ddv",
-        "PARAMITE.ddv",
-        "PARSCAR.ddv",
-        "R1P11P6.ddv",
-        "R1p13p1.ddv",
-        "r1p13p14.ddv",
-        "r1p14p13.ddv",
-        "R1p18p1.ddv",
-        "R1P18P19.ddv",
-        "R1P19P18.ddv",
-        "R1P1P13.ddv",
-        "R1p1p18.ddv",
-        "R1P6P11.ddv",
-        "Scrab.ddv",
-        "ScrScar.ddv",
-        "xaosopen.ddv"
-    };
+	std::vector<std::string> aoDdvs =
+	{
+		"Badend.ddv",
+		"Begin.ddv",
+		"ABEMORPH.ddv",
+		"Barrels.ddv",
+		"d1p1p2.ddv",
+		"D1P2P1.ddv",
+		"d1p3p4.ddv",
+		"D1P4P3.ddv",
+		"d1p6p7.ddv",
+		"D1P7P6.ddv",
+		"d1p9d2.ddv",
+		"d2p10d7.ddv",
+		"d2p10p2.ddv",
+		"d2p10p3.ddv",
+		"d2p10p4.ddv",
+		"d2p10p5.ddv",
+		"d2p10p6.ddv",
+		"d2p10p7.ddv",
+		"d2p10p8.ddv",
+		"d2p10p9.ddv",
+		"d2p1p10.ddv",
+		"d2p2p10.ddv",
+		"d2p2p10b.ddv",
+		"d2p3p10.ddv",
+		"d2p3p10b.ddv",
+		"d2p4p10.ddv",
+		"d2p4p10b.ddv",
+		"d2p5p10.ddv",
+		"d2p5p10b.ddv",
+		"d2p6p10.ddv",
+		"d2p6p10b.ddv",
+		"d2p7p10.ddv",
+		"d2p7p10b.ddv",
+		"d2p8p10.ddv",
+		"d2p8p10b.ddv",
+		"d2p9p10.ddv",
+		"d2p9p10b.ddv",
+		"d7c11c12.ddv",
+		"d7c12c11.ddv",
+		"Drag.ddv",
+		"E1P4C8.ddv",
+		"E2P2R2.ddv",
+		"F1p1p2.ddv",
+		"F1P2P1.ddv",
+		"F1P2P5.ddv",
+		"F1P5P2.ddv",
+		"F1P5P6.ddv",
+		"F1P6P5.ddv",
+		"F1P8P9.ddv",
+		"F1p9f2.ddv",
+		"F1P9P8.ddv",
+		"F2P1P8.ddv",
+		"F2P2P8.ddv",
+		"F2P2P8B.ddv",
+		"F2p3p8.ddv",
+		"F2p3p8b.ddv",
+		"F2P4P8.ddv",
+		"F2P4P8B.ddv",
+		"F2P5P8.ddv",
+		"F2P5P8B.ddv",
+		"F2P6P8.ddv",
+		"F2P6P8B.ddv",
+		"F2P7P8.ddv",
+		"F2P7P8B.ddv",
+		"F2P8F4.ddv",
+		"F2P8P2.ddv",
+		"f2p8p3.ddv",
+		"F2P8P4.ddv",
+		"F2P8P5.ddv",
+		"F2P8P6.ddv",
+		"F2P8P7.ddv",
+		"F4C11C13.ddv",
+		"F4C13C11.ddv",
+		"GAMEBGN.ddv",
+		"Goodend.ddv",
+		"gtddlogo.ddv",
+		"Halts.ddv",
+		"L1P1C14.ddv",
+		"L1P1P2.ddv",
+		"L1P2P1.ddv",
+		"L1P2P3.ddv",
+		"L1P3P2.ddv",
+		"L1P5C4.ddv",
+		"L1P5P6.ddv",
+		"L1P6E2.ddv",
+		"L1P6P5.ddv",
+		"li1p6e2.ddv",
+		"logoint.ddv",
+		"LP1C15C3.ddv",
+		"LP1C16C3.ddv",
+		"LP1C3C15.ddv",
+		"LP1C3C16.ddv",
+		"LP5C3C4.ddv",
+		"LP5C4C3.ddv",
+		"Mollock.ddv",
+		"moon.ddv",
+		"PARAMITE.ddv",
+		"PARSCAR.ddv",
+		"R1P11P6.ddv",
+		"R1p13p1.ddv",
+		"r1p13p14.ddv",
+		"r1p14p13.ddv",
+		"R1p18p1.ddv",
+		"R1P18P19.ddv",
+		"R1P19P18.ddv",
+		"R1P1P13.ddv",
+		"R1p1p18.ddv",
+		"R1P6P11.ddv",
+		"Scrab.ddv",
+		"ScrScar.ddv",
+		"xaosopen.ddv"
+	};
 
-    // TODO: gtilogo.ddv and prophecy.ddv do not render correctly
-    std::string abesExoddusDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Exoddus\\";
-    std::string abesOddyseeDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Oddysee\\";
-    std::string msg1CdDir = "W:\\MOVIE\\";
-    std::string msg1Cd2Dir = "X:\\MOVIE\\";
+	// TODO: gtilogo.ddv and prophecy.ddv do not render correctly
+	std::string abesExoddusDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Exoddus\\";
+	std::string abesOddyseeDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Oddysee\\";
+	std::string msg1CdDir = "W:\\MOVIE\\";
+	std::string msg1Cd2Dir = "X:\\MOVIE\\";
 
-    
-    for (auto& file : ddvs)
-    {
-        std::cout << "Playing: " << file.c_str() << std::endl;
-        PlayDDV((abesExoddusDir + file).c_str());
-    }
-    
 
-    for (auto& file : aoDdvs)
-    {
-        std::cout << "Playing: " << file.c_str() << std::endl;
-        PlayStrOrOldDDV((abesOddyseeDir + file).c_str());
-    }
+	for (auto& file : ddvs)
+	{
+		std::cout << "Playing: " << file.c_str() << std::endl;
+		PlayDDV((abesExoddusDir + file).c_str());
+	}
 
+
+	for (auto& file : aoDdvs)
+	{
+		std::cout << "Playing: " << file.c_str() << std::endl;
+		PlayStrOrOldDDV((abesOddyseeDir + file).c_str());
+	}
+
+	AudioBuffer::Close();
     StopSDL();
 
     return 0;
