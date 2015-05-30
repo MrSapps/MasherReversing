@@ -5,27 +5,22 @@
 #include <vector>
 #include <mutex>
 
-typedef struct
-{
-	uint16_t left;
-	uint16_t right;
-} StereoStream;
-
 // Hacky audio class to play data from masher.
-class AudioBuffer
+static class AudioBuffer
 {
 public:
-	AudioBuffer();
-	~AudioBuffer();
+	static void Open(int frameSize, int freq);
+	static void ChangeAudioSpec(int frameSize, int freq);
+	static void Close();
 
-	void Init();
+	static void AudioCallback(void *udata, Uint8 *stream, int len);
 
 	// Sample data must be 16 bit pcm.
-	void SendSamples(char * sampleData, int size);
+	static void SendSamples(char * sampleData, int size);
 
 	// Internal use
-	long long mSampleTick = 0;
-	std::vector<char> audioBuffer;
-	std::mutex audioBufferMutex;
+	static unsigned __int64 mPlayedSamples; // This will overflow when playing roughly 10000 years worth of video.
+	static std::vector<char> mBuffer;
+	static std::mutex mBufferMutex;
 };
 
