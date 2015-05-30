@@ -197,7 +197,8 @@ static void PlayDDV(const char* fileName)
 
             audio.SendSamples((char*)decodedFrame.data(), decodedFrame.size()*2);
 
-            SDL_Delay(16*2);
+            SDL_Delay(40);
+           // SDL_Delay(1000 / ddv.frameRate);
            // SDL_Delay(10);
             FlipSDL();
 

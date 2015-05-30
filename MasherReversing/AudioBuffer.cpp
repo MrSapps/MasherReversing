@@ -40,7 +40,7 @@ void AudioBuffer::Init()
 	audioSpec.callback = AudioCallback;
 	audioSpec.userdata = this;
 	audioSpec.channels = 2;
-    audioSpec.freq = 37800;
+    audioSpec.freq = 41000;
 	audioSpec.samples = SDL_BUFFER_SIZE;
 	audioSpec.format = AUDIO_S16;
 
