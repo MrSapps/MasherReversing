@@ -382,12 +382,15 @@ int main(int, char**)
 	// All public DDVs known to man
 	std::vector<std::string> ddvs =
 	{
+        // TODO: Fix strange audio static
+        "TRAIN2.DDV",
+        "BREW.DDV",
+
 		"ASLIKEXP.DDV",
 		"ASLIKINF.DDV",
 		"BA1114.DDV",
 		"BACKSTRY.DDV",
 		"BDENDING.DDV",
-		"BREW.DDV",
 		"BREWCAMT.DDV",
 		"BRP01C01.DDV",
 		"BRP01C02.DDV",
@@ -517,7 +520,6 @@ int main(int, char**)
 		"SV940704.DDV",
 		"SVP01C05.DDV",
 		"TRAIN1.DDV",
-		"TRAIN2.DDV",
 		"train3.ddv",
 		"v1a4s01.ddv",
 		"vision.ddv"
@@ -656,7 +658,6 @@ int main(int, char**)
 		"xaosopen.ddv"
 	};
 
-	// TODO: gtilogo.ddv and prophecy.ddv do not render correctly
 	std::string abesExoddusDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Exoddus\\";
 	std::string abesOddyseeDir = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Oddworld Abes Oddysee\\";
 	std::string msg1CdDir = "W:\\MOVIE\\";
