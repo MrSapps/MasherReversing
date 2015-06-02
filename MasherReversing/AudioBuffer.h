@@ -6,7 +6,7 @@
 #include <mutex>
 
 // Hacky audio class to play data from masher.
-static class AudioBuffer
+class AudioBuffer
 {
 public:
 	static void Open(int frameSize, int freq);

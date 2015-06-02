@@ -9,6 +9,7 @@
 #include "Hooks.hpp"
 #include "PSXMDECDecoder.h"
 #include "AudioBuffer.h"
+#include <fstream>
 
 struct DDVHeader
 {
@@ -46,6 +47,124 @@ struct AudioHeader
 };
 
 extern std::vector<Uint32> pixels;
+
+
+std::vector<BYTE> readFile(const char* filename)
+{
+    // open the file:
+    std::ifstream file(filename, std::ios::binary);
+
+    // read the data:
+    return std::vector<BYTE>((std::istreambuf_iterator<char>(file)),
+        std::istreambuf_iterator<char>());
+}
+
+extern SDL_Renderer *ren;
+
+static void DisplayPSXCam(const char* fileName, unsigned int timeFor)
+{
+    auto bits = readFile(fileName);
+
+
+    BYTE* ptr = (BYTE*)bits.data();
+    ptr += 16;
+
+    uint16_t* buf = (uint16_t*)pixels.data();
+    int u = 0;
+
+
+    Uint32 rmask, gmask, bmask, amask;
+
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    rmask = 0xff000000;
+    gmask = 0x00ff0000;
+    bmask = 0x0000ff00;
+    amask = 0x000000ff;
+#else
+    rmask = 0x000000ff;
+    gmask = 0x0000ff00;
+    bmask = 0x00ff0000;
+    amask = 0xff000000;
+#endif
+
+    SDL_Surface* wholeImage = SDL_CreateRGBSurface(0, 640, 240, 32, rmask, gmask, bmask, amask);
+    if (wholeImage == NULL)
+    {
+        fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());
+        exit(1);
+    }
+
+    SDL_Surface* imageStrip = SDL_CreateRGBSurface(0, 32, 240, 32, rmask, gmask, bmask, amask);
+    if (imageStrip == NULL)
+    {
+        fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());
+        exit(1);
+    }
+
+  //  for (;;)
+    {
+        SDL_Event event = {};
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_WINDOWEVENT:
+                switch (event.window.event)
+                {
+                case SDL_WINDOWEVENT_ENTER:
+                    break;
+
+                case SDL_WINDOWEVENT_LEAVE:
+                    break;
+                }
+                break;
+
+            case SDL_KEYDOWN:
+                break;
+            }
+        }
+
+        while (u <= (368 / 32) - 1)
+        {
+            PSXMDECDecoder mdec;
+
+            WORD len = *(WORD*)ptr;
+
+            SDL_LockSurface(imageStrip);
+            mdec.DecodeFrameToABGR32((uint16_t*)imageStrip->pixels, (uint16_t*)(ptr + 4), 32, 240, false);
+            SDL_UnlockSurface(imageStrip);
+
+            SDL_Rect dstRect = {};
+            dstRect.x = 32 * u;
+            dstRect.y = 0;
+            dstRect.w = 32;
+            dstRect.h = 240;
+            SDL_BlitSurface(imageStrip, NULL, wholeImage, &dstRect);
+
+            auto newTexture = SDL_CreateTextureFromSurface(ren, wholeImage);
+            SDL_RenderClear(ren);
+
+            SDL_Rect dstRect2 = {};
+            dstRect2.x = 0;
+            dstRect2.y = 0;
+            dstRect2.w = 352;
+            dstRect2.h = 240;
+            SDL_RenderCopy(ren, newTexture, &dstRect2, NULL);
+            SDL_RenderPresent(ren);
+            SDL_DestroyTexture(newTexture);
+
+            SDL_Delay(20);
+
+            ptr += len + 4;
+            u++;
+        }
+        
+    }
+
+    SDL_Delay(timeFor);
+    SDL_FreeSurface(imageStrip);
+    SDL_FreeSurface(wholeImage);
+}
 
 static void PlayDDV(const char* fileName)
 {
@@ -375,7 +494,10 @@ int main(int, char**)
 {
     init_Snd_tbl();
 
+
     StartSDL();
+
+    DisplayPSXCam("C:\\Users\\paul\\Desktop\\masher\\MasherReversing\\MIP08C05.CAM", 3000);
 
 	AudioBuffer::Open(512, 44100);
 

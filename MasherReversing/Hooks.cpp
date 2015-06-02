@@ -550,7 +550,7 @@ int __cdecl decode_audio_frame(WORD *rawFrameBuffer, WORD *outPtr, signed int nu
 
 
 static SDL_Window *win = nullptr;
-static SDL_Renderer *ren = nullptr;
+SDL_Renderer *ren = nullptr;
 static SDL_Texture *sdlTexture = nullptr;
 
 int StartSDL()
