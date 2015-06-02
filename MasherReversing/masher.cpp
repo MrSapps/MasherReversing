@@ -497,7 +497,18 @@ int main(int, char**)
 
     StartSDL();
 
-    DisplayPSXCam("C:\\Users\\paul\\Desktop\\masher\\MasherReversing\\MIP08C05.CAM", 3000);
+    WIN32_FIND_DATAA findData = {};
+    HANDLE hFind = ::FindFirstFileA("*.CAM", &findData);
+    if (hFind)
+    {
+        do
+        {
+            std::cout << "Displaying: " << findData.cFileName << std::endl;
+            DisplayPSXCam(findData.cFileName, 3000);
+        } while (::FindNextFileA(hFind, &findData));
+        ::FindClose(hFind);
+    }
+
 
 	AudioBuffer::Open(512, 44100);
 
