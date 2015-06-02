@@ -170,7 +170,6 @@ exit 0
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)\SDL2-2.0.3\lib\x64\SDL2.dll" "$(OutDir)"
-exit 0
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

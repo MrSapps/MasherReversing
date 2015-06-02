@@ -178,7 +178,7 @@ exit 0</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <AdditionalDependencies>$(ProjectDir)\SDL2-2.0.3\lib\x86\SDL2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)\SDL2-2.0.3\lib\x64\SDL2.lib;$(ProjectDir)\SDL2-2.0.3\lib\x64\SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)\SDL2-2.0.3\lib\x86\SDL2.dll" "$(OutDir)"
