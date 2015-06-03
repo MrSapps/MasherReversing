@@ -167,26 +167,16 @@ int __cdecl decode_16bit_audio_frame(WORD *outPtr, int numSamplesPerFrame)
 
     WORD *outPtr2; // eax@12
     WORD outputTmp; // dx@12
-   // int bitCount6; // ecx@12
-    unsigned __int8 bBitCountIs32; // zf@12
-    char bBitCountLessThan32; // sf@12
-    unsigned __int8 overflow; // of@12
-    int srcVal9; // edi@13
+
     WORD *outPtr3; // eax@14
     WORD outputTmp1; // dx@14
     int bitCount7; // ecx@14
-    unsigned __int8 bBitCountIs32_1; // zf@14
-    char bBitCountLessThan32_1; // sf@14
-    unsigned __int8 overflow1; // of@14
-    int srcVal10; // edi@15
+  
     int loopOutput; // ebx@16
     int secondWordCopyCopyCopyCopy; // ecx@17
     int tmpBitCounter; // eax@19
     unsigned int v44; // edx@19
     int v45; // esi@19
-    unsigned __int8 bBitCountIs32_2; // zf@19
-    char bBitCountLessThan32_2; // sf@19
-    unsigned __int8 overflow2; // of@19
     WORD *srcPtr2; // edi@20
 
     signed int secondWord_Unknown2; // ecx@22
@@ -316,10 +306,10 @@ int __cdecl decode_16bit_audio_frame(WORD *outPtr, int numSamplesPerFrame)
         secondWordCopyCopyCopyCopy = secondWordCopyCopyCopy;
         secondWord_Unknown1 = (1 << secondWordCopyCopyCopy) - 1;
         counter = numSamplesPerFrame - 3;
-        while (1)
+        for (;;)
         {
 //            LOWORD(v45) = gFirstAudioFrameDWORD_dword_62EFB4 & secondWord_Unknown1;
-            SetLoInt(v45,gFirstAudioFrameDWORD_dword_62EFB4 & secondWord_Unknown1);
+            SetLoInt(v45,gFirstAudioFrameDWORD_dword_62EFB4 & secondWord_Unknown1); // dword to word
 
             v44 = gFirstAudioFrameDWORD_dword_62EFB4 >> secondWordCopyCopyCopyCopy;
             tmpBitCounter = gBitCounter - secondWordCopyCopyCopyCopy;
@@ -403,14 +393,14 @@ int __cdecl decode_16bit_audio_frame(WORD *outPtr, int numSamplesPerFrame)
             const int v58 = (v59 + v60) >> 1;
             if (firstWordCopyCopy)
             {
-                const __int16 v61 = GetSoundTableValue(v58);
+                const __int16 v61 = GetSoundTableValue(v58); // int to short
                 loopOutput = (signed __int16)sub_408F50(v45 + v61); // get positive bit7 mask? 2 bit mask or 1 bit RLE flag?
             }
             else
             {
                 loopOutput = (signed __int16)(v58 + (WORD)v45);
             }
-            *outPtr4 = loopOutput;
+            *outPtr4 = loopOutput; // int to word
             bCountIsOne = counter == 1;
             outPtr4 += gAudioFrameSizeBytes;
             --counter;
