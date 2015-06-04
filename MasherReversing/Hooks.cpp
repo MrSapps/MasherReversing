@@ -102,28 +102,6 @@ WORD *__cdecl SetupAudioDecodePtrs(WORD *rawFrameBuffer)
     return result;
 }
 
-
-int __cdecl SndRelated_sub_409650()
-{
-    const int v1 = gBitCounter & 7;
-    int numBits = gBitCounter - v1;
-   // const unsigned __int8 updatedBitCount = __SETO__(gBitCounter_62EEA8 - v1, 16);
-   // const unsigned __int8 remainingBitCountIs16 = gBitCounter_62EEA8 - v1 == 16;
-   // const int bitCountIsOverflown = gBitCounter_62EEA8 - v1 - 16 < 0;
-    gBitCounter -= v1;
-    gFirstAudioFrameDWORD >>= v1;
-    if (gBitCounter <= 16)
-    {
-        const int frameWord = **gAudioFrameDataPtr;
-        ++*gAudioFrameDataPtr;
-        const unsigned int v6 = (frameWord << numBits) | gFirstAudioFrameDWORD;
-        numBits += 16;
-        gFirstAudioFrameDWORD = v6;
-        gBitCounter = numBits;
-    }
-    return numBits;
-}
-
 static int ReadNextAudioWord(int value)
 {
     if (gBitCounter <= 16)
@@ -135,6 +113,17 @@ static int ReadNextAudioWord(int value)
     }
     return value;
 }
+
+static int SndRelated_sub_409650()
+{
+    const int v1 = gBitCounter & 7;
+    gBitCounter -= v1;
+    gFirstAudioFrameDWORD >>= v1;
+
+    gFirstAudioFrameDWORD = ReadNextAudioWord(gFirstAudioFrameDWORD);
+    return gBitCounter;
+}
+
 
 int __cdecl decode_16bit_audio_frame(WORD *outPtr, int numSamplesPerFrame)
 {
