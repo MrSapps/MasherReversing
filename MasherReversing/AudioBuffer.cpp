@@ -6,7 +6,7 @@ int gAudioBufferSize = 512;
 #define AUDIO_BUFFER_FORMAT_SIZE (SDL_AUDIO_BITSIZE(AUDIO_BUFFER_FORMAT) / 8)
 #define AUDIO_BUFFER_SAMPLE_SIZE (AUDIO_BUFFER_FORMAT_SIZE * AUDIO_BUFFER_CHANNELS)
 
-unsigned __int64 AudioBuffer::mPlayedSamples = 0;
+unsigned volatile __int64 AudioBuffer::mPlayedSamples = 0;
 std::vector<char> AudioBuffer::mBuffer;
 std::mutex AudioBuffer::mBufferMutex;
 

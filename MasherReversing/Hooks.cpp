@@ -51,7 +51,7 @@ static void SetLoInt(int& v, WORD lo)
 }
 
 
-DWORD gBitCounter = 0;
+int gBitCounter = 0;
 DWORD gFirstAudioFrameDWORD = 0;
 int gAudioFrameSizeBytes = 0;
 WORD* gTemp = nullptr;
@@ -102,24 +102,6 @@ WORD *__cdecl SetupAudioDecodePtrs(WORD *rawFrameBuffer)
     return result;
 }
 
-
-// sign flag
-__int8 __SETS__(int x)
-{
-    if (sizeof(int) == 1)
-        return __int8(x) < 0;
-    if (sizeof(int) == 2)
-        return __int16(x) < 0;
-    if (sizeof(int) == 4)
-        return __int32(x) < 0;
-    return __int64(x) < 0;
-}
-__int8 __SETO__(int x, int y)
-{
-    int y2 = y;
-    __int8 sx = __SETS__(x);
-    return (sx ^ __SETS__(y2)) & (sx ^ __SETS__(x - y2));
-}
 
 int __cdecl SndRelated_sub_409650()
 {
@@ -185,15 +167,14 @@ int __cdecl decode_16bit_audio_frame(WORD *outPtr, int numSamplesPerFrame)
 
     int loopOutput; // ebx@16
     int secondWordCopyCopyCopyCopy; // ecx@17
-    int tmpBitCounter; // eax@19
+
     unsigned int v44; // edx@19
     int v45; // esi@19
 
     signed int secondWord_Unknown2; // ecx@22
-    int c6; // eax@23
+
     unsigned int v53; // edx@23
 
-    int c7; // eax@26
     unsigned int v56; // edx@26
 
     char bCountIsOne; // zf@37
@@ -289,7 +270,6 @@ int __cdecl decode_16bit_audio_frame(WORD *outPtr, int numSamplesPerFrame)
             SetLoInt(v45,gFirstAudioFrameDWORD & secondWord_Unknown1); // dword to word
 
             v44 = gFirstAudioFrameDWORD >> secondWordCopyCopyCopyCopy;
-            tmpBitCounter = gBitCounter - secondWordCopyCopyCopyCopy;
             gBitCounter -= secondWordCopyCopyCopyCopy;
             gFirstAudioFrameDWORD >>= secondWordCopyCopyCopyCopy;
 
@@ -297,11 +277,10 @@ int __cdecl decode_16bit_audio_frame(WORD *outPtr, int numSamplesPerFrame)
             {
                 const int srcVal = *(*gAudioFrameDataPtr);
                 ++(*gAudioFrameDataPtr);
-                v44 |= srcVal << tmpBitCounter;
+                v44 |= srcVal << gBitCounter;
                 fourthWordCopyCopy = fourthWordCopyCopyCopy;
-                tmpBitCounter += 16;
+                gBitCounter += 16;
                 gFirstAudioFrameDWORD = v44;
-                gBitCounter = tmpBitCounter;
             }
 
             secondWord_Unknown2 = 1 << (secondWordCopyCopyCopy - 1);
@@ -312,20 +291,18 @@ int __cdecl decode_16bit_audio_frame(WORD *outPtr, int numSamplesPerFrame)
                 break;
             }
 
-            c6 = tmpBitCounter - thirdWordCopyCopyCopy;
-            gBitCounter = c6;
+            gBitCounter -= thirdWordCopyCopyCopy;
             v45 = v44 & ((1 << thirdWordCopyCopyCopy) - 1);
             v53 = v44 >> thirdWordCopyCopyCopy;
             gFirstAudioFrameDWORD = v53;
-            if (c6 <= 16)
+            if (gBitCounter <= 16)
             {
                 const int srcVal7 = *(*gAudioFrameDataPtr);
                 ++(*gAudioFrameDataPtr);
-                v53 |= srcVal7 << c6;
+                v53 |= srcVal7 << gBitCounter;
                 fourthWordCopyCopy = fourthWordCopyCopyCopy;
-                c6 += 16;
+                gBitCounter += 16;
                 gFirstAudioFrameDWORD = v53;
-                gBitCounter = c6;
             }
             secondWord_Unknown2 = thirdWordMask;
             v45 = (signed __int16)v45;
@@ -339,18 +316,17 @@ int __cdecl decode_16bit_audio_frame(WORD *outPtr, int numSamplesPerFrame)
                 v45 = -(v45 & ~secondWord_Unknown2);
                 goto LABEL_34;
             }
-            c7 = c6 - fourthWordCopyCopy;
-            gBitCounter = c7;
+            gBitCounter -= fourthWordCopyCopy;
             v45 = v53 & ((1 << fourthWordCopyCopy) - 1);
             v56 = v53 >> fourthWordCopyCopy;
             gFirstAudioFrameDWORD = v56;
-            if (c7 <= 16)
+            if (gBitCounter <= 16)
             {
                 const int srcVal = *(*gAudioFrameDataPtr);
                 ++(*gAudioFrameDataPtr);
                 fourthWordCopyCopy = fourthWordCopyCopyCopy;
-                gFirstAudioFrameDWORD = (srcVal << c7) | v56;
-                gBitCounter = c7 + 16;
+                gFirstAudioFrameDWORD = (srcVal << gBitCounter) | v56;
+                gBitCounter += 16;
             }
             v45 = (signed __int16)v45;
             if ((signed __int16)v45 & forthWordMask)
@@ -1013,6 +989,7 @@ BYTE *__cdecl do_decode_audio_frame(ddv_class *thisPtr)
 
 char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer)
 {
+
     if (!thisPtr->mHasVideo)
     {
         return 0;

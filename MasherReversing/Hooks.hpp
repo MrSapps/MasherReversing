@@ -74,12 +74,12 @@ static int* Y3_block = (int*)0x006310E8; // Y3 block
 static int* Y4_block = (int*)0x006312E8; // Y4 block
 */
 
-static int Cr_block[63] = {};
-static int Cb_block[63] = {};
-static int Y1_block[63] = {};
-static int Y2_block[63] = {};
-static int Y3_block[63] = {};
-static int Y4_block[63] = {};
+static int Cr_block[64] = {};
+static int Cb_block[64] = {};
+static int Y1_block[64] = {};
+static int Y2_block[64] = {};
+static int Y3_block[64] = {};
+static int Y4_block[64] = {};
 
 
 #pragma pack(push)

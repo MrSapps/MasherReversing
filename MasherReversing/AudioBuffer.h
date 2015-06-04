@@ -19,7 +19,7 @@ public:
 	static void SendSamples(char * sampleData, int size);
 
 	// Internal use
-	static unsigned __int64 mPlayedSamples; // This will overflow when playing roughly 10000 years worth of video.
+	static unsigned __int64 volatile mPlayedSamples; // This will overflow when playing roughly 10000 years worth of video.
 	static std::vector<char> mBuffer;
 	static std::mutex mBufferMutex;
 };
