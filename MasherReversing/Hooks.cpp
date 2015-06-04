@@ -562,11 +562,11 @@ static GetSoundTableValue_type real_GetSoundTableValue = (GetSoundTableValue_typ
 static JmpHookedFunction<GetSoundTableValue_type>* GetSoundTableValue_hook;
 
 
-void idct(int16_t* pSource, int32_t* pDestination);
+void idct(int16_t* input, std::array<int32_t, 64>& pDestination);
 
-static void do_blit_output_no_mmx(WORD* macroBlockBuffer, int* decodedBitStream)
+static void do_idct(int16_t* input, std::array<int32_t, 64>& outputBlock)
 {
-    idct((int16_t*)macroBlockBuffer, decodedBitStream);
+    idct(input, outputBlock);
 }
 
 static int To1d(int x, int y)
@@ -611,47 +611,51 @@ unsigned char Clamp(float v)
 static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, int yoff);
 int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput);
 
-void half_idct(int32_t* pSource, int32_t* pDestination, int nPitch, int nIncrement, int nShift)
+
+void half_idct(std::array<int32_t, 64>& pSource, std::array<int32_t, 64>& pDestination, int nPitch, int nIncrement, int nShift)
 {
-    int32_t pTemp[8];
+    std::array<int32_t,8> pTemp;
+
+    size_t sourceIdx = 0;
+    size_t destinationIdx = 0;
 
     for (int i = 0; i < 8; i++)
     {
-        pTemp[4] = pSource[0 * nPitch] * 8192 + pSource[2 * nPitch] * 10703 + pSource[4 * nPitch] * 8192 + pSource[6 * nPitch] * 4433;
-        pTemp[5] = pSource[0 * nPitch] * 8192 + pSource[2 * nPitch] * 4433 - pSource[4 * nPitch] * 8192 - pSource[6 * nPitch] * 10704;
-        pTemp[6] = pSource[0 * nPitch] * 8192 - pSource[2 * nPitch] * 4433 - pSource[4 * nPitch] * 8192 + pSource[6 * nPitch] * 10704;
-        pTemp[7] = pSource[0 * nPitch] * 8192 - pSource[2 * nPitch] * 10703 + pSource[4 * nPitch] * 8192 - pSource[6 * nPitch] * 4433;
+        pTemp[4] = pSource[(0 * nPitch) + sourceIdx] * 8192 + pSource[(2 * nPitch) + sourceIdx] * 10703 + pSource[(4 * nPitch) + sourceIdx] * 8192 + pSource[(6 * nPitch) + sourceIdx] * 4433;
+        pTemp[5] = pSource[(0 * nPitch) + sourceIdx] * 8192 + pSource[(2 * nPitch) + sourceIdx] * 4433 - pSource[(4 * nPitch) + sourceIdx] * 8192 - pSource[(6 * nPitch) + sourceIdx] * 10704;
+        pTemp[6] = pSource[(0 * nPitch) + sourceIdx] * 8192 - pSource[(2 * nPitch) + sourceIdx] * 4433 - pSource[(4 * nPitch) + sourceIdx] * 8192 + pSource[(6 * nPitch) + sourceIdx] * 10704;
+        pTemp[7] = pSource[(0 * nPitch) + sourceIdx] * 8192 - pSource[(2 * nPitch) + sourceIdx] * 10703 + pSource[(4 * nPitch) + sourceIdx] * 8192 - pSource[(6 * nPitch) + sourceIdx] * 4433;
 
-        pTemp[0] = pSource[1 * nPitch] * 11363 + pSource[3 * nPitch] * 9633 + pSource[5 * nPitch] * 6437 + pSource[7 * nPitch] * 2260;
-        pTemp[1] = pSource[1 * nPitch] * 9633 - pSource[3 * nPitch] * 2259 - pSource[5 * nPitch] * 11362 - pSource[7 * nPitch] * 6436;
-        pTemp[2] = pSource[1 * nPitch] * 6437 - pSource[3 * nPitch] * 11362 + pSource[5 * nPitch] * 2261 + pSource[7 * nPitch] * 9633;
-        pTemp[3] = pSource[1 * nPitch] * 2260 - pSource[3 * nPitch] * 6436 + pSource[5 * nPitch] * 9633 - pSource[7 * nPitch] * 11363;
+        pTemp[0] = pSource[(1 * nPitch) + sourceIdx] * 11363 + pSource[(3 * nPitch) + sourceIdx] * 9633 + pSource[(5 * nPitch) + sourceIdx] * 6437 + pSource[(7 * nPitch) + sourceIdx] * 2260;
+        pTemp[1] = pSource[(1 * nPitch) + sourceIdx] * 9633 - pSource[(3 * nPitch) + sourceIdx] * 2259 - pSource[(5 * nPitch) + sourceIdx] * 11362 - pSource[(7 * nPitch) + sourceIdx] * 6436;
+        pTemp[2] = pSource[(1 * nPitch) + sourceIdx] * 6437 - pSource[(3 * nPitch) + sourceIdx] * 11362 + pSource[(5 * nPitch) + sourceIdx] * 2261 + pSource[(7 * nPitch) + sourceIdx] * 9633;
+        pTemp[3] = pSource[(1 * nPitch) + sourceIdx] * 2260 - pSource[(3 * nPitch) + sourceIdx] * 6436 + pSource[(5 * nPitch) + sourceIdx] * 9633 - pSource[(7 * nPitch) + sourceIdx] * 11363;
 
-        pDestination[0 * nPitch] = (pTemp[4] + pTemp[0]) >> nShift;
-        pDestination[1 * nPitch] = (pTemp[5] + pTemp[1]) >> nShift;
-        pDestination[2 * nPitch] = (pTemp[6] + pTemp[2]) >> nShift;
-        pDestination[3 * nPitch] = (pTemp[7] + pTemp[3]) >> nShift;
-        pDestination[4 * nPitch] = (pTemp[7] - pTemp[3]) >> nShift;
-        pDestination[5 * nPitch] = (pTemp[6] - pTemp[2]) >> nShift;
-        pDestination[6 * nPitch] = (pTemp[5] - pTemp[1]) >> nShift;
-        pDestination[7 * nPitch] = (pTemp[4] - pTemp[0]) >> nShift;
+        pDestination[(0 * nPitch) + destinationIdx] = (pTemp[4] + pTemp[0]) >> nShift;
+        pDestination[(1 * nPitch) + destinationIdx] = (pTemp[5] + pTemp[1]) >> nShift;
+        pDestination[(2 * nPitch) + destinationIdx] = (pTemp[6] + pTemp[2]) >> nShift;
+        pDestination[(3 * nPitch) + destinationIdx] = (pTemp[7] + pTemp[3]) >> nShift;
+        pDestination[(4 * nPitch) + destinationIdx] = (pTemp[7] - pTemp[3]) >> nShift;
+        pDestination[(5 * nPitch) + destinationIdx] = (pTemp[6] - pTemp[2]) >> nShift;
+        pDestination[(6 * nPitch) + destinationIdx] = (pTemp[5] - pTemp[1]) >> nShift;
+        pDestination[(7 * nPitch) + destinationIdx] = (pTemp[4] - pTemp[0]) >> nShift;
 
-        pSource += nIncrement;
-        pDestination += nIncrement;
+        sourceIdx += nIncrement;
+        destinationIdx += nIncrement;
     }
 }
 
 // 0x40ED90
-void idct(int16_t* pSource, int32_t* pDestination)
+void idct(int16_t* input, std::array<int32_t, 64>& pDestination) // dst is 64 dwords
 {
-    int32_t pTemp[64];
-    int32_t pExtendedSource[64];
+    std::array<int32_t, 64> pTemp;
+    std::array<int32_t, 64> pExtendedSource;
 
     // Source is passed as signed 16 bits stored every 32 bits
     // We sign extend it at the beginning like Masher does
     for (int i = 0; i < 64; i++)
     {
-        pExtendedSource[i] = pSource[i * 2];
+        pExtendedSource[i] = input[i * 2];
     }
 
     half_idct(pExtendedSource, pTemp, 8, 1, 11);
@@ -794,7 +798,7 @@ static void SetHiWord(DWORD& v, WORD hi)
 }
 
 // Return val becomes param 1
-WORD* __cdecl ddv_func7_DecodeMacroBlock_impl(WORD* bitstreamPtr, int * blockPtr, WORD* outputBlockPtr, DWORD isYBlock, int unused1, int* unused2)
+int16_t* __cdecl ddv_func7_DecodeMacroBlock_impl(int16_t* bitstreamPtr, int16_t* outputBlockPtr, DWORD isYBlock)
 {
     int v1; // ebx@1
     DWORD *v2; // esi@1
@@ -903,7 +907,7 @@ WORD* __cdecl ddv_func7_DecodeMacroBlock_impl(WORD* bitstreamPtr, int * blockPtr
             output_q[idx] = outVal;
             if (counter >= 63)                      // 63 AC values?
             {
-                return dataPtr;
+                return (int16_t*)dataPtr;
             }
         }
         if (counter)
@@ -941,7 +945,7 @@ WORD* __cdecl ddv_func7_DecodeMacroBlock_impl(WORD* bitstreamPtr, int * blockPtr
         }
         
     }
-    return dataPtr;
+    return (int16_t*)dataPtr;
 }
 
 /*
@@ -1012,11 +1016,11 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
         return 0;
     }
 
-    WORD* bitstreamCurPos = thisPtr->mDecodedBitStream;
+    int16_t* bitstreamCurPos = (int16_t*)thisPtr->mDecodedBitStream;
     
     int xoff = 0;
     auto buf = (unsigned short int*)pScreenBuffer;
-    WORD* block1Output = thisPtr->mMacroBlockBuffer_q;
+    int16_t* block1Output = (int16_t*)thisPtr->mMacroBlockBuffer_q;
 
     // For 320x240 image we have a 20x16 macro block grid (because 320/16 and 240/16)
     for (unsigned int xBlock = 0; xBlock < thisPtr->nNumMacroblocksX; xBlock++)
@@ -1026,28 +1030,28 @@ char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* 
         {
             const int dataSizeBytes = thisPtr->mBlockDataSize_q * 4; // Convert to byte count 64*4=256
 
-            WORD* afterBlock1Ptr = ddv_func7_DecodeMacroBlock_impl(bitstreamCurPos, Cr_block, block1Output, 0, 0, 0);
-            do_blit_output_no_mmx(block1Output, Cr_block);
-            WORD* block2Output = dataSizeBytes + block1Output;
+            int16_t* afterBlock1Ptr = ddv_func7_DecodeMacroBlock_impl(bitstreamCurPos, block1Output, 0);
+            do_idct(block1Output, Cr_block);
+            int16_t* block2Output = dataSizeBytes + block1Output;
 
-            WORD* afterBlock2Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock1Ptr, Cb_block, block2Output, 0, 0, 0);
-            do_blit_output_no_mmx(block2Output, Cb_block);
-            WORD* block3Output = dataSizeBytes + block2Output;
+            int16_t* afterBlock2Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock1Ptr, block2Output, 0);
+            do_idct(block2Output, Cb_block);
+            int16_t* block3Output = dataSizeBytes + block2Output;
 
-            WORD* afterBlock3Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock2Ptr, Y1_block, block3Output, 1, 0, 0);
-            do_blit_output_no_mmx(block3Output, Y1_block);
-            WORD* block4Output = dataSizeBytes + block3Output;
-  
-            WORD* afterBlock4Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock3Ptr, Y2_block, block4Output, 1, 0, 0);
-            do_blit_output_no_mmx(block4Output, Y2_block);
-            WORD* block5Output = dataSizeBytes + block4Output;
+            int16_t* afterBlock3Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock2Ptr, block3Output, 1);
+            do_idct(block3Output, Y1_block);
+            int16_t* block4Output = dataSizeBytes + block3Output;
 
-            WORD* afterBlock5Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock4Ptr, Y3_block, block5Output, 1, 0, 0);
-            do_blit_output_no_mmx(block5Output, Y3_block);
-            WORD* block6Output = dataSizeBytes + block5Output;
+            int16_t* afterBlock4Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock3Ptr, block4Output, 1);
+            do_idct(block4Output, Y2_block);
+            int16_t* block5Output = dataSizeBytes + block4Output;
 
-            bitstreamCurPos = ddv_func7_DecodeMacroBlock_impl(afterBlock5Ptr, Y4_block, block6Output, 1, 0, 0);
-            do_blit_output_no_mmx(block6Output, Y4_block);
+            int16_t* afterBlock5Ptr = ddv_func7_DecodeMacroBlock_impl(afterBlock4Ptr, block5Output, 1);
+            do_idct(block5Output, Y3_block);
+            int16_t* block6Output = dataSizeBytes + block5Output;
+
+            bitstreamCurPos = ddv_func7_DecodeMacroBlock_impl(afterBlock5Ptr, block6Output, 1);
+            do_idct(block6Output, Y4_block);
             block1Output = dataSizeBytes + block6Output;
 
             ConvertYuvToRgbAndBlit(buf, xoff, yoff);

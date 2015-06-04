@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <memory>
+#include <array>
 
 int StartSDL();
 void SetSurfaceSize(int w, int h);
@@ -74,12 +75,12 @@ static int* Y3_block = (int*)0x006310E8; // Y3 block
 static int* Y4_block = (int*)0x006312E8; // Y4 block
 */
 
-static int Cr_block[64] = {};
-static int Cb_block[64] = {};
-static int Y1_block[64] = {};
-static int Y2_block[64] = {};
-static int Y3_block[64] = {};
-static int Y4_block[64] = {};
+static std::array<int32_t, 64> Cr_block = {};
+static std::array<int32_t, 64> Cb_block = {};
+static std::array<int32_t, 64> Y1_block = {};
+static std::array<int32_t, 64> Y2_block = {};
+static std::array<int32_t, 64> Y3_block = {};
+static std::array<int32_t, 64> Y4_block = {};
 
 
 #pragma pack(push)
