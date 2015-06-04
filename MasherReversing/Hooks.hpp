@@ -58,29 +58,18 @@ struct ddv_class
 };
 #pragma pack(pop)
 
-
-//static_assert(sizeof(ddv_class) == 0x94, "Structure size must match exactly!");
-
 char __fastcall decode_ddv_frame(void* hack, ddv_class *thisPtr, unsigned char* pScreenBuffer);
 
+// TODO: Should probably just be 64? Making this bigger fixes a sound glitch which is probably caused
+// by an out of bounds write somewhere.
+typedef std::array<int32_t, 64*4> T64IntsArray;
 
-// TODO: Probably structs as there are 7 other DWORDS related after each one
-// of these
-/*
-static int* Cr_block = (int*)0x006313E8; // Cr block
-static int* Cb_block = (int*)0x006314E8; // Cb block
-static int* Y1_block = (int*)0x00630FE8; // Y1 block
-static int* Y2_block = (int*)0x006311E8; // Y2 block
-static int* Y3_block = (int*)0x006310E8; // Y3 block
-static int* Y4_block = (int*)0x006312E8; // Y4 block
-*/
-
-static std::array<int32_t, 64> Cr_block = {};
-static std::array<int32_t, 64> Cb_block = {};
-static std::array<int32_t, 64> Y1_block = {};
-static std::array<int32_t, 64> Y2_block = {};
-static std::array<int32_t, 64> Y3_block = {};
-static std::array<int32_t, 64> Y4_block = {};
+static T64IntsArray Cr_block = {};
+static T64IntsArray Cb_block = {};
+static T64IntsArray Y1_block = {};
+static T64IntsArray Y2_block = {};
+static T64IntsArray Y3_block = {};
+static T64IntsArray Y4_block = {};
 
 
 #pragma pack(push)

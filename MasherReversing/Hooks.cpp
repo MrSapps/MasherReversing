@@ -562,9 +562,9 @@ static GetSoundTableValue_type real_GetSoundTableValue = (GetSoundTableValue_typ
 static JmpHookedFunction<GetSoundTableValue_type>* GetSoundTableValue_hook;
 
 
-void idct(int16_t* input, std::array<int32_t, 64>& pDestination);
+void idct(int16_t* input, T64IntsArray& pDestination);
 
-static void do_idct(int16_t* input, std::array<int32_t, 64>& outputBlock)
+static void do_idct(int16_t* input, T64IntsArray& outputBlock)
 {
     idct(input, outputBlock);
 }
@@ -612,7 +612,7 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
 int __cdecl decode_bitstream(WORD *pFrameData, unsigned short int *pOutput);
 
 
-void half_idct(std::array<int32_t, 64>& pSource, std::array<int32_t, 64>& pDestination, int nPitch, int nIncrement, int nShift)
+void half_idct(T64IntsArray& pSource, T64IntsArray& pDestination, int nPitch, int nIncrement, int nShift)
 {
     std::array<int32_t,8> pTemp;
 
@@ -646,10 +646,10 @@ void half_idct(std::array<int32_t, 64>& pSource, std::array<int32_t, 64>& pDesti
 }
 
 // 0x40ED90
-void idct(int16_t* input, std::array<int32_t, 64>& pDestination) // dst is 64 dwords
+void idct(int16_t* input, T64IntsArray& pDestination) // dst is 64 dwords
 {
-    std::array<int32_t, 64> pTemp;
-    std::array<int32_t, 64> pExtendedSource;
+    T64IntsArray pTemp;
+    T64IntsArray pExtendedSource;
 
     // Source is passed as signed 16 bits stored every 32 bits
     // We sign extend it at the beginning like Masher does
@@ -935,8 +935,8 @@ int16_t* __cdecl ddv_func7_DecodeMacroBlock_impl(int16_t* bitstreamPtr, int16_t*
                 output_q[index1] = 0;
                 output_q[index2] = 0;
                 output_q[index3] = 0;
-               // blockNumberQ += 4;
-                blockNumberQ++;
+                blockNumberQ += 4;
+               // blockNumberQ++;
             }
         }
         else
@@ -1083,7 +1083,7 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
         float Cr;
     };
 
-    Macroblock_YCbCr_Struct Macroblock_YCbCr[16][16] = {};
+    std::array< std::array<Macroblock_YCbCr_Struct, 16>, 16> Macroblock_YCbCr = {};
 
     for (int x = 0; x < 8; x++)
     {
@@ -1114,7 +1114,7 @@ static void ConvertYuvToRgbAndBlit(unsigned short int* pFrameBuffer, int xoff, i
         unsigned char Blue;
     };
     
-    Macroblock_RGB_Struct Macroblock_RGB[16][16] = {};
+    std::array< std::array<Macroblock_RGB_Struct, 16>, 16> Macroblock_RGB = {};
 
     for (int x = 0; x < 16; x++)
     {
