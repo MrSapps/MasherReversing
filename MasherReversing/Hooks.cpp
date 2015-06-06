@@ -295,15 +295,14 @@ int __cdecl decode_16bit_audio_frame(WORD *outPtr, int numSamplesPerFrame)
             }
             gBitCounter -= fourthWordCopyCopy;
             v45 = gFirstAudioFrameDWORD & ((1 << fourthWordCopyCopy) - 1);
-            const unsigned int v56 = gFirstAudioFrameDWORD >> fourthWordCopyCopy;
+            gFirstAudioFrameDWORD = gFirstAudioFrameDWORD >> fourthWordCopyCopy;
 
-            gFirstAudioFrameDWORD = v56;
             if (gBitCounter <= 16)
             {
                 const int srcVal = *(*gAudioFrameDataPtr);
                 ++(*gAudioFrameDataPtr);
                 fourthWordCopyCopy = fourthWordCopyCopyCopy;
-                gFirstAudioFrameDWORD = (srcVal << gBitCounter) | v56;
+                gFirstAudioFrameDWORD = (srcVal << gBitCounter) | gFirstAudioFrameDWORD;
                 gBitCounter += 16;
             }
 

@@ -233,7 +233,7 @@ static void PlayDDV(const char* fileName)
     ddv.mBlockDataSize_q = 64; // what should this be??
 
     ddv.mDecodedBitStream = (WORD*)malloc(40000 * 150); // TODO: correct size
-    ddv.mMacroBlockBuffer_q = (WORD*)malloc(4000000 * 150); // TODO: Correct size
+    ddv.mMacroBlockBuffer_q = (WORD*)malloc(40000 * 150); // TODO: Correct size
 
     const uint32_t audioArraySize = headerP3.framesInterleave;
     const uint32_t videoArraySize = headerP1.numberOfFrames;
@@ -495,8 +495,9 @@ int main(int, char**)
     init_Snd_tbl();
 
 
-    StartSDL();
 
+    StartSDL();
+    /*
     WIN32_FIND_DATAA findData = {};
     HANDLE hFind = ::FindFirstFileA("*.CAM", &findData);
     if (hFind)
@@ -508,7 +509,7 @@ int main(int, char**)
         } while (::FindNextFileA(hFind, &findData));
         ::FindClose(hFind);
     }
-
+    */
 
 	AudioBuffer::Open(512, 44100);
 
@@ -803,7 +804,7 @@ int main(int, char**)
 		PlayDDV((abesExoddusDir + file).c_str());
 	}
 
-
+    AudioBuffer::ChangeAudioSpec(512, 37800);
 	for (auto& file : aoDdvs)
 	{
 		std::cout << "Playing: " << file.c_str() << std::endl;
